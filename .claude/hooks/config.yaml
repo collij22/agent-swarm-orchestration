@@ -1,0 +1,255 @@
+hooks:
+  checkpoint_save:
+    compression:
+      enabled: true
+      threshold_kb: 1024
+    critical_phases:
+    - deployment
+    - migration
+    - security_update
+    critical_tools:
+    - delete_file
+    - drop_database
+    - deploy_production
+    - modify_config
+    enabled: true
+    incremental_saves: true
+    interval_minutes: 5
+    max_checkpoints: 20
+    priority: 50
+    triggers:
+    - agent_complete
+    - critical_decision
+    - error_detected
+    - milestone_reached
+  cost_control:
+    alerts:
+      channels:
+      - console
+      - log_file
+      threshold_percent: 80
+    budgets:
+      daily: 100.0
+      hourly: 10.0
+      monthly: 2000.0
+    cost_per_token:
+      claude-haiku: 0.0008
+      claude-opus: 0.015
+      claude-sonnet: 0.003
+      gpt-3.5: 0.002
+      gpt-4: 0.03
+    enabled: true
+    features:
+      alert_on_overspend: true
+      enforce_budget: true
+      suggest_alternatives: true
+      track_api_costs: true
+    priority: 20
+  memory_check:
+    actions:
+      on_critical: gc_collect
+      on_max: abort
+      on_warning: log
+    check_interval: 30
+    enabled: true
+    gc_settings:
+      aggressive: false
+      threshold: 0.8
+    priority: 60
+    thresholds:
+      critical_mb: 1024
+      max_mb: 2048
+      warning_mb: 512
+  post_tool_use:
+    cache:
+      cacheable_tools:
+      - read_file
+      - api_call
+      - web_request
+      - expensive_computation
+      enabled: true
+      max_size_mb: 100
+      ttl: 86400
+    enabled: true
+    features:
+      error_recovery: true
+      metrics_collection: true
+      result_caching: true
+      result_sanitization: true
+      side_effect_tracking: true
+    metrics:
+      alert_on_degradation: true
+      track_errors: true
+      track_performance: true
+      track_success_rate: true
+    priority: 90
+    timeout: 5000
+  pre_tool_use:
+    cost_limits:
+      max_per_call: 1.0
+      max_per_day: 100.0
+      max_per_hour: 10.0
+    enabled: true
+    features:
+      cost_estimation: true
+      parameter_enrichment: true
+      rate_limiting: true
+      security_checks: true
+      validation: true
+    priority: 10
+    rate_limits:
+      default_max_calls: 100
+      per_tool_limits:
+        api_call: 50
+        claude_call: 20
+        gpt_call: 20
+        run_command: 30
+        web_request: 50
+      time_window: 60
+    security:
+      allowed_directories:
+      - ./src
+      - ./tests
+      - ./docs
+      - ./config
+      block_dangerous_commands: true
+      block_system_paths: true
+      check_secrets: true
+    timeout: 5000
+  progress_update:
+    enabled: true
+    features:
+      eta_calculation: true
+      milestone_tracking: true
+      real_time_reporting: true
+      user_notifications: true
+    milestones:
+    - requirements_complete
+    - architecture_defined
+    - implementation_started
+    - testing_phase
+    - deployment_ready
+    notification_channels:
+      console: true
+      file: true
+      webhook: false
+    priority: 70
+    update_interval: 10
+registered:
+  checkpoint_save_agent_complete:
+    config:
+      enabled: true
+      interval_minutes: 5
+      max_checkpoints: 20
+      triggers:
+      - agent_complete
+      - critical_decision
+      - error_detected
+    enabled: true
+    event: agent_complete
+    priority: 50
+  checkpoint_save_milestone_reached:
+    config:
+      enabled: true
+      interval_minutes: 5
+      max_checkpoints: 20
+      triggers:
+      - agent_complete
+      - critical_decision
+      - error_detected
+    enabled: true
+    event: milestone_reached
+    priority: 50
+  checkpoint_save_workflow_error:
+    config:
+      enabled: true
+      interval_minutes: 5
+      max_checkpoints: 20
+      triggers:
+      - agent_complete
+      - critical_decision
+      - error_detected
+    enabled: true
+    event: workflow_error
+    priority: 50
+  cost_control:
+    config:
+      alert_on_overspend: true
+      enabled: true
+      enforce_budget: true
+      suggest_alternatives: true
+    enabled: true
+    event: cost_check
+    priority: 20
+  cost_control_pre:
+    config:
+      enabled: true
+      enforce_budget: true
+    enabled: true
+    event: pre_tool_use
+    priority: 20
+  memory_check:
+    config:
+      check_interval: 30
+      enabled: true
+      thresholds:
+        critical_mb: 1024
+        max_mb: 2048
+        warning_mb: 512
+    enabled: true
+    event: performance_check
+    priority: 60
+  post_tool_use:
+    config:
+      enabled: true
+      features:
+        error_recovery: true
+        metrics_collection: true
+        result_caching: true
+        side_effect_tracking: true
+    enabled: true
+    event: post_tool_use
+    priority: 90
+  pre_tool_use:
+    config:
+      enabled: true
+      features:
+        cost_estimation: true
+        rate_limiting: true
+        security_checks: true
+        validation: true
+    enabled: true
+    event: pre_tool_use
+    priority: 10
+  progress_update_agent_complete:
+    config:
+      enabled: true
+      real_time_reporting: true
+      update_interval: 10
+    enabled: true
+    event: agent_complete
+    priority: 70
+  progress_update_agent_start:
+    config:
+      enabled: true
+      real_time_reporting: true
+      update_interval: 10
+    enabled: true
+    event: agent_start
+    priority: 70
+  progress_update_milestone_reached:
+    config:
+      enabled: true
+      real_time_reporting: true
+      update_interval: 10
+    enabled: true
+    event: milestone_reached
+    priority: 70
+  progress_update_progress_update:
+    config:
+      enabled: true
+      real_time_reporting: true
+      update_interval: 10
+    enabled: true
+    event: progress_update
+    priority: 70

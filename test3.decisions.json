@@ -1,0 +1,135 @@
+{
+  "architecture": {
+    "requirements": {
+      "summary": "The project is a web-based blog application that should support basic blogging functionality including creating, reading, updating, and deleting blog posts. Based on typical blog requirements, it should include user authentication for authors, content management capabilities, and a public interface for readers. The system needs to be designed with scalability, security, and maintainability in mind from the start.",
+      "clarifications": [
+        "Expected number of concurrent users and traffic volume",
+        "Multi-author support or single author blog",
+        "Comment system requirements",
+        "Content moderation needs",
+        "SEO optimization requirements",
+        "Mobile responsiveness expectations",
+        "Third-party integrations (social media, analytics)",
+        "Content categories/tagging system",
+        "Search functionality requirements"
+      ]
+    },
+    "system": {
+      "components": [
+        "Frontend Web Application (React/Next.js)",
+        "API Gateway",
+        "Authentication Service",
+        "Blog Content Service",
+        "User Management Service",
+        "File Storage Service",
+        "Database Layer (PostgreSQL)",
+        "Redis Cache",
+        "CDN (Content Delivery Network)",
+        "Load Balancer",
+        "Monitoring and Logging Service"
+      ],
+      "data_flow": "User requests flow through the Load Balancer to the API Gateway, which routes requests to appropriate microservices. The Frontend communicates with backend services via RESTful APIs. Authentication Service validates user tokens and manages sessions. Blog Content Service handles CRUD operations for posts, interfacing with PostgreSQL database. Redis Cache stores frequently accessed data like recent posts and user sessions. File Storage Service manages media uploads. All services log to centralized monitoring system.",
+      "technology_stack": {
+        "frontend": {
+          "framework": "Next.js with React",
+          "styling": "Tailwind CSS",
+          "state_management": "React Query + Zustand"
+        },
+        "backend": {
+          "api_gateway": "Kong or AWS API Gateway",
+          "runtime": "Node.js with Express.js",
+          "authentication": "JWT with refresh tokens",
+          "validation": "Joi or Zod"
+        },
+        "database": {
+          "primary": "PostgreSQL",
+          "cache": "Redis",
+          "search": "Elasticsearch (optional)"
+        },
+        "infrastructure": {
+          "containerization": "Docker",
+          "orchestration": "Kubernetes or Docker Compose",
+          "load_balancer": "Nginx or AWS ALB",
+          "cdn": "Cloudflare or AWS CloudFront",
+          "file_storage": "AWS S3 or MinIO"
+        },
+        "monitoring": {
+          "logging": "Winston + ELK Stack",
+          "metrics": "Prometheus + Grafana",
+          "error_tracking": "Sentry"
+        }
+      }
+    },
+    "database": {
+      "entities": [
+        "users (id, username, email, password_hash, first_name, last_name, bio, avatar_url, role, is_active, created_at, updated_at)",
+        "posts (id, title, slug, content, excerpt, featured_image_url, author_id, status, published_at, created_at, updated_at)",
+        "categories (id, name, slug, description, created_at)",
+        "post_categories (post_id, category_id)",
+        "tags (id, name, slug)",
+        "post_tags (post_id, tag_id)",
+        "comments (id, post_id, author_name, author_email, content, status, parent_id, created_at)",
+        "media (id, filename, original_name, mime_type, size, url, user_id, created_at)",
+        "sessions (id, user_id, token_hash, expires_at, created_at)"
+      ],
+      "relationships": [
+        "users.id -> posts.author_id (one-to-many)",
+        "posts.id -> post_categories.post_id (many-to-many via junction)",
+        "categories.id -> post_categories.category_id (many-to-many via junction)",
+        "posts.id -> post_tags.post_id (many-to-many via junction)",
+        "tags.id -> post_tags.tag_id (many-to-many via junction)",
+        "posts.id -> comments.post_id (one-to-many)",
+        "comments.id -> comments.parent_id (self-referencing for nested comments)",
+        "users.id -> media.user_id (one-to-many)",
+        "users.id -> sessions.user_id (one-to-many)"
+      ],
+      "indexes": [
+        "posts(slug) - unique index for URL generation",
+        "posts(author_id, status, published_at) - composite index for author's published posts",
+        "posts(status, published_at DESC) - index for public post listing",
+        "users(email) - unique index for authentication",
+        "users(username) - unique index",
+        "comments(post_id, status, created_at) - index for post comments",
+        "sessions(token_hash) - unique index for session lookup",
+        "sessions(expires_at) - index for cleanup queries",
+        "posts using GIN(to_tsvector('english', title || ' ' || content)) - full-text search index"
+      ]
+    },
+    "api": {
+      "endpoints": [
+        "POST /api/v1/auth/login - User authentication",
+        "POST /api/v1/auth/logout - User logout",
+        "POST /api/v1/auth/refresh - Token refresh",
+        "GET /api/v1/posts - List published posts (public)",
+        "GET /api/v1/posts/:slug - Get post by slug (public)",
+        "POST /api/v1/posts - Create new post (authenticated)",
+        "PUT /api/v1/posts/:id - Update post (authenticated)",
+        "DELETE /api/v1/posts/:id - Delete post (authenticated)",
+        "GET /api/v1/posts/:id/comments - Get post comments (public)",
+        "POST /api/v1/posts/:id/comments - Create comment (public)",
+        "GET /api/v1/categories - List categories (public)",
+        "POST /api/v1/categories - Create category (admin)",
+        "GET /api/v1/tags - List tags (public)",
+        "POST /api/v1/tags - Create tag (authenticated)",
+        "GET /api/v1/users/profile - Get current user profile (authenticated)",
+        "PUT /api/v1/users/profile - Update user profile (authenticated)",
+        "POST /api/v1/media/upload - Upload media file (authenticated)",
+        "GET /api/v1/search?q=query - Search posts (public)"
+      ],
+      "authentication": "JWT-based authentication with access and refresh tokens. Access tokens expire in 15 minutes, refresh tokens in 7 days. Protected endpoints require valid JWT token in Authorization header. Role-based access control (RBAC) implemented with roles: reader, author, admin. Public endpoints accessible without authentication. Rate limiting applied per IP/user to prevent abuse.",
+      "versioning": "URL path versioning (/api/v1/) for clear version identification and backward compatibility. Version deprecation policy: support N-1 versions, 6-month deprecation notice before removing old versions. Content negotiation via Accept headers for response format (JSON default, supports application/json)."
+    }
+  },
+  "decisions": [
+    {
+      "decision": "System Architecture",
+      "reasoning": "I'm designing a modern, scalable three-tier architecture that separates concerns effectively. The architecture follows microservices principles with clear separation between presentation, business logic, and data layers. This design ensures maintainability, testability, and allows for independent scaling of components. I'm choosing technologies that are mature, well-supported, and suitable for a blog application that may need to scale.",
+      "timestamp": "2025-08-29 22:10:47"
+    },
+    {
+      "decision": "Database Design",
+      "reasoning": "The database design follows normalized principles while maintaining performance for read-heavy blog workloads. I'm using PostgreSQL for its reliability, JSON support for flexible content, and excellent full-text search capabilities. The schema supports multi-author blogs, content categorization, and future extensibility. Each entity has proper constraints, timestamps for auditing, and relationships that maintain data integrity.",
+      "timestamp": "2025-08-29 22:10:59"
+    }
+  ]
+}

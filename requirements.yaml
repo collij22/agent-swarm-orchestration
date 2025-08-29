@@ -1,0 +1,27 @@
+project:
+  name: "MyApp"
+  type: "web_app"  # web_app, mobile_app, api_service, ai_solution
+  timeline: "2 weeks"
+  priority: "MVP"  # MVP, full_feature, enterprise
+
+features:
+  - "User authentication"
+  - "Real-time messaging"
+  - "AI-powered recommendations"
+
+tech_overrides:
+  frontend:
+    framework: "Next.js"
+  backend:
+    language: "Python"
+    framework: "Django"
+
+constraints:
+  budget: "$5000"
+  team_size: 1
+  deployment: "Heroku"
+
+success_metrics:
+  - "1000+ users in month 1"
+  - "<200ms API response time"
+  - "99.9% uptime"

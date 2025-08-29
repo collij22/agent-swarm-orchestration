@@ -1,0 +1,36 @@
+# Web Dashboard Configuration
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://localhost:5173"
+    - "http://localhost:5174"
+  log_level: "info"
+  reload: true  # Auto-reload on code changes during development
+
+websocket:
+  ping_interval: 30  # Seconds
+  max_connections: 100
+  message_size_limit: 1048576  # 1MB
+  
+auth:
+  secret_key: "generate-secure-key-in-production"
+  algorithm: "HS256"
+  expire_minutes: 1440  # 24 hours
+  
+monitoring:
+  update_interval: 5  # Seconds between performance updates
+  metrics_retention_days: 30
+  event_buffer_size: 1000
+  
+api:
+  rate_limit: 100  # Requests per minute
+  pagination_default: 50
+  pagination_max: 200
+  
+dashboard:
+  theme: "dark"  # Default theme
+  auto_refresh: true
+  refresh_interval: 5000  # Milliseconds

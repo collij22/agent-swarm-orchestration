@@ -1,0 +1,78 @@
+{
+  "architecture": {
+    "requirements": {
+      "summary": "A simple blog web application that allows:\n1. User registration and authentication\n2. Creating, reading, updating, and deleting blog posts\n3. Commenting on blog posts\n4. Basic user profile management\n5. Responsive web interface",
+      "clarifications": [
+        "User roles and permissions",
+        "Performance expectations",
+        "Estimated initial and future user load",
+        "Monetization or integration plans"
+      ]
+    },
+    "system": {
+      "components": [
+        "User Service",
+        "Blog Post Service",
+        "Authentication Service",
+        "Comment Service",
+        "Frontend Application",
+        "API Gateway",
+        "Database",
+        "Caching Layer"
+      ],
+      "data_flow": "Users interact with Frontend \u2192 API Gateway routes requests \u2192 Microservices process logic \u2192 Database stores/retrieves data. Caching layer reduces database load and improves performance.",
+      "technology_stack": {
+        "backend": "Node.js with NestJS",
+        "frontend": "React with Next.js",
+        "database": "PostgreSQL",
+        "caching": "Redis",
+        "authentication": "JWT with OAuth support",
+        "deployment": "Docker, Kubernetes",
+        "monitoring": "Prometheus, Grafana"
+      }
+    },
+    "database": {
+      "entities": [
+        "Users",
+        "Posts",
+        "Comments",
+        "Tags",
+        "UserRoles"
+      ],
+      "relationships": [
+        "Users 1:N Posts",
+        "Posts 1:N Comments",
+        "Posts N:M Tags",
+        "Users 1:1 UserRoles"
+      ],
+      "indexes": [
+        "users.email",
+        "posts.created_at",
+        "comments.post_id",
+        "tags.name"
+      ]
+    },
+    "api": {
+      "endpoints": [
+        "/api/v1/users",
+        "/api/v1/posts",
+        "/api/v1/comments",
+        "/api/v1/auth"
+      ],
+      "authentication": "JWT with role-based access control (RBAC)",
+      "versioning": "Semantic versioning with `/api/v1/` prefix"
+    }
+  },
+  "decisions": [
+    {
+      "decision": "System Architecture",
+      "reasoning": "We need a modular, scalable architecture that separates concerns and allows easy future expansion. Microservices approach will provide flexibility and independent scalability.",
+      "timestamp": "2025-08-29 21:58:34"
+    },
+    {
+      "decision": "Database Design",
+      "reasoning": "A well-structured database schema ensures data integrity, supports efficient querying, and allows for future expansion.",
+      "timestamp": "2025-08-29 21:58:38"
+    }
+  ]
+}
