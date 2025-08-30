@@ -1,0 +1,15 @@
+
+project:
+  name: "MinimalTest"
+  type: "api_service"
+  description: "Minimal test"
+
+features:
+  - "Basic API endpoint"
+  - "Health check"
+
+requirements:
+  - id: "REQ-001"
+    description: "Test requirement"
+    priority: "high"
+    category: "functional"

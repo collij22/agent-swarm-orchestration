@@ -517,7 +517,7 @@ class ResultsAnalyzer:
         for phase, validated in self.analysis["phase_validation"]["phases_validated"].items():
             phase_name = phase.replace("_", " ").title()
             valid_class = "valid" if validated else "invalid"
-            status = "✓" if validated else "✗"
+            status = "[OK]" if validated else "[FAIL]"
             html_content += f"""
         <div class="phase-check {valid_class}">
             {status} <strong>{phase_name}</strong>

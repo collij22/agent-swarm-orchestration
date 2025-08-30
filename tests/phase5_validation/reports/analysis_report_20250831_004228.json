@@ -1,0 +1,133 @@
+{
+  "metadata": {
+    "generated": "2025-08-31T00:42:28.152666",
+    "results_file": "C:\\AI projects\\1test\\tests\\phase5_validation\\results\\test_results_20250831_004228.json",
+    "timestamp": "20250831_004228"
+  },
+  "analysis": {
+    "overall": {
+      "total_tests": 5,
+      "successful_tests": 0,
+      "success_rate": 0.0,
+      "average_quality_score": 0.0,
+      "min_quality_score": 0.0,
+      "max_quality_score": 0.0,
+      "total_execution_time": 2.7729177474975586,
+      "average_execution_time": 0.5545835494995117,
+      "test_date": "2025-08-31T00:42:25.294898"
+    },
+    "per_test": [
+      {
+        "test_key": "ecommerce",
+        "name": "E-Commerce Platform MVP",
+        "success": false,
+        "quality_score": 0.0,
+        "execution_time": 0.5648829936981201,
+        "agents_executed": 0,
+        "files_created": 0,
+        "requirements_completed": 0,
+        "total_requirements": 0,
+        "completion_rate": 0,
+        "errors": 1,
+        "warnings": 0
+      },
+      {
+        "test_key": "analytics",
+        "name": "Real-Time Analytics Dashboard",
+        "success": false,
+        "quality_score": 0.0,
+        "execution_time": 0.5538263320922852,
+        "agents_executed": 0,
+        "files_created": 0,
+        "requirements_completed": 0,
+        "total_requirements": 0,
+        "completion_rate": 0,
+        "errors": 1,
+        "warnings": 0
+      },
+      {
+        "test_key": "microservices",
+        "name": "Microservices Migration",
+        "success": false,
+        "quality_score": 0.0,
+        "execution_time": 0.5596528053283691,
+        "agents_executed": 0,
+        "files_created": 0,
+        "requirements_completed": 0,
+        "total_requirements": 0,
+        "completion_rate": 0,
+        "errors": 1,
+        "warnings": 0
+      },
+      {
+        "test_key": "mobile",
+        "name": "Mobile-First Social App",
+        "success": false,
+        "quality_score": 0.0,
+        "execution_time": 0.5437712669372559,
+        "agents_executed": 0,
+        "files_created": 0,
+        "requirements_completed": 0,
+        "total_requirements": 0,
+        "completion_rate": 0,
+        "errors": 1,
+        "warnings": 0
+      },
+      {
+        "test_key": "ai_cms",
+        "name": "AI-Powered Content Management",
+        "success": false,
+        "quality_score": 0.0,
+        "execution_time": 0.5507843494415283,
+        "agents_executed": 0,
+        "files_created": 0,
+        "requirements_completed": 0,
+        "total_requirements": 0,
+        "completion_rate": 0,
+        "errors": 1,
+        "warnings": 0
+      }
+    ],
+    "agent_performance": {
+      "agent_utilization": [],
+      "total_unique_agents": 0,
+      "most_used_agent": null,
+      "least_used_agent": null
+    },
+    "requirement_coverage": {
+      "total_requirements": 0,
+      "completed_requirements": 0,
+      "overall_coverage": 0.0,
+      "coverage_by_test": {},
+      "average_coverage": 0
+    },
+    "error_patterns": {
+      "tests_with_errors": [
+        "ecommerce",
+        "analytics",
+        "microservices",
+        "mobile",
+        "ai_cms"
+      ],
+      "error_count": 5,
+      "error_types": {
+        "other": 5,
+        "execution_errors": 5
+      },
+      "error_rate": 100.0
+    },
+    "performance": {},
+    "phase_validation": {
+      "phases_validated": {
+        "phase1_core_integration": false,
+        "phase2_production_infrastructure": false,
+        "phase3_quality_assurance": false,
+        "phase4_advanced_features": false,
+        "phase5_production_readiness": false
+      },
+      "phases_passed": 0,
+      "total_phases": 5,
+      "validation_rate": 0.0
+    }
+  }
+}

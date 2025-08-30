@@ -122,10 +122,32 @@ class EnhancedOrchestrator:
     def _load_agent_configs(self) -> Dict:
         """Load agent configurations and prompts"""
         agents = {}
-        agent_dir = Path(".claude/agents")
         
-        if not agent_dir.exists():
+        # Try multiple paths to find the agents directory
+        possible_paths = [
+            Path(".claude/agents"),  # Current directory
+            Path(__file__).parent / ".claude/agents",  # Relative to this script
+            Path.cwd() / ".claude/agents",  # Explicit current directory
+        ]
+        
+        # If running from a subdirectory, try parent directories
+        for i in range(3):  # Check up to 3 levels up
+            parent = Path.cwd().parents[i] if i < len(Path.cwd().parents) else None
+            if parent:
+                possible_paths.append(parent / ".claude/agents")
+        
+        agent_dir = None
+        for path in possible_paths:
+            if path.exists():
+                agent_dir = path
+                break
+        
+        if not agent_dir:
             self.logger.log_error("orchestrator", "Agent directory not found: .claude/agents")
+            # In mock mode, we can continue without agent configs
+            if os.environ.get('MOCK_MODE') == 'true':
+                self.logger.log_reasoning("orchestrator", "Mock mode enabled - continuing without agent configs")
+                return {}
             return agents
         
         # Load each agent's prompt from their .md files
