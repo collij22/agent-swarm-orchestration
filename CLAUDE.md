@@ -38,6 +38,7 @@ This repository contains an optimized 15-agent swarm for rapid technical develop
 - **E2E Tests**: Critical user journeys and payment flows
 - **Security Tests**: Authentication, authorization, input validation
 - **Performance Tests**: Load testing for expected traffic + 3x
+- **Mock Testing**: Enhanced mock mode with realistic file creation and requirement tracking
 
 ## 🛠️ Default Technology Stack
 
@@ -297,3 +298,33 @@ def process_payment(user_id: str, amount: float):
 - ALWAYS prefer editing an existing file to creating a new one
 - NEVER proactively create documentation files (*.md) or README files unless explicitly requested
 - All agents must adhere to these standards unless project requirements specify otherwise
+
+## 🧪 Enhanced Testing Standards (Section 7)
+
+### Mock Mode Testing
+- **Enhanced Mock Mode**: Use `--enhanced` flag for realistic file creation and requirement tracking
+- **Failure Simulation**: Configure failure rates (0-100%) for robust testing scenarios
+- **Progress Monitoring**: Track completion percentages and detailed metrics
+- **File Validation**: Verify actual file creation in temporary directories
+
+### Testing Commands
+```bash
+# Enhanced mock mode with file creation (recommended)
+python tests/test_agents.py --mode mock --enhanced
+
+# Traditional mock mode (basic simulation)
+python tests/test_agents.py --mode mock
+
+# Enhanced mock mode tests only
+python tests/test_mock_mode_enhanced.py
+
+# Direct enhanced mock client demonstration
+python lib/mock_anthropic_enhanced.py
+```
+
+### Mock Testing Benefits
+- **Zero API Costs**: Complete testing without API charges
+- **Realistic Behavior**: Actual file creation and validation
+- **Requirement Tracking**: Precise completion percentages (0-100%)
+- **Controlled Failures**: Test error handling with configurable failure rates
+- **Comprehensive Metrics**: API calls, costs, files created, progress tracking

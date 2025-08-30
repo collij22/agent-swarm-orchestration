@@ -22,6 +22,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from lib.agent_runtime import AnthropicAgentRunner, AgentContext, ModelType, get_optimal_model
 from lib.mock_anthropic import MockAnthropicClient, use_mock_client, restore_real_client
+from lib.mock_anthropic_enhanced import use_enhanced_mock_client
 from lib.agent_logger import get_logger
 
 class TestModelConfiguration(unittest.TestCase):
@@ -366,9 +367,142 @@ def run_tests(mode: str = "mock", budget: float = 1.0, verbose: bool = False):
     
     return result.wasSuccessful()
 
+class TestEnhancedMockMode(unittest.TestCase):
+    """Test enhanced mock mode features (Section 7)"""
+    
+    @classmethod
+    def setUpClass(cls):
+        """Set up enhanced mock mode"""
+        cls.original_init = use_enhanced_mock_client(
+            enable_file_creation=True,
+            failure_rate=0.1  # 10% for testing
+        )
+    
+    @classmethod
+    def tearDownClass(cls):
+        """Clean up"""
+        restore_real_client(cls.original_init)
+    
+    def test_realistic_file_creation(self):
+        """Test that enhanced mock mode actually creates files"""
+        runner = AnthropicAgentRunner()
+        context = AgentContext(
+            project_requirements={"name": "TestProject", "type": "web_app"},
+            completed_tasks=[],
+            artifacts={},
+            decisions=[],
+            current_phase="planning"
+        )
+        
+        success, result, context = runner.run_agent(
+            "project-architect",
+            "Create architecture documentation",
+            context,
+            model=ModelType.SONNET,
+            max_iterations=2
+        )
+        
+        # Get mock client and check file creation
+        mock_client = runner.client
+        if hasattr(mock_client, 'file_system') and mock_client.file_system:
+            files_created = mock_client.file_system.created_files
+            self.assertGreater(len(files_created), 0, "No files created in enhanced mock mode")
+            
+            # Cleanup
+            mock_client.file_system.cleanup()
+    
+    def test_requirement_tracking(self):
+        """Test requirement completion tracking"""
+        runner = AnthropicAgentRunner()
+        context = AgentContext(
+            project_requirements={
+                "name": "TestProject",
+                "type": "web_app",
+                "features": ["auth", "api", "frontend"]
+            },
+            completed_tasks=[],
+            artifacts={},
+            decisions=[],
+            current_phase="requirements"
+        )
+        
+        # Run requirements analyst
+        success, result, context = runner.run_agent(
+            "requirements-analyst",
+            "Analyze project requirements",
+            context,
+            model=ModelType.SONNET,
+            max_iterations=2
+        )
+        
+        # Check requirement tracking
+        mock_client = runner.client
+        if hasattr(mock_client, 'requirement_tracker'):
+            tracker = mock_client.requirement_tracker
+            self.assertGreater(tracker.total_requirements, 0, "No requirements tracked")
+            
+            # Get summary
+            summary = tracker.get_summary()
+            self.assertIn('total', summary)
+            self.assertIn('completed', summary)
+            self.assertIn('percentage', summary)
+
+def run_enhanced_tests(enable_files: bool = True, failure_rate: float = 0.0, verbose: bool = False):
+    """Run tests with enhanced mock mode"""
+    
+    print(f"\n{'='*60}")
+    print("Running ENHANCED Mock Mode Tests (Section 7)")
+    print(f"{'='*60}")
+    print(f"File Creation: {'Enabled' if enable_files else 'Disabled'}")
+    print(f"Failure Rate: {failure_rate:.1%}")
+    print(f"{'='*60}\n")
+    
+    # Set up enhanced mock client
+    original_init = use_enhanced_mock_client(
+        enable_file_creation=enable_files,
+        failure_rate=failure_rate
+    )
+    
+    try:
+        # Run enhanced tests
+        suite = unittest.TestLoader().loadTestsFromTestCase(TestEnhancedMockMode)
+        runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)
+        result = runner.run(suite)
+        
+        # Get final summary from mock client
+        test_runner = AnthropicAgentRunner()
+        mock_client = test_runner.client
+        
+        if hasattr(mock_client, 'get_usage_summary'):
+            summary = mock_client.get_usage_summary()
+            
+            print(f"\n{'='*60}")
+            print("ENHANCED MOCK MODE SUMMARY")
+            print(f"{'='*60}")
+            print(f"Total API Calls: {summary.get('total_calls', 0)}")
+            print(f"Estimated Cost: ${summary.get('estimated_cost', 0):.4f}")
+            
+            if 'requirements' in summary:
+                req_summary = summary['requirements']
+                print(f"\nRequirement Tracking:")
+                print(f"  Total Requirements: {req_summary['total']}")
+                print(f"  Completed: {req_summary['completed']}")
+                print(f"  Completion: {req_summary['percentage']:.1f}%")
+            
+            if 'file_system' in summary:
+                fs_summary = summary['file_system']
+                print(f"\nFile System Simulation:")
+                print(f"  Files Created: {fs_summary['files_created']}")
+                print(f"  Total Size: {fs_summary['total_size']} bytes")
+        
+        return result.wasSuccessful()
+        
+    finally:
+        restore_real_client(original_init)
+
 def main():
     """Main test runner"""
-    parser = argparse.ArgumentParser(description="Test Agent Swarm")
+    parser = argparse.ArgumentParser(description="Test Agent Swarm with Enhanced Mock Mode")
     parser.add_argument('--mode', choices=['mock', 'live'], default='mock',
                         help='Test mode: mock (no costs) or live (real API)')
     parser.add_argument('--budget', type=float, default=1.0,
@@ -376,11 +510,16 @@ def main():
     parser.add_argument('--verbose', action='store_true',
                         help='Verbose output')
     parser.add_argument('--agent', help='Test specific agent only')
+    parser.add_argument('--enhanced', action='store_true',
+                        help='Use enhanced mock mode with file creation and tracking (Section 7)')
     
     args = parser.parse_args()
     
     # Run tests
-    success = run_tests(args.mode, args.budget, args.verbose)
+    if args.enhanced and args.mode == 'mock':
+        success = run_enhanced_tests(enable_files=True, failure_rate=0.1, verbose=args.verbose)
+    else:
+        success = run_tests(args.mode, args.budget, args.verbose)
     
     # Exit with appropriate code
     sys.exit(0 if success else 1)

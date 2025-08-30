@@ -371,6 +371,9 @@ def restore_real_client(original_init):
 
 if __name__ == "__main__":
     # Demo the mock client
+    print("Basic Mock Client Demo (Legacy Mode)")
+    print("=" * 50)
+    
     client = MockAnthropicClient()
     
     # Simulate architect agent
@@ -383,13 +386,21 @@ if __name__ == "__main__":
         ]
     )
     
-    print("Mock Response:")
+    print("\nMock Response:")
     for block in response.content:
         if hasattr(block, 'text'):
-            print(f"Text: {block.text}")
+            print(f"   Text: {block.text}")
         elif hasattr(block, 'name'):
-            print(f"Tool: {block.name}")
-            print(f"Input: {block.input}")
+            print(f"   Tool: {block.name}")
+            print(f"   Input: {block.input}")
     
     print("\nUsage Summary:")
-    print(client.get_usage_summary())
+    summary = client.get_usage_summary()
+    for key, value in summary.items():
+        print(f"   {key}: {value}")
+    
+    print("\n" + "=" * 50)
+    print("NOTE: For enhanced mock mode with realistic file creation,")
+    print("requirement tracking, and progress indicators, use:")
+    print("python lib/mock_anthropic_enhanced.py")
+    print("=" * 50)
