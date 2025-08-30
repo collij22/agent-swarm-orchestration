@@ -1,4 +1,4 @@
-import { io, Socket } from 'socket.io-client';
+// Using native WebSocket instead of socket.io
 
 export interface WebSocketEvent {
   event: string;
@@ -14,7 +14,7 @@ export interface WebSocketEvent {
 export type EventCallback = (event: WebSocketEvent) => void;
 
 class WebSocketService {
-  private socket: Socket | null = null;
+  private socket: WebSocket | null = null;
   private eventCallbacks: Map<string, Set<EventCallback>> = new Map();
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;

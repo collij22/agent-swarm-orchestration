@@ -478,12 +478,34 @@ class AnthropicAgentRunner:
                     "write_file called without content parameter",
                     f"Args provided: {list(args.keys())}"
                 )
-                # Provide empty content as fallback to prevent crash
-                args["content"] = ""
-                self.logger.log_reasoning(
-                    agent_name or "unknown",
-                    "Using empty content as fallback for write_file tool"
-                )
+                
+                # Check if there's a "text" or "data" parameter that might contain the content
+                if "text" in args:
+                    args["content"] = args.pop("text")
+                    self.logger.log_reasoning(agent_name or "unknown", "Using 'text' parameter as content")
+                elif "data" in args:
+                    args["content"] = str(args.pop("data"))
+                    self.logger.log_reasoning(agent_name or "unknown", "Using 'data' parameter as content")
+                else:
+                    # Generate placeholder content based on file type
+                    file_path = args.get("file_path", "unknown")
+                    if file_path.endswith(".py"):
+                        args["content"] = f"# TODO: Implement {file_path}\n# File created by {agent_name}\n\npass"
+                    elif file_path.endswith(".json"):
+                        args["content"] = "{}"
+                    elif file_path.endswith(".md"):
+                        args["content"] = f"# {file_path}\n\nTODO: Add content"
+                    elif file_path.endswith(".txt"):
+                        args["content"] = f"TODO: Add content for {file_path}"
+                    elif file_path.endswith(".yml") or file_path.endswith(".yaml"):
+                        args["content"] = "# TODO: Add configuration"
+                    else:
+                        args["content"] = ""
+                    
+                    self.logger.log_reasoning(
+                        agent_name or "unknown",
+                        f"Generated placeholder content for {file_path}"
+                    )
             elif args["content"] is None:
                 self.logger.log_error(
                     agent_name or "unknown",

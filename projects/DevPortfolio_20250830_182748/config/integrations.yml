@@ -1,0 +1,37 @@
+# DevPortfolio API Integration Configuration
+
+github:
+  api_version: v3
+  scopes:
+    - repo
+    - read:user
+  cache_duration: 3600  # 1 hour cache
+  retry_strategy:
+    max_attempts: 3
+    backoff_factor: 2
+
+openai:
+  model: gpt-3.5-turbo
+  max_tokens: 500
+  temperature: 0.7
+  rate_limit:
+    requests_per_minute: 20
+    concurrent_requests: 5
+
+oauth:
+  providers:
+    - name: github
+      client_id: ${GITHUB_CLIENT_ID}
+      strategy: authorization_code
+    - name: google
+      client_id: ${GOOGLE_CLIENT_ID}
+      strategy: authorization_code
+  
+  admin_auth:
+    method: jwt
+    two_factor: true
+    token_expiry: 3600  # 1 hour
+
+security:
+  encryption: AES-256
+  key_rotation_interval: 30  # days

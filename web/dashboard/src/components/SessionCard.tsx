@@ -1,5 +1,5 @@
 import React from 'react';
-import { Session } from '../services/api';
+import type { Session } from '../services/api';
 
 interface SessionCardProps {
   session: Session;

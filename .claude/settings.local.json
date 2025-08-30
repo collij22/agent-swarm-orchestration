@@ -19,7 +19,10 @@
       "Bash(rg:*)",
       "Bash(git push:*)",
       "Bash(git commit:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []

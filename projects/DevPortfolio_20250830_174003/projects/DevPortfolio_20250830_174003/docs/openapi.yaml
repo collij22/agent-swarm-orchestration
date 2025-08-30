@@ -1,0 +1,141 @@
+openapi: 3.0.0
+info:
+  title: DevPortfolio API
+  version: 1.0.0
+  description: Professional developer portfolio and blog platform API
+  contact:
+    name: DevPortfolio Support
+    email: support@devportfolio.com
+
+servers:
+  - url: https://api.devportfolio.com/v1
+    description: Production API Server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+paths:
+  /projects:
+    get:
+      summary: List developer projects
+      description: Retrieve a list of projects with optional filtering
+      tags:
+        - Projects
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter projects by technology category
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: Number of projects to return
+      responses:
+        '200':
+          description: Successful project retrieval
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    title:
+                      type: string
+                    description:
+                      type: string
+                    technologies:
+                      type: array
+                      items:
+                        type: string
+                    githubLink:
+                      type: string
+                    demoLink:
+                      type: string
+
+  /blog/posts:
+    get:
+      summary: List blog posts
+      description: Retrieve blog posts with optional filtering and pagination
+      tags:
+        - Blog
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter posts by category
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Page number for pagination
+      responses:
+        '200':
+          description: Successful blog posts retrieval
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  posts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        title:
+                          type: string
+                        publishedAt:
+                          type: string
+                          format: date-time
+                        category:
+                          type: string
+                  totalPosts:
+                    type: integer
+
+  /ai/suggest:
+    post:
+      summary: AI Content Suggestion
+      description: Get AI-powered content suggestions for blog writing
+      tags:
+        - AI Assistant
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                context:
+                  type: string
+                  description: Initial content or topic
+                maxLength:
+                  type: integer
+                  description: Maximum suggestion length
+      responses:
+        '200':
+          description: Successful AI suggestion
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  suggestion:
+                    type: string
+                  keywords:
+                    type: array
+                    items:
+                      type: string

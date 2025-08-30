@@ -182,6 +182,35 @@ uv run orchestrate_v2.py --project-type=api_service --requirements=test_requirem
 
 ## 🔍 Session Management
 
+### Human-Readable Logging (NEW)
+The system now generates compact, human-readable markdown summaries alongside detailed JSON logs:
+
+```bash
+# Enable human-readable logging (enabled by default)
+python orchestrate_enhanced.py config_files/dev_portfolio.json --human-log
+
+# Control summary detail level
+python orchestrate_enhanced.py config_files/dev_portfolio.json --summary-level concise  # ~100-200 lines
+python orchestrate_enhanced.py config_files/dev_portfolio.json --summary-level detailed # ~300-500 lines  
+python orchestrate_enhanced.py config_files/dev_portfolio.json --summary-level verbose  # 500+ lines
+
+# Disable human-readable logging (JSON only)
+python orchestrate_enhanced.py config_files/dev_portfolio.json --no-human-log
+```
+
+**Human Log Benefits:**
+- **5-Minute Review**: Review entire execution in ~5 minutes vs 30+ for JSON logs
+- **Markdown Format**: Easy to read in any text editor or markdown viewer
+- **Agent Summaries**: Quick overview of what each agent accomplished
+- **File Tracking**: Lists all files created/modified with counts
+- **Error Summary**: Consolidated view of errors and resolutions
+- **Decision Log**: Critical decisions made during execution
+- **Completion Metrics**: Success rates, timing, and requirement coverage
+
+**Log File Locations:**
+- JSON logs: `sessions/session_[id]_[timestamp].json` (detailed, 400KB+)
+- Human logs: `sessions/session_[id]_[timestamp]_human.md` (compact, ~5-10KB)
+
 ### Monitor Agent Executions
 ```bash
 # List recent sessions
@@ -195,6 +224,9 @@ python session_cli.py analyze [session-id] --types error_pattern
 
 # Monitor performance in real-time
 python session_cli.py monitor --interval 5
+
+# View human-readable summary directly
+cat sessions/session_[id]_[timestamp]_human.md
 ```
 
 ## 🚀 Production Deployment

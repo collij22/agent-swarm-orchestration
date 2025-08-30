@@ -519,10 +519,47 @@ class EndpointTester:
     async def test_endpoint(self, endpoint: str, method: str = "GET", 
                            data: Optional[Dict] = None, headers: Optional[Dict] = None) -> Dict:
         """Test a single endpoint"""
-        import aiohttp
+        try:
+            import aiohttp
+            has_aiohttp = True
+        except ImportError:
+            has_aiohttp = False
+            import requests
         
         url = f"{self.base_url}{endpoint}"
         
+        if not has_aiohttp:
+            # Use requests as fallback
+            try:
+                if method == "GET":
+                    response = requests.get(url, headers=headers)
+                elif method == "POST":
+                    response = requests.post(url, json=data, headers=headers)
+                elif method == "PUT":
+                    response = requests.put(url, json=data, headers=headers)
+                elif method == "DELETE":
+                    response = requests.delete(url, headers=headers)
+                else:
+                    response = requests.request(method, url, json=data, headers=headers)
+                
+                return {
+                    "endpoint": endpoint,
+                    "method": method,
+                    "status_code": response.status_code,
+                    "success": 200 <= response.status_code < 300,
+                    "response_time": response.elapsed.total_seconds() * 1000,
+                    "body": response.text[:500]  # Limit response size
+                }
+            except Exception as e:
+                return {
+                    "endpoint": endpoint,
+                    "method": method,
+                    "status_code": 0,
+                    "success": False,
+                    "error": str(e)
+                }
+        
+        # Use aiohttp if available
         async with aiohttp.ClientSession() as session:
             try:
                 async with session.request(method, url, json=data, headers=headers) as response:

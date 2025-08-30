@@ -1,0 +1,38 @@
+{
+    "github": {
+        "integration_type": "oauth_app",
+        "scopes": ["repo:read", "user:read"],
+        "authentication": "oauth2",
+        "rate_limit": {
+            "requests_per_minute": 30,
+            "concurrent_connections": 5
+        }
+    },
+    "openai": {
+        "integration_type": "api_key",
+        "services": ["grammar_check", "content_suggestion", "seo_optimization"],
+        "rate_limit": {
+            "requests_per_minute": 10,
+            "token_budget_per_minute": 90000
+        }
+    },
+    "oauth_providers": {
+        "github": {
+            "client_id": "${GITHUB_CLIENT_ID}",
+            "authentication_flow": "openid_connect"
+        },
+        "google": {
+            "client_id": "${GOOGLE_CLIENT_ID}",
+            "authentication_flow": "openid_connect"
+        }
+    },
+    "analytics": {
+        "tracking_method": "custom_events",
+        "event_types": [
+            "page_view", 
+            "blog_read", 
+            "project_view",
+            "interaction_time"
+        ]
+    }
+}

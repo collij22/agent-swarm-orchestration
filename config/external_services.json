@@ -1,0 +1,36 @@
+{
+    "github": {
+        "api_version": "v4",
+        "endpoints": {
+            "user_profile": "/user",
+            "repositories": "/user/repos",
+            "contributions": "/users/{username}/events"
+        },
+        "rate_limits": {
+            "max_requests_per_hour": 5000,
+            "retry_strategy": "exponential_backoff"
+        }
+    },
+    "openai": {
+        "models": {
+            "primary": "gpt-4-turbo",
+            "embedding": "text-embedding-3-small"
+        },
+        "rate_limits": {
+            "max_requests_per_minute": 60,
+            "retry_strategy": "queue_and_process"
+        },
+        "fallback_provider": "anthropic_claude"
+    },
+    "oauth": {
+        "providers": ["github", "google"],
+        "scopes": {
+            "github": ["user:email", "read:user", "repo"],
+            "google": ["profile", "email"]
+        }
+    },
+    "analytics": {
+        "tracking_strategy": "privacy_first",
+        "data_retention": "30_days"
+    }
+}

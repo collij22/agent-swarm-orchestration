@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import apiService, { Session, Metrics, PerformanceSnapshot, Agent, Error } from '../services/api';
-import websocketService, { WebSocketEvent } from '../services/websocket';
+import apiService from '../services/api';
+import type { Session, Metrics, PerformanceSnapshot, Agent, Error } from '../services/api';
+import websocketService from '../services/websocket';
+import type { WebSocketEvent } from '../services/websocket';
 
 interface DashboardState {
   // Connection status
@@ -106,7 +108,7 @@ const useDashboardStore = create<DashboardState>()(
         sidebarCollapsed: false,
         theme: 'dark',
         autoRefresh: true,
-        refreshInterval: 5000,
+        refreshInterval: 30000,  // 30 seconds instead of 5
         
         // Connection actions
         connect: async () => {

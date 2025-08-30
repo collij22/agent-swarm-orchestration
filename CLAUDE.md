@@ -254,6 +254,7 @@ def process_payment(user_id: str, amount: float):
 - Reasoning quality assessment
 - Cross-session metrics aggregation
 - Agent performance rankings
+- Human-readable summary generation
 
 ## 🎯 Enhanced Orchestration Standards (Section 8)
 
@@ -312,8 +313,12 @@ def process_payment(user_id: str, amount: float):
 ### Human-Readable Logging
 The system now generates concise markdown summaries alongside detailed JSON logs:
 - **File Pattern**: `session_<id>_<timestamp>_human.md`
-- **Target Size**: 100-200 lines for full execution
+- **Target Size**: 
+  - Concise: 100-200 lines (5-minute review)
+  - Detailed: 300-500 lines (10-minute review)
+  - Verbose: 500+ lines (full detail)
 - **Real-time**: Updates as execution progresses
+- **Review Time**: 5 minutes vs 30+ for JSON logs
 
 ### Configuration Options
 ```yaml

@@ -1,0 +1,53 @@
+---
+# DevPortfolio External Services Integration Configuration
+
+# GitHub Integration
+github:
+  api_version: "v4"
+  endpoints:
+    user_profile: "/user"
+    repositories: "/user/repos"
+    contributions: "/users/{username}/events"
+  rate_limits:
+    max_requests_per_hour: 5000
+    retry_strategy: exponential_backoff
+
+# OpenAI Integration
+openai:
+  models:
+    content_generation: "gpt-4-turbo"
+    embeddings: "text-embedding-3-small"
+  endpoints:
+    completions: "/v1/chat/completions"
+    embeddings: "/v1/embeddings"
+  rate_limits:
+    max_requests_per_minute: 60
+    retry_strategy: exponential_backoff
+
+# OAuth Providers
+oauth:
+  providers:
+    github:
+      client_id: "${GITHUB_CLIENT_ID}"
+      scope: ["user", "repo"]
+    google:
+      client_id: "${GOOGLE_CLIENT_ID}"
+      scope: ["profile", "email"]
+  token_endpoint: "/oauth/token"
+  callback_url: "/auth/callback"
+
+# Monitoring and Logging
+monitoring:
+  log_level: "INFO"
+  error_tracking:
+    enabled: true
+    max_retries: 3
+  performance_metrics:
+    enabled: true
+    sample_rate: 0.1
+
+# Security
+security:
+  webhook_secret_rotation: 90  # days
+  api_key_rotation: 180  # days
+  encryption_method: "AES-256-GCM"

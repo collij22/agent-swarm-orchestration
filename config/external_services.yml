@@ -1,0 +1,68 @@
+external_services:
+  github:
+    base_url: https://api.github.com
+    rate_limits:
+      max_requests_per_hour: 5000
+      concurrent_connections: 10
+    scopes:
+      - repo
+      - read:user
+      - user:email
+    webhook_secret_env: GITHUB_WEBHOOK_SECRET
+
+  openai:
+    base_url: https://api.openai.com/v1
+    rate_limits:
+      max_requests_per_minute: 60
+      max_tokens_per_minute: 150000
+    models:
+      primary: gpt-4-turbo
+      fallback: gpt-3.5-turbo
+    webhook_support: false
+
+  google_oauth:
+    base_url: https://oauth2.googleapis.com
+    scopes:
+      - profile
+      - email
+    rate_limits:
+      max_requests_per_hour: 1000
+    callback_url: /auth/google/callback
+
+  analytics:
+    providers:
+      - plausible
+      - google_analytics
+    rate_limits:
+      max_events_per_second: 10
+
+integration_security:
+  encryption_key_env: INTEGRATION_ENCRYPTION_KEY
+  token_rotation_days: 30
+  allowed_methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+  blocked_endpoints: []
+
+error_handling:
+  retry_strategy:
+    max_attempts: 3
+    backoff_factor: 2
+    jitter: true
+  fallback_mechanisms:
+    github: 
+      - use_cached_data
+      - skip_update
+    openai:
+      - use_previous_response
+      - fallback_to_local_model
+
+monitoring:
+  enabled: true
+  log_level: INFO
+  alert_thresholds:
+    api_error_rate: 5%
+    response_time_ms: 500
+    token_usage_percent: 80

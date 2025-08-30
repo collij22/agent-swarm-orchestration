@@ -9,7 +9,6 @@ const Overview: React.FC = () => {
   const { 
     sessions, 
     metrics, 
-    performance,
     agents,
     errors,
     activeSessions

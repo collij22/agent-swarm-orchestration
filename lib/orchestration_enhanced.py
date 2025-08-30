@@ -31,8 +31,13 @@ try:
 except ImportError:
     HAS_RICH = False
 
-from .agent_logger import ReasoningLogger, get_logger
-from .agent_runtime import AnthropicAgentRunner, AgentContext, ModelType
+try:
+    from .agent_logger import ReasoningLogger, get_logger
+    from .agent_runtime import AnthropicAgentRunner, AgentContext, ModelType
+except ImportError:
+    # For standalone imports
+    from agent_logger import ReasoningLogger, get_logger
+    from agent_runtime import AnthropicAgentRunner, AgentContext, ModelType
 
 
 class RequirementStatus(Enum):
@@ -225,7 +230,15 @@ class AdaptiveWorkflowEngine:
         features = requirements_dict.get("features", [])
         
         for idx, feature in enumerate(features):
-            req_id = f"REQ-{idx+1:03d}"
+            # Handle both string features and dictionary features
+            if isinstance(feature, dict):
+                # Use the existing ID or create one
+                req_id = feature.get("id", f"REQ-{idx+1:03d}")
+                # Get description from the feature dict
+                feature_desc = feature.get("description", feature.get("title", str(feature)))
+            else:
+                req_id = f"REQ-{idx+1:03d}"
+                feature_desc = str(feature)
             
             # Analyze feature for agent assignments and priorities
             assigned_agents, priority = self._analyze_feature_requirements(feature)
@@ -235,7 +248,7 @@ class AdaptiveWorkflowEngine:
             
             requirement = RequirementItem(
                 id=req_id,
-                description=feature,
+                description=feature_desc,
                 priority=priority,
                 assigned_agents=assigned_agents,
                 dependencies=dependencies,
@@ -256,11 +269,26 @@ class AdaptiveWorkflowEngine:
         
         return parsed_requirements
     
-    def _analyze_feature_requirements(self, feature: str) -> Tuple[List[str], int]:
+    def _analyze_feature_requirements(self, feature) -> Tuple[List[str], int]:
         """Analyze feature to determine required agents and priority"""
-        feature_lower = feature.lower()
+        # Handle both string and dict features
+        if isinstance(feature, dict):
+            feature_text = f"{feature.get('title', '')} {feature.get('description', '')} {feature.get('id', '')}"
+            feature_priority = feature.get('priority', 'medium')
+        else:
+            feature_text = str(feature)
+            feature_priority = 'medium'
+        
+        feature_lower = feature_text.lower()
         assigned_agents = []
-        priority = 2  # Default medium priority
+        
+        # Use priority from feature dict if available, otherwise determine from text
+        if feature_priority in ['high', 'critical']:
+            priority = 1
+        elif feature_priority == 'low':
+            priority = 3
+        else:
+            priority = 2  # Default medium priority
         
         # Agent assignment rules
         agent_patterns = {
@@ -293,10 +321,17 @@ class AdaptiveWorkflowEngine:
         
         return assigned_agents, priority
     
-    def _detect_dependencies(self, current_feature: str, previous_features: List[str]) -> List[str]:
+    def _detect_dependencies(self, current_feature, previous_features: List) -> List[str]:
         """Detect dependencies between requirements (simple heuristic)"""
         dependencies = []
-        current_lower = current_feature.lower()
+        
+        # Handle both string and dict features
+        if isinstance(current_feature, dict):
+            current_text = f"{current_feature.get('title', '')} {current_feature.get('description', '')}"
+        else:
+            current_text = str(current_feature)
+        
+        current_lower = current_text.lower()
         
         dependency_patterns = {
             "frontend": ["api", "backend", "authentication"],
@@ -309,15 +344,26 @@ class AdaptiveWorkflowEngine:
         for pattern, deps in dependency_patterns.items():
             if pattern in current_lower:
                 for idx, prev_feature in enumerate(previous_features):
-                    prev_lower = prev_feature.lower()
+                    # Handle both string and dict for previous features
+                    if isinstance(prev_feature, dict):
+                        prev_text = f"{prev_feature.get('title', '')} {prev_feature.get('description', '')}"
+                    else:
+                        prev_text = str(prev_feature)
+                    prev_lower = prev_text.lower()
                     if any(dep in prev_lower for dep in deps):
                         dependencies.append(f"REQ-{idx+1:03d}")
         
         return dependencies
     
-    def _estimate_effort(self, feature: str) -> int:
+    def _estimate_effort(self, feature) -> int:
         """Estimate effort in story points (1-8)"""
-        feature_lower = feature.lower()
+        # Handle both string and dict features
+        if isinstance(feature, dict):
+            feature_text = f"{feature.get('title', '')} {feature.get('description', '')}"
+        else:
+            feature_text = str(feature)
+            
+        feature_lower = feature_text.lower()
         
         # High effort patterns
         if any(pattern in feature_lower for pattern in [
@@ -660,17 +706,44 @@ class AdaptiveWorkflowEngine:
         
         self.console.print(table)
     
+    def _serialize_for_json(self, obj):
+        """Custom serializer for JSON dump to handle Enums"""
+        if isinstance(obj, Enum):
+            return obj.value
+        elif hasattr(obj, '__dict__'):
+            result = {}
+            for key, value in obj.__dict__.items():
+                if isinstance(value, Enum):
+                    result[key] = value.value
+                elif isinstance(value, list):
+                    result[key] = [self._serialize_for_json(v) for v in value]
+                elif isinstance(value, dict):
+                    result[key] = {k: self._serialize_for_json(v) for k, v in value.items()}
+                else:
+                    result[key] = value
+            return result
+        return obj
+    
     def get_execution_summary(self) -> Dict:
         """Get detailed execution summary"""
+        # Convert enums to values for JSON serialization
+        requirements_dict = {}
+        for req_id, req in self.requirements.items():
+            req_dict = asdict(req)
+            req_dict['status'] = req.status.value if isinstance(req.status, Enum) else req.status
+            requirements_dict[req_id] = req_dict
+            
+        agent_plans_dict = {}
+        for agent, plan in self.agent_plans.items():
+            plan_dict = asdict(plan)
+            plan_dict['status'] = plan.status.value if isinstance(plan.status, Enum) else plan.status
+            agent_plans_dict[agent] = plan_dict
+        
         return {
             "workflow_id": self.workflow_id,
             "progress": asdict(self.progress),
-            "requirements": {
-                req_id: asdict(req) for req_id, req in self.requirements.items()
-            },
-            "agent_plans": {
-                agent: asdict(plan) for agent, plan in self.agent_plans.items()
-            },
+            "requirements": requirements_dict,
+            "agent_plans": agent_plans_dict,
             "dependency_graph": {
                 "nodes": list(self.dependency_graph.nodes()),
                 "edges": list(self.dependency_graph.edges())
@@ -685,8 +758,14 @@ class AdaptiveWorkflowEngine:
             "execution_summary": self.get_execution_summary()
         }
         
+        # Custom JSON encoder for Enums
+        def enum_encoder(obj):
+            if isinstance(obj, Enum):
+                return obj.value
+            raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+        
         with open(checkpoint_path, 'w') as f:
-            json.dump(checkpoint_data, f, indent=2)
+            json.dump(checkpoint_data, f, indent=2, default=enum_encoder)
         
         self.logger.log_reasoning(
             "orchestrator",
@@ -702,17 +781,21 @@ class AdaptiveWorkflowEngine:
             
             summary = checkpoint_data["execution_summary"]
             
-            # Restore requirements
-            self.requirements = {
-                req_id: RequirementItem(**req_data)
-                for req_id, req_data in summary["requirements"].items()
-            }
+            # Restore requirements with enum conversion
+            self.requirements = {}
+            for req_id, req_data in summary["requirements"].items():
+                # Convert status string back to enum if needed
+                if 'status' in req_data and isinstance(req_data['status'], str):
+                    req_data['status'] = RequirementStatus(req_data['status'])
+                self.requirements[req_id] = RequirementItem(**req_data)
             
-            # Restore agent plans
-            self.agent_plans = {
-                agent: AgentExecutionPlan(**plan_data)
-                for agent, plan_data in summary["agent_plans"].items()
-            }
+            # Restore agent plans with enum conversion
+            self.agent_plans = {}
+            for agent, plan_data in summary["agent_plans"].items():
+                # Convert status string back to enum if needed
+                if 'status' in plan_data and isinstance(plan_data['status'], str):
+                    plan_data['status'] = AgentExecutionStatus(plan_data['status'])
+                self.agent_plans[agent] = AgentExecutionPlan(**plan_data)
             
             # Restore progress
             self.progress = WorkflowProgress(**summary["progress"])
