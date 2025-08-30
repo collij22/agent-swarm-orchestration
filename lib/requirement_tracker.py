@@ -295,9 +295,26 @@ class RequirementTracker:
     
     def generate_coverage_report(self) -> Dict:
         """Generate comprehensive coverage report"""
+        
+        # Get status summary for by_status field
+        status_summary = {}
+        for status in RequirementStatus:
+            count = sum(1 for req in self.requirements.values() if req.status == status)
+            if count > 0:
+                status_summary[status.value] = count
+        
+        # Calculate completion percentage
+        total = len(self.requirements)
+        completed = sum(1 for req in self.requirements.values() 
+                       if req.status == RequirementStatus.COMPLETED)
+        completion_percentage = (completed / total * 100) if total > 0 else 0
+        
         report = {
+            "total": total,  # Add this for compatibility
             "total_requirements": len(self.requirements),
             "overall_coverage": self.get_coverage_percentage(),
+            "completion_percentage": completion_percentage,  # Add this field
+            "by_status": status_summary,  # Add this field
             "status_summary": self.get_status_summary(),
             "uncovered": len(self.get_uncovered_requirements()),
             "incomplete": len(self.get_incomplete_requirements()),

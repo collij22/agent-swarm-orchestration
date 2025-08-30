@@ -40,6 +40,9 @@ sys.path.append(str(Path(__file__).parent / "lib"))
 
 from lib.agent_logger import ReasoningLogger, create_new_session
 from lib.agent_runtime import AnthropicAgentRunner, AgentContext, ModelType, Tool, create_standard_tools, create_quality_tools
+from lib.requirement_tracker import RequirementTracker, RequirementStatus, RequirementPriority
+from lib.validation_orchestrator import ValidationOrchestrator, RetryStrategy
+from lib.agent_validator import AgentValidator
 
 try:
     from rich.console import Console
@@ -56,13 +59,22 @@ console = Console() if HAS_RICH else None
 class EnhancedOrchestrator:
     """Enhanced orchestrator with logging and real agent execution"""
     
-    def __init__(self, api_key: Optional[str] = None, session_id: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, session_id: Optional[str] = None,
+                 requirements_file: Optional[str] = None):
         self.logger = create_new_session(session_id)
         self.runtime = AnthropicAgentRunner(api_key, self.logger)
         self.agents = self._load_agent_configs()
         self.workflows = self._define_workflows()
         self.checkpoints_dir = Path("checkpoints")
         self.checkpoints_dir.mkdir(exist_ok=True)
+        
+        # Initialize requirement tracking and validation
+        self.requirement_tracker = RequirementTracker(requirements_file)
+        self.agent_validator = AgentValidator()
+        self.validation_orchestrator = ValidationOrchestrator(
+            self.requirement_tracker, 
+            self.agent_validator
+        )
         
         # Register standard tools
         for tool in create_standard_tools():
@@ -345,14 +357,77 @@ class EnhancedOrchestrator:
             "coverage_complete": len(missing_coverage) == 0
         }
     
+    def _map_requirements_to_agents(self, requirements: Dict, workflow: List) -> Dict[str, List[str]]:
+        """Map requirements to specific agents based on patterns"""
+        agent_requirements = {}
+        
+        # First, parse requirements if not already loaded
+        if not self.requirement_tracker.requirements:
+            self.requirement_tracker._parse_requirements(requirements)
+        
+        # Map patterns to agents
+        requirement_patterns = {
+            "authentication": ["rapid-builder", "quality-guardian"],
+            "frontend": ["frontend-specialist"],
+            "ui": ["frontend-specialist"],
+            "react": ["frontend-specialist"],
+            "dashboard": ["frontend-specialist"],
+            "api": ["rapid-builder", "api-integrator"],
+            "database": ["database-expert", "rapid-builder"],
+            "ai": ["ai-specialist"],
+            "ml": ["ai-specialist"],
+            "categorization": ["ai-specialist"],
+            "docker": ["devops-engineer"],
+            "deployment": ["devops-engineer"],
+            "test": ["quality-guardian"],
+            "documentation": ["documentation-writer"],
+            "performance": ["performance-optimizer"],
+            "security": ["quality-guardian"]
+        }
+        
+        # Flatten workflow to get all agents
+        workflow_agents = set()
+        for phase in workflow:
+            workflow_agents.update(phase)
+        
+        # Map each requirement to agents
+        for req_id, req in self.requirement_tracker.requirements.items():
+            req_text = (req.name + " " + req.description).lower()
+            assigned_agents = []
+            
+            for pattern, agents in requirement_patterns.items():
+                if pattern in req_text:
+                    for agent in agents:
+                        if agent in workflow_agents and agent not in assigned_agents:
+                            assigned_agents.append(agent)
+            
+            # Default to rapid-builder if no specific mapping
+            if not assigned_agents and "rapid-builder" in workflow_agents:
+                assigned_agents.append("rapid-builder")
+            
+            # Track assignments
+            for agent in assigned_agents:
+                if agent not in agent_requirements:
+                    agent_requirements[agent] = []
+                agent_requirements[agent].append(req_id)
+                
+            # Update requirement tracker
+            self.requirement_tracker.assign_to_agent("multiple", [req_id])
+            for agent in assigned_agents:
+                self.requirement_tracker.assign_to_agent(agent, [req_id])
+        
+        return agent_requirements
+    
     async def execute_workflow(
         self,
         project_type: str,
         requirements: Dict,
         interactive: bool = False,
-        checkpoint: Optional[str] = None
+        checkpoint: Optional[str] = None,
+        enable_validation: bool = True,
+        max_retries: int = 3
     ) -> bool:
-        """Execute complete workflow with logging"""
+        """Execute complete workflow with logging, requirement tracking, and validation"""
         
         # Auto-upgrade project type based on requirements
         original_type = project_type
@@ -370,6 +445,18 @@ class EnhancedOrchestrator:
             return False
         
         workflow = self.workflows[project_type]
+        
+        # Map requirements to agents
+        agent_requirements = self._map_requirements_to_agents(requirements, workflow)
+        
+        # Log requirement mapping
+        if agent_requirements:
+            console.print(Panel(
+                "[bold cyan]Requirement Assignments:[/bold cyan]\n" +
+                "\n".join(f"• {agent}: {', '.join(reqs)}" 
+                         for agent, reqs in agent_requirements.items()),
+                border_style="cyan"
+            ))
         
         # Validate requirements coverage
         validation_result = self._validate_requirements_coverage(requirements, workflow)
@@ -430,13 +517,19 @@ class EnhancedOrchestrator:
             if len(phase_agents) == 1:
                 # Sequential execution
                 agent_name = phase_agents[0]
-                success = await self._execute_single_agent(agent_name, context, interactive)
+                success = await self._execute_single_agent(
+                    agent_name, context, interactive, 
+                    enable_validation, max_retries
+                )
                 if not success and not interactive:
                     self.logger.log_error("orchestrator", f"Workflow failed at {agent_name}")
                     return False
             else:
                 # Parallel execution
-                success = await self._execute_parallel_agents(phase_agents, context, interactive)
+                success = await self._execute_parallel_agents(
+                    phase_agents, context, interactive,
+                    enable_validation, max_retries
+                )
                 if not success and not interactive:
                     self.logger.log_error("orchestrator", f"Workflow failed at {phase_name}")
                     return False
@@ -451,6 +544,20 @@ class EnhancedOrchestrator:
                     "current_phase": phase_num
                 }, f, indent=2)
         
+        # Generate requirement tracking report
+        req_report = self.requirement_tracker.generate_coverage_report()
+        
+        # Generate validation report if enabled
+        validation_report_text = ""
+        if enable_validation:
+            val_report = self.validation_orchestrator.generate_validation_report()
+            validation_report_text = (
+                f"\n[cyan]Validation Summary:[/cyan]\n" +
+                f"• Pre-validation passed: {val_report['passed_pre_validation']}/{val_report['total_validations']}\n" +
+                f"• Post-validation passed: {val_report['passed_post_validation']}/{val_report['total_validations']}\n" +
+                f"• Agents with retries: {len(val_report['agents_with_retries'])}"
+            )
+        
         # Run final validation if quality-guardian was in workflow
         workflow_agents = set()
         for phase in workflow:
@@ -464,11 +571,19 @@ class EnhancedOrchestrator:
                 validation_report = await validator.validate_requirements(requirements, context)
                 
                 console.print(Panel(
-                    "[bold green]Workflow Complete![/bold green]\n" +
-                    f"Completed tasks: {len(context.completed_tasks)}\n" +
-                    f"Artifacts created: {len(context.artifacts)}\n" +
-                    f"Decisions made: {len(context.decisions)}\n" +
-                    f"[yellow]Requirement Completion: {validation_report.completion_percentage:.1f}%[/yellow]",
+                    "[bold green]Workflow Complete![/bold green]\n\n" +
+                    f"[bold]Execution Summary:[/bold]\n" +
+                    f"• Completed tasks: {len(context.completed_tasks)}\n" +
+                    f"• Artifacts created: {len(context.artifacts)}\n" +
+                    f"• Files created: {len(context.get_all_files())}\n" +
+                    f"• Decisions made: {len(context.decisions)}\n\n" +
+                    f"[bold]Requirement Tracking:[/bold]\n" +
+                    f"• Total requirements: {req_report['total']}\n" +
+                    f"• Completed: {req_report['by_status'].get('completed', 0)} ({req_report['completion_percentage']:.1f}%)\n" +
+                    f"• In progress: {req_report['by_status'].get('in_progress', 0)}\n" +
+                    f"• Failed: {req_report['by_status'].get('failed', 0)}\n" +
+                    validation_report_text +
+                    f"\n\n[yellow]Overall Completion: {validation_report.completion_percentage:.1f}%[/yellow]",
                     border_style="green"
                 ))
                 
@@ -479,20 +594,36 @@ class EnhancedOrchestrator:
                     "Final validation complete"
                 )
             except:
-                # Fallback to simple completion message
+                # Fallback to requirement tracker report
                 console.print(Panel(
-                    "[bold green]Workflow Complete![/bold green]\n" +
-                    f"Completed tasks: {len(context.completed_tasks)}\n" +
-                    f"Artifacts created: {len(context.artifacts)}\n" +
-                    f"Decisions made: {len(context.decisions)}",
+                    "[bold green]Workflow Complete![/bold green]\n\n" +
+                    f"[bold]Execution Summary:[/bold]\n" +
+                    f"• Completed tasks: {len(context.completed_tasks)}\n" +
+                    f"• Artifacts created: {len(context.artifacts)}\n" +
+                    f"• Files created: {len(context.get_all_files())}\n" +
+                    f"• Decisions made: {len(context.decisions)}\n\n" +
+                    f"[bold]Requirement Tracking:[/bold]\n" +
+                    f"• Total requirements: {req_report['total']}\n" +
+                    f"• Completed: {req_report['by_status'].get('completed', 0)} ({req_report['completion_percentage']:.1f}%)\n" +
+                    f"• In progress: {req_report['by_status'].get('in_progress', 0)}\n" +
+                    f"• Failed: {req_report['by_status'].get('failed', 0)}" +
+                    validation_report_text,
                     border_style="green"
                 ))
         else:
             console.print(Panel(
-                "[bold green]Workflow Complete![/bold green]\n" +
-                f"Completed tasks: {len(context.completed_tasks)}\n" +
-                f"Artifacts created: {len(context.artifacts)}\n" +
-                f"Decisions made: {len(context.decisions)}",
+                "[bold green]Workflow Complete![/bold green]\n\n" +
+                f"[bold]Execution Summary:[/bold]\n" +
+                f"• Completed tasks: {len(context.completed_tasks)}\n" +
+                f"• Artifacts created: {len(context.artifacts)}\n" +
+                f"• Files created: {len(context.get_all_files())}\n" +
+                f"• Decisions made: {len(context.decisions)}\n\n" +
+                f"[bold]Requirement Tracking:[/bold]\n" +
+                f"• Total requirements: {req_report['total']}\n" +
+                f"• Completed: {req_report['by_status'].get('completed', 0)} ({req_report['completion_percentage']:.1f}%)\n" +
+                f"• In progress: {req_report['by_status'].get('in_progress', 0)}\n" +
+                f"• Failed: {req_report['by_status'].get('failed', 0)}" +
+                validation_report_text,
                 border_style="green"
             ))
         
@@ -502,9 +633,11 @@ class EnhancedOrchestrator:
         self,
         agent_name: str,
         context: AgentContext,
-        interactive: bool = False
+        interactive: bool = False,
+        enable_validation: bool = True,
+        max_retries: int = 3
     ) -> bool:
-        """Execute a single agent"""
+        """Execute a single agent with validation and retry logic"""
         
         if agent_name not in self.agents:
             self.logger.log_error("orchestrator", f"Unknown agent: {agent_name}")
@@ -512,24 +645,74 @@ class EnhancedOrchestrator:
         
         agent_config = self.agents[agent_name]
         
+        # Mark requirements as in-progress
+        agent_reqs = self.requirement_tracker.agent_assignments.get(agent_name, [])
+        for req_id in agent_reqs:
+            self.requirement_tracker.mark_in_progress(req_id)
+        
         if interactive:
             task = Prompt.ask(f"Specific task for {agent_name}", default="Execute as configured")
             agent_prompt = agent_config["prompt"] + f"\n\nSpecific task: {task}"
         else:
-            agent_prompt = agent_config["prompt"]
+            # Add requirement context to agent prompt
+            if agent_reqs:
+                req_context = "\n\nAssigned Requirements:\n"
+                for req_id in agent_reqs:
+                    req = self.requirement_tracker.requirements.get(req_id)
+                    if req:
+                        req_context += f"- {req_id}: {req.name}\n"
+                agent_prompt = agent_config["prompt"] + req_context
+            else:
+                agent_prompt = agent_config["prompt"]
         
-        success, result, updated_context = await self.runtime.run_agent_async(
-            agent_name,
-            agent_prompt,
-            context,
-            model=self._get_model(agent_config["model"]),
-            max_iterations=10
-        )
+        # Define agent executor function for validation orchestrator
+        async def agent_executor(agent_name: str, context: AgentContext):
+            return await self.runtime.run_agent_async(
+                agent_name,
+                agent_prompt,
+                context,
+                model=self._get_model(agent_config["model"]),
+                max_iterations=10
+            )
+        
+        # Execute with validation and retry if enabled
+        if enable_validation:
+            success, result, updated_context = await self.validation_orchestrator.execute_with_validation_and_retry(
+                agent_name,
+                agent_executor,
+                context,
+                max_retries=max_retries,
+                retry_strategy=RetryStrategy.WITH_SUGGESTIONS
+            )
+        else:
+            # Direct execution without validation
+            success, result, updated_context = await agent_executor(agent_name, context)
         
         # Update context
         context.completed_tasks = updated_context.completed_tasks
         context.artifacts = updated_context.artifacts
         context.decisions = updated_context.decisions
+        context.created_files = updated_context.created_files
+        context.verification_required = updated_context.verification_required
+        context.incomplete_tasks = updated_context.incomplete_tasks
+        
+        # Update requirement status
+        if success:
+            for req_id in agent_reqs:
+                # Check if deliverables were created
+                req = self.requirement_tracker.requirements.get(req_id)
+                if req and req.deliverables:
+                    # Calculate completion based on actual deliverables
+                    completed = sum(1 for d in req.deliverables 
+                                  if any(d in f for f in context.get_all_files()))
+                    percentage = int((completed / len(req.deliverables)) * 100)
+                    self.requirement_tracker.update_progress(req_id, percentage)
+                else:
+                    # Mark as completed if no specific deliverables defined
+                    self.requirement_tracker.mark_completed(req_id)
+        else:
+            for req_id in agent_reqs:
+                self.requirement_tracker.mark_failed(req_id, f"Agent {agent_name} failed: {result}")
         
         # Add delay between agents to prevent rate limiting
         if success:
@@ -542,14 +725,19 @@ class EnhancedOrchestrator:
         self,
         agents: List[str],
         context: AgentContext,
-        interactive: bool = False
+        interactive: bool = False,
+        enable_validation: bool = True,
+        max_retries: int = 3
     ) -> bool:
-        """Execute multiple agents in parallel"""
+        """Execute multiple agents in parallel with validation"""
         
         tasks = []
         for agent_name in agents:
             if agent_name in self.agents:
-                tasks.append(self._execute_single_agent(agent_name, context, interactive))
+                tasks.append(self._execute_single_agent(
+                    agent_name, context, interactive, 
+                    enable_validation, max_retries
+                ))
         
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
@@ -638,14 +826,19 @@ async def main():
     parser.add_argument("--replay", help="Replay session from log file")
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
     parser.add_argument("--api-key", help="Anthropic API key (or set ANTHROPIC_API_KEY env)")
+    parser.add_argument("--no-validation", action="store_true", help="Disable validation and retry logic")
+    parser.add_argument("--max-retries", type=int, default=3, help="Maximum retry attempts per agent (default: 3)")
     
     args = parser.parse_args()
     
     # Handle API key
     api_key = args.api_key or os.getenv("ANTHROPIC_API_KEY")
     
-    # Create orchestrator
-    orchestrator = EnhancedOrchestrator(api_key)
+    # Create orchestrator with requirements file if provided
+    orchestrator = EnhancedOrchestrator(
+        api_key, 
+        requirements_file=args.requirements
+    )
     
     try:
         if args.replay:
@@ -668,7 +861,9 @@ async def main():
                 args.project_type,
                 requirements,
                 interactive=args.interactive,
-                checkpoint=args.checkpoint
+                checkpoint=args.checkpoint,
+                enable_validation=not args.no_validation,
+                max_retries=args.max_retries
             )
             
             orchestrator.logger.close_session()
