@@ -1,0 +1,18 @@
+[
+  {
+    "timestamp": 1756591917.5708268,
+    "action": "config_tune",
+    "parameter": "agent_timeout",
+    "old_value": 100,
+    "new_value": 142,
+    "reason": "Average response time (95.0s) approaching timeout"
+  },
+  {
+    "timestamp": 1756591917.5711532,
+    "action": "config_tune",
+    "parameter": "max_parallel_agents",
+    "old_value": 5,
+    "new_value": 4,
+    "reason": "High error rate (15.0%) may be due to resource contention"
+  }
+]
