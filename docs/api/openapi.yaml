@@ -1,0 +1,957 @@
+openapi: 3.0.3
+info:
+  title: Agent Swarm Orchestration API
+  description: |
+    Production-grade API for the Agent Swarm system enabling automated software development
+    through intelligent agent orchestration. This API provides endpoints for workflow execution,
+    agent management, session tracking, and system monitoring.
+    
+    ## Key Features
+    - **15 Optimized Agents** with Claude 4 integration
+    - **Parallel Execution** with dependency management
+    - **Session Management** with replay capabilities
+    - **Real-time Monitoring** via WebSocket
+    - **Comprehensive Testing** with mock mode support
+    
+  version: 1.0.0
+  contact:
+    name: Agent Swarm Support
+    email: support@agentswarm.ai
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Local development server
+  - url: https://api.agentswarm.ai/v1
+    description: Production server
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+tags:
+  - name: Workflows
+    description: Workflow execution and management
+  - name: Agents
+    description: Individual agent operations
+  - name: Sessions
+    description: Session tracking and analysis
+  - name: Monitoring
+    description: System monitoring and metrics
+  - name: Security
+    description: Authentication and authorization
+
+paths:
+  /workflows:
+    get:
+      tags: [Workflows]
+      summary: List available workflows
+      description: Returns all available workflow types with their descriptions
+      operationId: listWorkflows
+      responses:
+        '200':
+          description: List of workflows
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  workflows:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorkflowType'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    
+    post:
+      tags: [Workflows]
+      summary: Execute a workflow
+      description: Start a new workflow execution with specified requirements
+      operationId: executeWorkflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowRequest'
+      responses:
+        '202':
+          description: Workflow execution started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  
+  /workflows/{workflowId}:
+    get:
+      tags: [Workflows]
+      summary: Get workflow status
+      description: Retrieve the current status and progress of a workflow
+      operationId: getWorkflowStatus
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Workflow status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    
+    delete:
+      tags: [Workflows]
+      summary: Cancel workflow
+      description: Cancel a running workflow execution
+      operationId: cancelWorkflow
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Workflow cancelled
+        '404':
+          $ref: '#/components/responses/NotFound'
+  
+  /workflows/{workflowId}/checkpoint:
+    post:
+      tags: [Workflows]
+      summary: Create checkpoint
+      description: Create a checkpoint for workflow recovery
+      operationId: createCheckpoint
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Checkpoint created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckpointResponse'
+  
+  /agents:
+    get:
+      tags: [Agents]
+      summary: List all agents
+      description: Returns information about all available agents
+      operationId: listAgents
+      parameters:
+        - name: tier
+          in: query
+          schema:
+            type: string
+            enum: [core, specialized, orchestration]
+      responses:
+        '200':
+          description: List of agents
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  agents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Agent'
+  
+  /agents/{agentName}/execute:
+    post:
+      tags: [Agents]
+      summary: Execute single agent
+      description: Execute a specific agent with custom parameters
+      operationId: executeAgent
+      parameters:
+        - name: agentName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentExecutionRequest'
+      responses:
+        '202':
+          description: Agent execution started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentExecutionResponse'
+  
+  /sessions:
+    get:
+      tags: [Sessions]
+      summary: List sessions
+      description: List all workflow execution sessions
+      operationId: listSessions
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [running, completed, failed]
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+            maximum: 1000
+      responses:
+        '200':
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Session'
+  
+  /sessions/{sessionId}:
+    get:
+      tags: [Sessions]
+      summary: Get session details
+      description: Retrieve detailed information about a specific session
+      operationId: getSession
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Session details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionDetail'
+  
+  /sessions/{sessionId}/replay:
+    post:
+      tags: [Sessions]
+      summary: Replay session
+      description: Replay a previous session for debugging or analysis
+      operationId: replaySession
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '202':
+          description: Replay started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReplayResponse'
+  
+  /sessions/{sessionId}/analysis:
+    get:
+      tags: [Sessions]
+      summary: Get session analysis
+      description: Retrieve comprehensive analysis of session performance
+      operationId: getSessionAnalysis
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Session analysis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionAnalysis'
+  
+  /monitoring/metrics:
+    get:
+      tags: [Monitoring]
+      summary: Get system metrics
+      description: Retrieve current system performance metrics
+      operationId: getMetrics
+      responses:
+        '200':
+          description: System metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemMetrics'
+  
+  /monitoring/health:
+    get:
+      tags: [Monitoring]
+      summary: Health check
+      description: Check system health status
+      operationId: healthCheck
+      security: []  # No auth required for health check
+      responses:
+        '200':
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+  
+  /monitoring/alerts:
+    get:
+      tags: [Monitoring]
+      summary: Get active alerts
+      description: Retrieve all active system alerts
+      operationId: getAlerts
+      responses:
+        '200':
+          description: Active alerts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  alerts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Alert'
+  
+  /security/api-keys:
+    post:
+      tags: [Security]
+      summary: Generate API key
+      description: Generate a new API key for authentication
+      operationId: generateApiKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project:
+                  type: string
+                  description: Project name for the API key
+                expires_in_days:
+                  type: integer
+                  default: 30
+      responses:
+        '201':
+          description: API key created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKeyResponse'
+  
+  /security/api-keys/{keyId}/rotate:
+    post:
+      tags: [Security]
+      summary: Rotate API key
+      description: Rotate an existing API key
+      operationId: rotateApiKey
+      parameters:
+        - name: keyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: API key rotated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKeyResponse'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key authentication (format: sk-{project}-{key})
+    
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT bearer token authentication
+  
+  schemas:
+    WorkflowType:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [web_app, api_service, ai_solution, mobile_app, legacy_migration, microservices]
+        name:
+          type: string
+        description:
+          type: string
+        required_agents:
+          type: array
+          items:
+            type: string
+        estimated_duration:
+          type: string
+          format: duration
+    
+    WorkflowRequest:
+      type: object
+      required:
+        - project_type
+        - requirements
+      properties:
+        project_type:
+          type: string
+          enum: [web_app, api_service, ai_solution, mobile_app, legacy_migration, microservices]
+        requirements:
+          type: object
+          properties:
+            project_name:
+              type: string
+            features:
+              type: array
+              items:
+                type: string
+            tech_overrides:
+              type: object
+            constraints:
+              type: object
+            success_metrics:
+              type: array
+              items:
+                type: string
+        options:
+          type: object
+          properties:
+            mock_mode:
+              type: boolean
+              default: false
+            max_parallel_agents:
+              type: integer
+              default: 3
+            enable_monitoring:
+              type: boolean
+              default: true
+            checkpoint_frequency:
+              type: integer
+              default: 3
+              description: Create checkpoint every N agents
+    
+    WorkflowResponse:
+      type: object
+      properties:
+        workflow_id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, running, completed, failed, cancelled]
+        created_at:
+          type: string
+          format: date-time
+        estimated_completion:
+          type: string
+          format: date-time
+        websocket_url:
+          type: string
+          format: uri
+          description: WebSocket URL for real-time updates
+    
+    WorkflowStatus:
+      type: object
+      properties:
+        workflow_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, running, completed, failed, cancelled]
+        progress:
+          type: object
+          properties:
+            total_requirements:
+              type: integer
+            completed_requirements:
+              type: integer
+            percentage:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+        current_phase:
+          type: string
+        active_agents:
+          type: array
+          items:
+            type: string
+        completed_agents:
+          type: array
+          items:
+            type: string
+        files_created:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              agent:
+                type: string
+              error:
+                type: string
+              timestamp:
+                type: string
+                format: date-time
+    
+    CheckpointResponse:
+      type: object
+      properties:
+        checkpoint_id:
+          type: string
+          format: uuid
+        workflow_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        state:
+          type: object
+          description: Serialized workflow state
+    
+    Agent:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        tier:
+          type: string
+          enum: [core, specialized, orchestration]
+        model:
+          type: string
+          enum: [claude-3-5-haiku-20241022, claude-sonnet-4-20250514, claude-opus-4-20250514]
+        capabilities:
+          type: array
+          items:
+            type: string
+        average_execution_time:
+          type: string
+          format: duration
+        success_rate:
+          type: number
+          format: float
+    
+    AgentExecutionRequest:
+      type: object
+      required:
+        - prompt
+      properties:
+        prompt:
+          type: string
+        context:
+          type: object
+        model_override:
+          type: string
+          enum: [haiku, sonnet, opus]
+        max_iterations:
+          type: integer
+          default: 10
+        temperature:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          default: 0.7
+    
+    AgentExecutionResponse:
+      type: object
+      properties:
+        execution_id:
+          type: string
+          format: uuid
+        agent_name:
+          type: string
+        status:
+          type: string
+          enum: [running, completed, failed]
+        result:
+          type: string
+        artifacts:
+          type: object
+        execution_time:
+          type: string
+          format: duration
+    
+    Session:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        workflow_id:
+          type: string
+          format: uuid
+        project_name:
+          type: string
+        status:
+          type: string
+          enum: [running, completed, failed]
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        total_agents_executed:
+          type: integer
+        total_files_created:
+          type: integer
+        quality_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+    
+    SessionDetail:
+      allOf:
+        - $ref: '#/components/schemas/Session'
+        - type: object
+          properties:
+            agent_executions:
+              type: array
+              items:
+                type: object
+                properties:
+                  agent_name:
+                    type: string
+                  started_at:
+                    type: string
+                    format: date-time
+                  completed_at:
+                    type: string
+                    format: date-time
+                  status:
+                    type: string
+                  requirements_handled:
+                    type: array
+                    items:
+                      type: string
+                  files_created:
+                    type: array
+                    items:
+                      type: string
+            requirement_coverage:
+              type: object
+              properties:
+                total:
+                  type: integer
+                completed:
+                  type: integer
+                partial:
+                  type: integer
+                missing:
+                  type: integer
+            logs:
+              type: array
+              items:
+                type: object
+                properties:
+                  timestamp:
+                    type: string
+                    format: date-time
+                  level:
+                    type: string
+                  message:
+                    type: string
+    
+    SessionAnalysis:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        requirement_coverage:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: [completed, partial, missing]
+              completion_percentage:
+                type: number
+                format: float
+              evidence:
+                type: array
+                items:
+                  type: string
+        performance_metrics:
+          type: object
+          properties:
+            total_duration:
+              type: string
+              format: duration
+            agent_durations:
+              type: object
+              additionalProperties:
+                type: string
+                format: duration
+            api_calls:
+              type: integer
+            estimated_cost:
+              type: number
+              format: float
+        quality_assessment:
+          type: object
+          properties:
+            overall_score:
+              type: number
+              format: float
+            code_quality:
+              type: number
+              format: float
+            test_coverage:
+              type: number
+              format: float
+            documentation_quality:
+              type: number
+              format: float
+        recommendations:
+          type: array
+          items:
+            type: object
+            properties:
+              priority:
+                type: string
+                enum: [critical, high, medium, low]
+              category:
+                type: string
+              recommendation:
+                type: string
+              agent_assignment:
+                type: string
+    
+    ReplayResponse:
+      type: object
+      properties:
+        replay_id:
+          type: string
+          format: uuid
+        original_session_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [running, completed, failed]
+        modifications:
+          type: array
+          items:
+            type: string
+    
+    SystemMetrics:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        cpu_usage:
+          type: number
+          format: float
+        memory_usage:
+          type: object
+          properties:
+            used_mb:
+              type: number
+            total_mb:
+              type: number
+            percentage:
+              type: number
+              format: float
+        active_workflows:
+          type: integer
+        queued_workflows:
+          type: integer
+        agent_execution_stats:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              total_executions:
+                type: integer
+              success_rate:
+                type: number
+                format: float
+              avg_duration_seconds:
+                type: number
+                format: float
+        api_stats:
+          type: object
+          properties:
+            total_calls:
+              type: integer
+            rate_per_minute:
+              type: number
+              format: float
+            estimated_cost_today:
+              type: number
+              format: float
+        cache_stats:
+          type: object
+          properties:
+            hit_rate:
+              type: number
+              format: float
+            size_mb:
+              type: number
+              format: float
+    
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        version:
+          type: string
+        uptime:
+          type: string
+          format: duration
+        components:
+          type: object
+          properties:
+            api:
+              type: string
+              enum: [up, down]
+            database:
+              type: string
+              enum: [up, down]
+            redis:
+              type: string
+              enum: [up, down]
+            agents:
+              type: string
+              enum: [up, down]
+    
+    Alert:
+      type: object
+      properties:
+        alert_id:
+          type: string
+          format: uuid
+        severity:
+          type: string
+          enum: [info, warning, critical, emergency]
+        category:
+          type: string
+        message:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        acknowledged:
+          type: boolean
+        metadata:
+          type: object
+    
+    ApiKeyResponse:
+      type: object
+      properties:
+        key_id:
+          type: string
+        api_key:
+          type: string
+          description: Only returned on creation
+        project:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+    
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+        timestamp:
+          type: string
+          format: date-time
+  
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
