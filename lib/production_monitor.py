@@ -418,6 +418,33 @@ class ProductionMonitor:
             }
         }
     
+    def get_system_health(self) -> Dict:
+        """Get overall system health metrics"""
+        total_executions = len(self.completed_executions) + len(self.active_executions)
+        failed_executions = sum(1 for exec in self.completed_executions if not exec.success)
+        successful_executions = sum(1 for exec in self.completed_executions if exec.success)
+        
+        error_rate = failed_executions / total_executions if total_executions > 0 else 0
+        
+        # Calculate average response time
+        avg_response_time = 0
+        if self.completed_executions:
+            total_duration = sum(exec.duration_seconds for exec in self.completed_executions)
+            avg_response_time = total_duration / len(self.completed_executions)
+        
+        return {
+            "total_executions": total_executions,
+            "active_executions": len(self.active_executions),
+            "completed_executions": len(self.completed_executions),
+            "successful_executions": successful_executions,
+            "failed_executions": failed_executions,
+            "error_rate": error_rate,
+            "avg_response_time": avg_response_time,
+            "uptime_seconds": (datetime.now() - self.monitor_start_time).total_seconds(),
+            "total_cost": self.cost_tracker["total"],
+            "agent_count": len(self.agent_metrics)
+        }
+    
     def get_alerts(self, active_only: bool = True) -> List[Dict]:
         """Get triggered alerts"""
         if active_only:

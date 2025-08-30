@@ -6,11 +6,11 @@
   "value": 0.8,
   "threshold": 0.5,
   "message": "Test rule 89: 0.80 greater_than (threshold)",
-  "triggered_at": "2025-08-30T21:42:57.872505",
+  "triggered_at": "2025-08-30T22:01:01.690694",
   "resolved_at": null,
   "acknowledged_at": null,
   "acknowledged_by": null,
-  "duration_seconds": 0.000121,
+  "duration_seconds": 0.000142,
   "labels": {},
   "annotations": {},
   "notification_sent": true

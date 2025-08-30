@@ -6,11 +6,11 @@
   "value": 0.6000000000000001,
   "threshold": 0.5,
   "message": "Test rule 7: 0.60 greater_than (threshold)",
-  "triggered_at": "2025-08-30T21:42:57.857384",
+  "triggered_at": "2025-08-30T22:01:01.676051",
   "resolved_at": null,
   "acknowledged_at": null,
   "acknowledged_by": null,
-  "duration_seconds": 0.000141,
+  "duration_seconds": 0.000221,
   "labels": {},
   "annotations": {},
   "notification_sent": true

@@ -209,7 +209,7 @@ class RecoveryManager:
                     self.base_delay * (self.backoff_multiplier ** (recovery_context.attempt_number - 2)),
                     self.max_delay
                 )
-                print(f"\n⏳ Waiting {delay}s before retry attempt {recovery_context.attempt_number}/{recovery_context.max_attempts}")
+                print(f"\n[WAIT] Waiting {delay}s before retry attempt {recovery_context.attempt_number}/{recovery_context.max_attempts}")
                 await asyncio.sleep(delay)
             
             # Create checkpoint before attempt
@@ -224,7 +224,7 @@ class RecoveryManager:
                     if not executing_agent:
                         executing_agent = agent_name  # Fallback to original
                 
-                print(f"\n🔄 Recovery attempt {recovery_context.attempt_number} for {executing_agent}")
+                print(f"\n[RETRY] Recovery attempt {recovery_context.attempt_number} for {executing_agent}")
                 
                 # Prepare context with recovery information
                 if preserve_context:
@@ -240,7 +240,7 @@ class RecoveryManager:
                 )
                 
                 if success:
-                    print(f"✅ Recovery successful for {executing_agent}")
+                    print(f"[SUCCESS] Recovery successful for {executing_agent}")
                     # Clean up recovery context
                     del self.active_recoveries[recovery_id]
                     return True, result, updated_context
@@ -261,7 +261,7 @@ class RecoveryManager:
                     
             except Exception as e:
                 recovery_context.add_error(str(e))
-                print(f"❌ Recovery attempt {recovery_context.attempt_number} failed: {e}")
+                print(f"[FAILED] Recovery attempt {recovery_context.attempt_number} failed: {e}")
         
         # All attempts exhausted
         return await self._handle_recovery_failure(recovery_context, context)
@@ -323,7 +323,7 @@ class RecoveryManager:
         
         intervention_id = f"intervention_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
-        print(f"\n⚠️  Manual Intervention Required")
+        print(f"\n[WARNING] Manual Intervention Required")
         print(f"   ID: {intervention_id}")
         print(f"   Agent: {recovery_context.agent_name}")
         print(f"   Task: {recovery_context.task_description}")
@@ -504,7 +504,7 @@ class RecoveryManager:
         if recovery_context.recovery_strategy == RecoveryStrategy.PARTIAL_COMPLETION:
             # Return partial results
             if recovery_context.partial_results:
-                print(f"\n⚠️  Accepting partial completion for {recovery_context.agent_name}")
+                print(f"\n[WARNING] Accepting partial completion for {recovery_context.agent_name}")
                 if hasattr(context, 'artifacts'):
                     context.artifacts.update(recovery_context.partial_results)
                 return True, "Partial completion accepted", context
@@ -516,7 +516,7 @@ class RecoveryManager:
         
         elif recovery_context.recovery_strategy == RecoveryStrategy.SKIP_TASK:
             # Skip the task
-            print(f"\n⏭️  Skipping task for {recovery_context.agent_name}")
+            print(f"\n[SKIP] Skipping task for {recovery_context.agent_name}")
             return True, "Task skipped", context
         
         # Default: complete failure
