@@ -20,7 +20,7 @@ Essential agents that handle 80% of development tasks:
    - API structure planning
    - Technology stack recommendations
    - Runs: Sequential start, parallel planning
-   - **Uses: claude-3-opus-20240229 or claude-sonnet-4-20250514**
+   - **Uses: claude-opus-4-20250514 or claude-sonnet-4-20250514**
 
 2. **rapid-builder** (Model: Sonnet - Claude 4)
    - Fast prototyping and core feature implementation
@@ -34,7 +34,7 @@ Essential agents that handle 80% of development tasks:
    - LLM implementation and optimization
    - Intelligent automation
    - Runs: Parallel with frontend/backend work
-   - **Uses: claude-3-opus-20240229**
+   - **Uses: claude-opus-4-20250514**
 
 4. **quality-guardian** (Model: Sonnet - Claude 4)
    - Testing suite creation and execution

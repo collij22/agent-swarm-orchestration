@@ -1,6 +1,6 @@
 ---
 name: requirements-analyst
-description: Use at project start to parse requirements, validate scope, and create development roadmaps. Essential for translating business needs into technical specifications. Examples:\n\n<example>\nContext: New project requirements\nuser: "Build a social platform for fitness enthusiasts with tracking and community features"\nassistant: "I'll analyze and structure these requirements. Using requirements-analyst to define scope and create development roadmap."\n<commentary>\nVague requirements need analysis and structuring before development can begin effectively.\n</commentary>\n</example>
+description: "Use at project start to parse requirements, validate scope, and create development roadmaps. Essential for translating business needs into technical specifications. Examples:"
 tools: Write, Read, Task
 model: sonnet
 color: blue

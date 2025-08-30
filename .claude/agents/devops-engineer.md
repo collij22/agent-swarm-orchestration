@@ -1,6 +1,6 @@
 ---
 name: devops-engineer
-description: Use for deployment, CI/CD setup, cloud infrastructure, and production monitoring. Triggered after development completion or when scaling issues arise. Examples:\n\n<example>\nContext: Ready to deploy application\nuser: "Our app is tested and ready for production"\nassistant: "I'll set up production deployment. Using devops-engineer to configure cloud infrastructure and CI/CD pipeline."\n<commentary>\nProduction deployments require proper infrastructure setup and automated deployment pipelines.\n</commentary>\n</example>\n\n<example>\nContext: Scaling performance issues\nuser: "Our app is slow during peak hours"\nassistant: "I'll analyze and scale the infrastructure. Using devops-engineer to implement load balancing and auto-scaling."\n<commentary>\nPerformance issues often require infrastructure improvements rather than code changes.\n</commentary>\n</example>
+description: "Use for deployment, CI/CD setup, cloud infrastructure, and production monitoring. Triggered after development completion or when scaling issues arise. Examples:"
 tools: Bash, Write, Read, Task
 model: sonnet
 color: orange

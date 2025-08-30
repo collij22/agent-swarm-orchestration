@@ -31,7 +31,7 @@ class TestModelConfiguration(unittest.TestCase):
         """Verify all model names are correct"""
         self.assertEqual(ModelType.HAIKU.value, "claude-3-5-haiku-20241022")
         self.assertEqual(ModelType.SONNET.value, "claude-sonnet-4-20250514")
-        self.assertEqual(ModelType.OPUS.value, "claude-3-opus-20240229")
+        self.assertEqual(ModelType.OPUS.value, "claude-opus-4-20250514")
     
     def test_optimal_model_selection(self):
         """Test optimal model selection logic"""

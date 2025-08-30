@@ -1,6 +1,6 @@
 ---
 name: documentation-writer
-description: Use for creating technical documentation, API docs, and user guides. Triggered after feature implementation or before deployment. Examples:\n\n<example>\nContext: API documentation needed\nuser: "Document our REST API for external developers"\nassistant: "I'll create comprehensive API documentation. Using documentation-writer to generate OpenAPI specs and usage examples."\n<commentary>\nExternal APIs require detailed documentation with examples for developer adoption.\n</commentary>\n</example>
+description: "Use for creating technical documentation, API docs, and user guides. Triggered after feature implementation or before deployment. Examples:"
 tools: Write, Read, Grep, Task
 model: haiku
 color: green

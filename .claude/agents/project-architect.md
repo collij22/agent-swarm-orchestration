@@ -1,6 +1,6 @@
 ---
 name: project-architect
-description: Use when starting new projects requiring system architecture design, database schema planning, or API structure definition. Essential for complex applications with multiple components. Examples:\n\n<example>\nContext: Starting a new full-stack application\nuser: "Design a social media app with real-time messaging"\nassistant: "I'll analyze requirements and create the system architecture. Let me use the project-architect to design the database schema, API endpoints, and service architecture."\n<commentary>\nComplex applications need proper architectural foundation before development begins.\n</commentary>\n</example>\n\n<example>\nContext: Scaling an existing application\nuser: "Our app is slow with 100K users, we need to redesign"\nassistant: "I'll analyze the bottlenecks and redesign the architecture. Using project-architect to create a scalable system design."\n<commentary>\nPerformance issues often require architectural changes rather than code fixes.\n</commentary>\n</example>
+description: "Use when starting new projects requiring system architecture design, database schema planning, or API structure definition. Essential for complex applications with multiple components. Examples:"
 tools: Write, Read, Glob, Grep, Task
 model: opus
 color: blue

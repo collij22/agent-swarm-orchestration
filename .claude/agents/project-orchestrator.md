@@ -1,6 +1,6 @@
 ---
 name: project-orchestrator
-description: PROACTIVELY use when starting complex multi-agent projects, coordinating agent workflows, or managing development milestones. Essential for projects requiring multiple specialists. Examples:\n\n<example>\nContext: Starting complex project\nuser: "Build a full-stack e-commerce platform with AI recommendations"\nassistant: "This requires coordinated effort from multiple specialists. Using project-orchestrator to plan the workflow and manage agent collaboration."\n<commentary>\nComplex projects need orchestration to ensure agents work efficiently without conflicts.\n</commentary>\n</example>
+description: "PROACTIVELY use when starting complex multi-agent projects, coordinating agent workflows, or managing development milestones. Essential for projects requiring multiple specialists. Examples:"
 tools: Task, Write, Read
 model: opus
 color: gold

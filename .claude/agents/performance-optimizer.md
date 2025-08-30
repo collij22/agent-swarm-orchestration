@@ -1,6 +1,6 @@
 ---
 name: performance-optimizer
-description: Use when applications are slow, need scaling, or fail to meet performance requirements. Specializes in identifying bottlenecks and implementing optimizations. Examples:\n\n<example>\nContext: Application performance issues\nuser: "Our app is slow, users are complaining about load times"\nassistant: "I'll diagnose and fix the performance issues. Using performance-optimizer to analyze bottlenecks and implement optimizations."\n<commentary>\nPerformance issues require systematic analysis to identify root causes before optimization.\n</commentary>\n</example>
+description: "Use when applications are slow, need scaling, or fail to meet performance requirements. Specializes in identifying bottlenecks and implementing optimizations. Examples:"
 tools: Read, Bash, Grep, Task
 model: sonnet
 color: indigo

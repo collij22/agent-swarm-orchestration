@@ -1,6 +1,6 @@
 ---
 name: api-integrator
-description: Use when connecting third-party services, setting up webhooks, or implementing OAuth flows. Specializes in reliable external service integration. Examples:\n\n<example>\nContext: Adding payment processing\nuser: "Integrate Stripe for subscriptions"\nassistant: "I'll set up secure Stripe integration. Using api-integrator to implement subscription webhooks and payment flows."\n<commentary>\nPayment integrations require proper webhook handling and security measures.\n</commentary>\n</example>
+description: "Use when connecting third-party services, setting up webhooks, or implementing OAuth flows. Specializes in reliable external service integration. Examples:"
 tools: Write, Read, Bash, WebFetch, Task
 model: haiku
 color: yellow

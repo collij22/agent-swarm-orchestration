@@ -1,6 +1,6 @@
 ---
 name: code-migrator
-description: Use for updating legacy code, framework migrations, or technical debt resolution. Essential for modernizing existing applications safely. Examples:\n\n<example>\nContext: Legacy system modernization\nuser: "Migrate our jQuery app to React while maintaining functionality"\nassistant: "I'll plan and execute the migration safely. Using code-migrator to modernize the codebase while preserving existing features."\n<commentary>\nFramework migrations require careful planning to avoid breaking existing functionality.\n</commentary>\n</example>
+description: "Use for updating legacy code, framework migrations, or technical debt resolution. Essential for modernizing existing applications safely. Examples:"
 tools: Read, Write, MultiEdit, Grep, Bash, Task
 model: sonnet
 color: orange

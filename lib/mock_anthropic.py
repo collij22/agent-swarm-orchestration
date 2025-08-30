@@ -344,12 +344,22 @@ def use_mock_client():
     original_init = runtime.AnthropicAgentRunner.__init__
     
     def mock_init(self, api_key=None, logger=None):
-        self.api_key = "mock-key"
-        self.client = MockAnthropicClient()
+        # Initialize all attributes first (matching real agent_runtime.py)
         self.logger = logger or runtime.get_logger()
         self.tools = {}
-        self.max_retries = 3
+        self.max_retries = 5  # Increased for rate limit handling
         self.retry_delay = 2
+        
+        # Rate limiting: Track API calls to prevent rate limit hits
+        self.api_calls_per_minute = []
+        self.max_calls_per_minute = 20  # Conservative limit to avoid 30k token limit
+        
+        # Add inter-agent delays for sequential execution
+        self.min_delay_between_agents = 3  # 3 second delay between agents
+        
+        # Set up mock API client
+        self.api_key = "mock-key"
+        self.client = MockAnthropicClient()
     
     runtime.AnthropicAgentRunner.__init__ = mock_init
     return original_init

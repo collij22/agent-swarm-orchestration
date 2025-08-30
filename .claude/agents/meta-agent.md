@@ -1,6 +1,6 @@
 ---
 name: meta-agent
-description: Use when you need to create new specialized agents or customize existing ones for specific project needs. Essential for extending the agent swarm capabilities. Examples:\n\n<example>\nContext: Need specialized agent for specific domain\nuser: "Create an agent specialized in blockchain development"\nassistant: "I'll create a blockchain specialist agent. Using meta-agent to generate a new agent with cryptocurrency and smart contract expertise."\n<commentary>\nSpecialized domains may need custom agents with specific knowledge and tools.\n</commentary>\n</example>
+description: "Use when you need to create new specialized agents or customize existing ones for specific project needs. Essential for extending the agent swarm capabilities. Examples:"
 tools: Write, MultiEdit, WebFetch, Task
 model: opus
 color: cyan

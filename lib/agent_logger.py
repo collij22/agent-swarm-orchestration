@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict, field
 from enum import Enum
+import re
 
 try:
     from rich.console import Console
@@ -32,8 +33,46 @@ except ImportError:
     Console = None
     Panel = None
 
-# Initialize console if available
-console = Console() if Console else None
+# Initialize console with Windows encoding fix
+if Console:
+    import sys
+    # Force UTF-8 encoding on Windows to handle Unicode characters
+    console = Console(
+        file=sys.stdout,
+        force_terminal=True,
+        width=120,
+        legacy_windows=False
+    )
+    # Set console encoding to handle Unicode on Windows
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+else:
+    console = None
+
+def clean_unicode_for_windows(text: str) -> str:
+    """Replace common Unicode characters with ASCII equivalents for Windows compatibility"""
+    replacements = {
+        '✅': '[OK]',
+        '❌': '[FAIL]',
+        '⚠️': '[WARN]', 
+        '⚠': '[WARN]',
+        '🔧': '[TOOL]',
+        '📝': '[NOTE]',
+        '✓': '[OK]',
+        '✗': '[FAIL]',
+        '→': '->',
+        '⛓️': '[CHAIN]',
+        '⏹️': '[STOP]',
+        '▶': '>'
+    }
+    
+    for unicode_char, ascii_replacement in replacements.items():
+        text = text.replace(unicode_char, ascii_replacement)
+    
+    # Remove any remaining problematic Unicode characters
+    text = re.sub(r'[^\x00-\x7F]+', '?', text)
+    
+    return text
 
 class LogLevel(Enum):
     DEBUG = "DEBUG"
@@ -228,10 +267,13 @@ class ReasoningLogger:
         
         if self.console:
             params_str = json.dumps(parameters, indent=2) if len(json.dumps(parameters)) < 200 else f"{json.dumps(parameters)[:200]}..."
-            self.console.print(Panel(
+            content = (
                 f"[yellow][TOOL] Tool Call: {tool_name}[/yellow]\n"
-                f"[bold]Reasoning:[/bold] {reasoning}\n"
-                f"[dim]Parameters:[/dim]\n{params_str}",
+                f"[bold]Reasoning:[/bold] {clean_unicode_for_windows(reasoning)}\n"
+                f"[dim]Parameters:[/dim]\n{params_str}"
+            )
+            self.console.print(Panel(
+                content,
                 border_style="yellow"
             ))
     
@@ -254,10 +296,13 @@ class ReasoningLogger:
         self._add_entry(entry)
         
         if self.console:
-            self.console.print(Panel(
+            content = (
                 f"[cyan][THINK] {agent_name} Thinking[/cyan]\n"
-                f"[bold]Reasoning:[/bold] {reasoning}\n"
-                + (f"[bold green]Decision:[/bold green] {decision}" if decision else ""),
+                f"[bold]Reasoning:[/bold] {clean_unicode_for_windows(reasoning)}\n"
+                + (f"[bold green]Decision:[/bold green] {clean_unicode_for_windows(decision)}" if decision else "")
+            )
+            self.console.print(Panel(
+                content,
                 border_style="cyan"
             ))
     
@@ -277,10 +322,13 @@ class ReasoningLogger:
         self._add_entry(entry)
         
         if self.console:
-            self.console.print(Panel(
+            content = (
                 f"[bold red][ERROR] Error in {agent_name}[/bold red]\n"
-                f"[red]{error}[/red]\n"
-                + (f"[dim]Reasoning: {reasoning}[/dim]" if reasoning else ""),
+                f"[red]{clean_unicode_for_windows(error)}[/red]\n"
+                + (f"[dim]Reasoning: {clean_unicode_for_windows(reasoning)}[/dim]" if reasoning else "")
+            )
+            self.console.print(Panel(
+                content,
                 border_style="red"
             ))
     

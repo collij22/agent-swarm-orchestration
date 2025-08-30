@@ -1,6 +1,6 @@
 ---
 name: quality-guardian
-description: Use after code implementation to ensure comprehensive testing, security compliance, and code quality. Proactively triggered after major changes or before deployments. Examples:\n\n<example>\nContext: After implementing new features\nuser: "I've added payment processing to our app"\nassistant: "Let me ensure this is secure and well-tested. Using quality-guardian to audit the payment system and create comprehensive tests."\n<commentary>\nPayment systems require rigorous security testing and comprehensive test coverage.\n</commentary>\n</example>\n\n<example>\nContext: Before production deployment\nuser: "Ready to deploy our user authentication system"\nassistant: "I'll verify security and test coverage first. Using quality-guardian to audit auth implementation and run security tests."\n<commentary>\nAuthentication systems must be thoroughly tested before production deployment.\n</commentary>\n</example>
+description: "Use after code implementation to ensure comprehensive testing, security compliance, and code quality. Proactively triggered after major changes or before deployments. Examples:"
 tools: Read, Write, Bash, Grep, Glob, Task
 model: sonnet
 color: red

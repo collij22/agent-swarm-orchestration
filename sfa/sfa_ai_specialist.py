@@ -620,7 +620,7 @@ class RAGPipeline:
             
             try:
                 response = self.client.messages.create(
-                    model="claude-3-opus-20240229",  # Use Opus for AI tasks
+                    model="claude-opus-4-20250514",  # Use Opus for AI tasks
                     max_tokens=4096,
                     messages=messages,
                     tools=tools,

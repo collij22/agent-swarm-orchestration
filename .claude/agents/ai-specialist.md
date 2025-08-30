@@ -1,6 +1,6 @@
 ---
 name: ai-specialist
-description: Use when implementing AI/ML features, integrating language models, building recommendation systems, or adding intelligent automation. Specializes in practical AI implementation for production. Examples:\n\n<example>\nContext: Adding AI features to existing app\nuser: "Add AI-powered content recommendations to our blog platform"\nassistant: "I'll implement a smart recommendation engine. Using ai-specialist to build an ML pipeline that learns from user behavior and content patterns."\n<commentary>\nRecommendation systems require careful ML implementation and user behavior analysis.\n</commentary>\n</example>\n\n<example>\nContext: Building AI-first application\nuser: "Create an AI writing assistant for students"\nassistant: "I'll build an intelligent writing assistant. Using ai-specialist to integrate LLMs with proper prompt engineering and response handling."\n<commentary>\nAI-first apps need sophisticated prompt design and response management systems.\n</commentary>\n</example>
+description: "Use when implementing AI/ML features, integrating language models, building recommendation systems, or adding intelligent automation. Specializes in practical AI implementation for production."
 tools: Write, Read, MultiEdit, Bash, WebFetch, Task
 model: opus
 color: cyan

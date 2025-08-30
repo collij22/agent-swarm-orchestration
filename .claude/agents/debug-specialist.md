@@ -1,6 +1,6 @@
 ---
 name: debug-specialist
-description: Use when encountering complex bugs, performance issues, or system failures that require deep investigation. Triggered when other agents encounter blocking issues. Examples:\n\n<example>\nContext: Production bug investigation\nuser: "Users report random login failures, no clear pattern"\nassistant: "I'll investigate this systematically. Using debug-specialist to trace the authentication flow and identify the root cause."\n<commentary>\nIntermittent bugs require systematic investigation to identify patterns and root causes.\n</commentary>\n</example>
+description: "Use when encountering complex bugs, performance issues, or system failures that require deep investigation. Triggered when other agents encounter blocking issues. Examples:"
 tools: Read, Bash, Grep, Glob, Task
 model: opus
 color: red

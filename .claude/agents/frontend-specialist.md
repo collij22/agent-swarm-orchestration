@@ -1,6 +1,6 @@
 ---
 name: frontend-specialist
-description: Use for UI/UX implementation, responsive design, and frontend optimization. Triggered after backend setup or for frontend-focused projects. Examples:\n\n<example>\nContext: Building user interfaces\nuser: "Create responsive dashboard with charts and data tables"\nassistant: "I'll build an interactive dashboard. Using frontend-specialist to create responsive components with data visualization."\n<commentary>\nDashboards require careful component design and responsive layouts for usability.\n</commentary>\n</example>
+description: "Use for UI/UX implementation, responsive design, and frontend optimization. Triggered after backend setup or for frontend-focused projects. Examples:"
 tools: Write, Read, MultiEdit, Bash, Task
 model: sonnet
 color: pink

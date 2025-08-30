@@ -25,6 +25,16 @@ from typing import Dict, List, Optional, Tuple
 import yaml
 from datetime import datetime
 
+# Load environment variables from .env file if it exists
+env_file = Path(".env")
+if env_file.exists():
+    with open(env_file, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, value = line.split('=', 1)
+                os.environ[key.strip()] = value.strip()
+
 # Add lib directory to path
 sys.path.append(str(Path(__file__).parent / "lib"))
 
@@ -287,6 +297,11 @@ class EnhancedOrchestrator:
         context.artifacts = updated_context.artifacts
         context.decisions = updated_context.decisions
         
+        # Add delay between agents to prevent rate limiting
+        if success:
+            import asyncio
+            await asyncio.sleep(self.runtime.min_delay_between_agents)
+        
         return success
     
     async def _execute_parallel_agents(
@@ -357,13 +372,13 @@ class EnhancedOrchestrator:
                     if reasoning:
                         console.print(f"  [dim]Reasoning: {reasoning}[/dim]")
                 elif event == "agent_complete":
-                    console.print(f"[green]✓ {agent}[/green] - {message}")
+                    console.print(f"[green][OK] {agent}[/green] - {message}")
                 elif event == "tool_call":
-                    console.print(f"  [yellow]🔧 {message}[/yellow]")
+                    console.print(f"  [yellow][TOOL] {message}[/yellow]")
                     if reasoning:
                         console.print(f"    [dim]{reasoning}[/dim]")
                 elif event == "error":
-                    console.print(f"  [red]⚠ {message}[/red]")
+                    console.print(f"  [red][ERROR] {message}[/red]")
         
         # Load and display summary if available
         summary_file = Path(session_file).with_suffix('.summary.json')

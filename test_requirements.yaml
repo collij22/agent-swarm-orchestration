@@ -1,0 +1,109 @@
+project:
+  name: "TaskManagerAPI"
+  type: "api_service"
+  timeline: "1 day"
+  priority: "MVP"
+  description: "AI-Enhanced Task Management API with smart categorization"
+
+features:
+  - "RESTful API with CRUD operations for tasks"
+  - "User authentication with JWT tokens"
+  - "SQLite database for task and user storage"
+  - "AI-powered automatic task categorization"
+  - "Smart priority scoring based on task content"
+  - "Simple React frontend for task management"
+  - "API documentation with OpenAPI/Swagger"
+  - "Docker containerization for easy deployment"
+  - "Comprehensive unit tests for all endpoints"
+  - "Basic rate limiting and security headers"
+
+tech_overrides:
+  backend:
+    language: "Python"
+    framework: "FastAPI"
+    database: "SQLite"
+    auth: "JWT"
+  frontend:
+    framework: "React"
+    styling: "Tailwind CSS"
+    build: "Vite"
+  ai:
+    provider: "OpenAI"
+    model: "gpt-3.5-turbo"
+    purpose: "Task categorization and priority scoring"
+  deployment:
+    containerization: "Docker"
+    orchestration: "docker-compose"
+
+constraints:
+  budget: "$100"
+  team_size: 1
+  deployment: "Local Docker"
+  complexity: "Medium"
+  external_dependencies: "Minimal"
+
+success_metrics:
+  - "All CRUD endpoints functional"
+  - "AI categorization accuracy >80%"
+  - "API response time <100ms"
+  - "Test coverage >85%"
+  - "Docker deployment successful"
+  - "API documentation complete"
+
+data_model:
+  task:
+    fields:
+      - "id: UUID"
+      - "title: string"
+      - "description: text"
+      - "category: string (AI-generated)"
+      - "priority: integer (1-5, AI-scored)"
+      - "status: enum (todo, in_progress, done)"
+      - "created_at: timestamp"
+      - "updated_at: timestamp"
+      - "user_id: foreign_key"
+  user:
+    fields:
+      - "id: UUID"
+      - "username: string"
+      - "email: string"
+      - "password_hash: string"
+      - "created_at: timestamp"
+  category:
+    fields:
+      - "id: UUID"
+      - "name: string"
+      - "description: text"
+      - "color: string"
+
+api_endpoints:
+  auth:
+    - "POST /api/v1/auth/register"
+    - "POST /api/v1/auth/login"
+    - "POST /api/v1/auth/refresh"
+  tasks:
+    - "GET /api/v1/tasks (list all tasks)"
+    - "POST /api/v1/tasks (create task)"
+    - "GET /api/v1/tasks/{id} (get task)"
+    - "PUT /api/v1/tasks/{id} (update task)"
+    - "DELETE /api/v1/tasks/{id} (delete task)"
+    - "POST /api/v1/tasks/{id}/categorize (AI categorization)"
+    - "POST /api/v1/tasks/{id}/prioritize (AI priority scoring)"
+  categories:
+    - "GET /api/v1/categories (list categories)"
+    - "POST /api/v1/categories (create category)"
+
+testing_requirements:
+  - "Unit tests for all API endpoints"
+  - "Integration tests for database operations"
+  - "Mock tests for AI service"
+  - "Authentication flow tests"
+  - "Error handling tests"
+  - "Rate limiting tests"
+
+documentation_requirements:
+  - "OpenAPI/Swagger specification"
+  - "README with setup instructions"
+  - "API usage examples"
+  - "Docker deployment guide"
+  - "Environment variable documentation"

@@ -1,6 +1,6 @@
 ---
 name: rapid-builder
-description: Use for fast prototyping, MVP development, and project scaffolding. Specializes in getting functional applications running quickly with proper structure. Examples:\n\n<example>\nContext: Need to build an MVP quickly\nuser: "Build a task management app MVP in 3 days"\nassistant: "I'll create a functional MVP with core features. Using rapid-builder to scaffold the project and implement essential functionality."\n<commentary>\nMVPs need to be functional quickly while maintaining code quality for future development.\n</commentary>\n</example>\n\n<example>\nContext: Proof of concept for stakeholders\nuser: "Demo our AI chat idea to investors next week"\nassistant: "I'll build a working prototype for your demo. Using rapid-builder to create a functional AI chat interface with backend."\n<commentary>\nInvestor demos need working prototypes that showcase core value proposition.\n</commentary>\n</example>
+description: "Use for fast prototyping, MVP development, and project scaffolding. Specializes in getting functional applications running quickly with proper structure. Examples:"
 tools: Write, Read, MultiEdit, Bash, Glob, Task
 model: sonnet
 color: green

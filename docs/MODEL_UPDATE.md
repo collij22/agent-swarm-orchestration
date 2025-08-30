@@ -6,7 +6,7 @@ The agent swarm has been updated to use the latest Claude 4 models with intellig
 
 - **Claude 4 Sonnet** (`claude-sonnet-4-20250514`) - Primary model for balanced performance
 - **Claude 3.5 Haiku** (`claude-3-5-haiku-20241022`) - Fast & cost-optimized
-- **Claude 3 Opus** (`claude-3-opus-20240229`) - Complex reasoning tasks
+- **Claude 4 Opus** (`claude-opus-4-20250514`) - Complex reasoning tasks
 
 ## 📊 Model Selection Strategy
 

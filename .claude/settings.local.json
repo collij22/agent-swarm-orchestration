@@ -11,7 +11,11 @@
       "Bash(npx tailwindcss init:*)",
       "WebSearch",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(gh:*)",
+      "Bash(grep:*)",
+      "Bash(timeout 60 python:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []
