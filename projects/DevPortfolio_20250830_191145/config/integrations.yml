@@ -1,0 +1,56 @@
+---
+# DevPortfolio External Service Integrations
+
+# GitHub Integration
+github:
+  api_version: v4
+  scopes: 
+    - read:user
+    - read:repo
+  auth_method: OAuth2
+  rate_limit:
+    max_requests: 5000
+    reset_window: 3600  # 1 hour
+
+# OpenAI Integration
+openai:
+  model: gpt-3.5-turbo
+  max_tokens: 1024
+  temperature: 0.7
+  endpoints:
+    - content_suggestion
+    - grammar_check
+    - seo_optimization
+  rate_limit:
+    max_requests: 60
+    reset_window: 60  # 1 minute
+
+# OAuth Providers
+oauth:
+  providers:
+    github:
+      client_id: ${GITHUB_CLIENT_ID}
+      auth_endpoint: https://github.com/login/oauth/authorize
+    google:
+      client_id: ${GOOGLE_CLIENT_ID}
+      auth_endpoint: https://accounts.google.com/o/oauth2/v2/auth
+  
+  flow: authorization_code
+  scopes:
+    - profile
+    - email
+
+# Custom Analytics
+analytics:
+  tracking_methods:
+    - page_views
+    - engagement_rate
+    - content_performance
+  privacy_mode: anonymized
+  retention_period: 12  # months
+
+# Security Configurations
+security:
+  encryption: AES-256
+  key_rotation_interval: 90  # days
+  webhook_signature_method: HMAC-SHA256

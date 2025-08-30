@@ -385,14 +385,25 @@ class EnhancedOrchestrator:
                 "Requirement validation warning"
             )
         
-        # Initialize context
+        # Create project output directory
+        project_name = requirements.get("project", {}).get("name", "project")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        project_dir = Path(f"projects/{project_name}_{timestamp}")
+        project_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Initialize context with project directory
         context = AgentContext(
             project_requirements=requirements,
             completed_tasks=[],
-            artifacts={},
+            artifacts={"project_directory": str(project_dir)},
             decisions=[],
             current_phase="initialization"
         )
+        
+        console.print(Panel(
+            f"[bold green]Project Directory:[/bold green] {project_dir}",
+            border_style="green"
+        ))
         
         # Load checkpoint if provided
         if checkpoint and Path(checkpoint).exists():

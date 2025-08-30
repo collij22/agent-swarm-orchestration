@@ -625,7 +625,10 @@ async def write_file_tool(file_path: str, content: str, reasoning: str = None,
         # Fallback to creating a default project directory
         project_base = Path.cwd() / 'project_output'
     
-    # Handle Linux-style paths on Windows by converting /project to the project directory
+    # Check if the file_path already contains the project directory to avoid duplication
+    project_name = project_base.name if project_base else ""
+    
+    # Handle different path formats
     if file_path.startswith('/project/'):
         # Use the project directory from context
         file_path = str(project_base / file_path[9:])  # Remove '/project/' prefix
@@ -633,8 +636,21 @@ async def write_file_tool(file_path: str, content: str, reasoning: str = None,
         # Other absolute paths - put them in the project directory
         file_path = str(project_base / file_path[1:])  # Remove leading '/'
     elif not Path(file_path).is_absolute():
-        # Relative paths go into the project directory
-        file_path = str(project_base / file_path)
+        # For relative paths, check if they already contain the project directory
+        if project_name and project_name in file_path:
+            # The path already contains the project directory, extract the relative part
+            # Split by the project directory name and take the part after it
+            parts = file_path.split(project_name)
+            if len(parts) > 1:
+                # Take the last occurrence and clean up any leading slashes
+                relative_path = parts[-1].lstrip('/\\')
+                file_path = str(project_base / relative_path)
+            else:
+                # Fallback: treat as relative to project directory
+                file_path = str(project_base / file_path)
+        else:
+            # Normal relative path - add to project directory
+            file_path = str(project_base / file_path)
     
     path = Path(file_path)
     
