@@ -1,0 +1,91 @@
+{
+  "Enterprise CRM": {
+    "workflow_name": "enterprise_crm",
+    "execution_mode": "mock",
+    "duration_seconds": 0.003523,
+    "phases_completed": 0,
+    "requirements": {
+      "total": 10,
+      "completed": 0,
+      "failed": 0,
+      "completion_rate": 0.0
+    },
+    "agents": {
+      "total_executed": 0,
+      "successful": 0,
+      "failed": 0,
+      "success_rate": 0
+    },
+    "conflicts": {
+      "detected": 0,
+      "resolved": 0,
+      "resolution_rate": 100
+    },
+    "recovery": {
+      "attempts": 0,
+      "successful": 0,
+      "success_rate": 100
+    },
+    "checkpoints": 8,
+    "quality_scores": {},
+    "phase_timings": {},
+    "agent_timings": {},
+    "estimated_cost": 0.0
+  },
+  "Failure Recovery": {
+    "error": "[Errno 22] Invalid argument"
+  },
+  "Progressive Enhancement": {
+    "error": "[Errno 22] Invalid argument"
+  },
+  "Quality Analysis": {
+    "project_name": "Quality Test Project",
+    "execution_time": 0.000244,
+    "summary": {
+      "overall_quality_score": 8.834497839763413,
+      "requirements_completed": "0/6",
+      "average_completion": "70.7%",
+      "files_created": 0,
+      "tests_created": 0
+    },
+    "quality_dimensions": {
+      "correctness": "70.7%",
+      "completeness": "0.0%",
+      "consistency": "0.0%",
+      "efficiency": "0.0%",
+      "reliability": "0.0%",
+      "security": "0.0%",
+      "usability": "0.0%",
+      "maintainability": "0.0%"
+    },
+    "threshold_compliance": {
+      "requirement_coverage": false,
+      "code_quality": false,
+      "security_compliance": false,
+      "complexity": true,
+      "duplication": true
+    },
+    "top_issues": {
+      "security": [],
+      "code_smells": []
+    },
+    "detailed_metrics": {
+      "requirement_coverage": 70.6759827181073,
+      "code_quality": 0.0,
+      "security_compliance": 0.0,
+      "performance_score": 0.0
+    },
+    "recommendations": [
+      "Increase requirement coverage from 70.7% to at least 80.0%",
+      "Improve code quality score from 0.0 to at least 70.0",
+      "Enhance security compliance from 0.0% to at least 85.0%",
+      "Ensure all required files and tests are created",
+      "Apply consistent coding standards across all files",
+      "Optimize performance bottlenecks to meet SLA requirements",
+      "Increase test coverage to at least 60%",
+      "Address security vulnerabilities and implement security best practices",
+      "Add comprehensive documentation and code comments",
+      "Reduce code complexity and eliminate code smells"
+    ]
+  }
+}
