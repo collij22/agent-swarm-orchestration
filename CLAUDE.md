@@ -393,9 +393,15 @@ Files Created: 12 files (main.py, database.py, config.json, ...)
 - NEVER proactively create documentation files (*.md) or README files unless explicitly requested
 - All agents must adhere to these standards unless project requirements specify otherwise
 
-## 🧪 Enhanced Testing Standards (Section 7)
+## 🧪 Enhanced Testing Standards
 
-### Mock Mode Testing
+### Phase 1: Core Integration Standards
+- **Requirement Tracking**: All agents must track assigned requirements with 0-100% completion
+- **Validation Checkpoints**: Pre/post execution validation with retry logic
+- **Agent Output Validation**: Agent-specific validation rules with retry suggestions
+- **Integration Testing**: Test Phase 1 components (validation_orchestrator, requirement_tracker)
+
+### Mock Mode Testing (Section 7)
 - **Enhanced Mock Mode**: Use `--enhanced` flag for realistic file creation and requirement tracking
 - **Failure Simulation**: Configure failure rates (0-100%) for robust testing scenarios
 - **Progress Monitoring**: Track completion percentages and detailed metrics
@@ -403,6 +409,9 @@ Files Created: 12 files (main.py, database.py, config.json, ...)
 
 ### Testing Commands
 ```bash
+# Test Phase 1 integration
+python tests/test_phase1_integration.py
+
 # Enhanced mock mode with file creation (recommended)
 python tests/test_agents.py --mode mock --enhanced
 
