@@ -1,0 +1,31 @@
+{
+  "timestamp": "2025-08-30T22:35:29.300335",
+  "passed": false,
+  "metrics": {
+    "requirement_coverage": "0.0%",
+    "agent_success_rate": "0.0%",
+    "test_coverage": "0.0%",
+    "code_complexity": "22.8",
+    "security_score": "40/100",
+    "performance_score": "75/100",
+    "documentation_coverage": "74.4%"
+  },
+  "critical_issues": [
+    "Requirement coverage must be at least 80% (actual: 0.0)",
+    "Agent success rate must be at least 90% (actual: 0.0)",
+    "Test coverage must be at least 85% (actual: 0.0)",
+    "Security score must be at least 80 (actual: 40.0)"
+  ],
+  "warnings": [
+    "Could not check orchestrate.py: 'charmap' codec can't decode byte 0x9d in position 7339: character maps to <undefined>",
+    "Could not check lib\\agent_logger.py: 'charmap' codec can't decode byte 0x9d in position 1745: character maps to <undefined>",
+    "Could not check lib\\alert_manager.py: 'charmap' codec can't decode byte 0x8f in position 4481: character maps to <undefined>",
+    "Could not check lib\\metrics_exporter.py: 'charmap' codec can't decode byte 0x9d in position 19374: character maps to <undefined>",
+    "Could not check lib\\orchestration_enhanced.py: 'charmap' codec can't decode byte 0x8f in position 29195: character maps to <undefined>",
+    "Could not check lib\\quality_enforcer.py: 'charmap' codec can't decode byte 0x9d in position 17704: character maps to <undefined>",
+    "Could not check lib\\quality_validation.py: 'charmap' codec can't decode byte 0x8f in position 2127: character maps to <undefined>",
+    "Could not check lib\\validation_orchestrator.py: 'charmap' codec can't decode byte 0x8f in position 8545: character maps to <undefined>",
+    "Could not check sfa\\sfa_frontend_specialist.py: 'charmap' codec can't decode byte 0x9d in position 60425: character maps to <undefined>",
+    "Could not check web\\install_dependencies.py: 'charmap' codec can't decode byte 0x8f in position 1153: character maps to <undefined>"
+  ]
+}

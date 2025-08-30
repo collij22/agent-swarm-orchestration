@@ -293,6 +293,13 @@ class RequirementTracker:
             summary[req.status.value] += 1
         return summary
     
+    def get_coverage_report(self) -> Dict:
+        """Get comprehensive coverage report (alias for generate_coverage_report)"""
+        report = self.generate_coverage_report()
+        # Add overall_completion field for compatibility
+        report["overall_completion"] = report.get("overall_coverage", 0)
+        return report
+    
     def generate_coverage_report(self) -> Dict:
         """Generate comprehensive coverage report"""
         
