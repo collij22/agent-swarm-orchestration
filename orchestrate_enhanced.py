@@ -250,9 +250,58 @@ class EnhancedOrchestrator:
         requirements: Dict,
         interactive: bool = False,
         checkpoint_file: Optional[str] = None,
-        max_parallel: int = 3
+        max_parallel: int = 3,
+        output_dir: Optional[str] = None
     ) -> bool:
-        """Execute enhanced workflow with all Section 8 capabilities"""
+        """Execute enhanced workflow with all Section 8 capabilities
+        
+        Args:
+            output_dir: Optional output directory. If not provided, creates timestamped folder
+        """
+        
+        # Validate requirements before starting
+        validation_errors = self._validate_requirements(requirements)
+        if validation_errors:
+            self.logger.log_error("orchestrator", "Requirements validation failed", str(validation_errors))
+            if HAS_RICH:
+                console.print(Panel(
+                    f"[red]Requirements validation failed:[/red]\n" + 
+                    "\n".join(f"• {error}" for error in validation_errors),
+                    title="Validation Error",
+                    border_style="red"
+                ))
+            return False
+        
+        # Log the actual project being processed
+        project_name = requirements.get("project", {}).get("name", "Unknown")
+        project_type_actual = requirements.get("project", {}).get("type", project_type)
+        
+        # Set up project output directory
+        if output_dir is None:
+            # Create timestamped directory for this execution
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            output_dir = f"projects/{project_name}_{timestamp}"
+        
+        self.project_dir = Path(output_dir)
+        self.project_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Store the project directory in the context for agents to use
+        self.context_project_dir = str(self.project_dir)
+        
+        self.logger.log_reasoning(
+            "orchestrator", 
+            f"Starting workflow for project: {project_name} (type: {project_type_actual})",
+            f"Project output directory: {self.project_dir}"
+        )
+        
+        if HAS_RICH:
+            console.print(Panel(
+                f"[bold green]Project Directory:[/bold green] {self.project_dir}\n"
+                f"[bold]Project:[/bold] {project_name}\n"
+                f"[bold]Type:[/bold] {project_type_actual}",
+                title="Workflow Configuration",
+                border_style="green"
+            ))
         
         self.workflow_engine.max_parallel_agents = max_parallel
         
@@ -286,11 +335,11 @@ class EnhancedOrchestrator:
                 len(self.workflow_engine.agent_plans)
             )
         
-        # Initialize context
+        # Initialize context with project directory
         context = AgentContext(
             project_requirements=requirements,
             completed_tasks=[],
-            artifacts={},
+            artifacts={"project_directory": str(self.project_dir)},
             decisions=[],
             current_phase="enhanced_orchestration"
         )
@@ -451,6 +500,41 @@ class EnhancedOrchestrator:
         
         return success, result, updated_context
     
+    def _validate_requirements(self, requirements: Dict) -> List[str]:
+        """Validate requirements structure and content"""
+        errors = []
+        
+        # Check required top-level fields
+        if "project" not in requirements:
+            errors.append("Missing 'project' section in requirements")
+        else:
+            project = requirements["project"]
+            if "name" not in project:
+                errors.append("Missing project name")
+            if "type" not in project:
+                errors.append("Missing project type")
+        
+        # Check for features
+        if "features" not in requirements:
+            errors.append("Missing 'features' section in requirements")
+        elif not requirements["features"]:
+            errors.append("No features specified in requirements")
+        
+        # Validate feature structure if present
+        if "features" in requirements and isinstance(requirements["features"], list):
+            for idx, feature in enumerate(requirements["features"]):
+                if isinstance(feature, str):
+                    # Simple string feature is OK
+                    continue
+                elif isinstance(feature, dict):
+                    # Structured feature should have at least id or title
+                    if "id" not in feature and "title" not in feature:
+                        errors.append(f"Feature {idx+1} missing both 'id' and 'title'")
+                else:
+                    errors.append(f"Feature {idx+1} has invalid format")
+        
+        return errors
+    
     def _display_workflow_results(self, success: bool, summary: Dict):
         """Display comprehensive workflow results"""
         if not HAS_RICH:
@@ -486,7 +570,7 @@ class EnhancedOrchestrator:
                 status_color = {
                     "completed": "green",
                     "failed": "red",
-                    "blocked": "orange",
+                    "blocked": "yellow",
                     "pending": "yellow"
                 }.get(req_data["status"], "white")
                 
@@ -506,7 +590,7 @@ class EnhancedOrchestrator:
             agent_table.add_column("Agent", style="cyan")
             agent_table.add_column("Status", style="green")
             agent_table.add_column("Duration", style="yellow")
-            agent_table.add_column("Retries", style="orange")
+            agent_table.add_column("Retries", style="yellow")
             agent_table.add_column("Requirements", style="blue")
             
             for agent_name, plan_data in summary["agent_plans"].items():
@@ -541,6 +625,7 @@ async def main():
     parser.add_argument("--max-parallel", type=int, default=3, help="Max parallel agents")
     parser.add_argument("--api-key", help="Anthropic API key (or set ANTHROPIC_API_KEY env)")
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
+    parser.add_argument("--output-dir", help="Output directory for project files (default: timestamped folder)")
     
     args = parser.parse_args()
     
@@ -571,7 +656,8 @@ async def main():
                 requirements,
                 interactive=args.interactive,
                 checkpoint_file=args.resume_checkpoint,
-                max_parallel=args.max_parallel
+                max_parallel=args.max_parallel,
+                output_dir=args.output_dir
             )
             
             orchestrator.logger.close_session()

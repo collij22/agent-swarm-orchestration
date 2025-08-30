@@ -26,7 +26,11 @@ except ImportError:
     HAS_ANTHROPIC = False
     print("Warning: Anthropic not installed. Install with: pip install anthropic")
 
-from .agent_logger import ReasoningLogger, get_logger
+try:
+    from .agent_logger import ReasoningLogger, get_logger
+except ImportError:
+    # For standalone imports
+    from agent_logger import ReasoningLogger, get_logger
 
 class ModelType(Enum):
     HAIKU = "claude-3-5-haiku-20241022"  # Fast & cost-optimized (~$1/1M input, $5/1M output)
@@ -279,13 +283,29 @@ class AnthropicAgentRunner:
                 if not response:
                     raise Exception("Failed to get response from Claude")
                 
-                # Process response
-                assistant_message = response.content[0] if response.content else None
+                # Process response - collect all text blocks
+                text_blocks = []
+                for block in response.content:
+                    if hasattr(block, 'type') and block.type == 'text' and hasattr(block, 'text'):
+                        text_blocks.append(block.text)
+                
+                # Combine text blocks if multiple exist
+                combined_text = "\n".join(text_blocks) if text_blocks else ""
                 
                 # Handle text responses
-                if hasattr(assistant_message, 'text'):
-                    self.logger.log_reasoning(agent_name, assistant_message.text[:500])
-                    messages.append({"role": "assistant", "content": assistant_message.text})
+                if combined_text:
+                    # Strip trailing whitespace to avoid Claude API errors
+                    clean_text = combined_text.rstrip()
+                    # Prevent repetitive text by checking for duplicates
+                    lines = clean_text.split('\n')
+                    unique_lines = []
+                    for line in lines:
+                        if not unique_lines or line != unique_lines[-1]:
+                            unique_lines.append(line)
+                    clean_text = '\n'.join(unique_lines)
+                    
+                    self.logger.log_reasoning(agent_name, clean_text[:500])
+                    messages.append({"role": "assistant", "content": clean_text})
                 
                 # Handle tool calls
                 tool_called = False
@@ -340,7 +360,8 @@ class AnthropicAgentRunner:
                 
                 # If no tools were called, agent is done
                 if not tool_called:
-                    final_result = assistant_message.text if hasattr(assistant_message, 'text') else "Complete"
+                    # Use the combined text from all blocks
+                    final_result = clean_text if combined_text else "Complete"
                     break
                 
         except Exception as e:
@@ -449,6 +470,35 @@ class AnthropicAgentRunner:
         import inspect
         sig = inspect.signature(tool.function)
         
+        # Enhanced handling for write_file tool to prevent missing content errors
+        if tool.name == "write_file":
+            if "content" not in args:
+                self.logger.log_error(
+                    agent_name or "unknown",
+                    "write_file called without content parameter",
+                    f"Args provided: {list(args.keys())}"
+                )
+                # Provide empty content as fallback to prevent crash
+                args["content"] = ""
+                self.logger.log_reasoning(
+                    agent_name or "unknown",
+                    "Using empty content as fallback for write_file tool"
+                )
+            elif args["content"] is None:
+                self.logger.log_error(
+                    agent_name or "unknown",
+                    "write_file called with None content",
+                    "Converting None to empty string"
+                )
+                args["content"] = ""
+            elif not isinstance(args["content"], str):
+                # Convert non-string content to string
+                self.logger.log_reasoning(
+                    agent_name or "unknown",
+                    f"Converting non-string content ({type(args['content'])}) to string"
+                )
+                args["content"] = str(args["content"])
+        
         # Prepare function arguments
         func_args = {}
         
@@ -546,7 +596,31 @@ async def write_file_tool(file_path: str, content: str, reasoning: str = None,
                          context: AgentContext = None, agent_name: str = None,
                          verify: bool = True, max_retries: int = 3) -> str:
     """Enhanced write content to a file with verification and tracking"""
+    # Get project directory from context if available
+    if context and "project_directory" in context.artifacts:
+        project_base = Path(context.artifacts["project_directory"])
+    else:
+        # Fallback to creating a default project directory
+        project_base = Path.cwd() / 'project_output'
+    
+    # Handle Linux-style paths on Windows by converting /project to the project directory
+    if file_path.startswith('/project/'):
+        # Use the project directory from context
+        file_path = str(project_base / file_path[9:])  # Remove '/project/' prefix
+    elif file_path.startswith('/'):
+        # Other absolute paths - put them in the project directory
+        file_path = str(project_base / file_path[1:])  # Remove leading '/'
+    elif not Path(file_path).is_absolute():
+        # Relative paths go into the project directory
+        file_path = str(project_base / file_path)
+    
     path = Path(file_path)
+    
+    # Ensure content is a string (handle None or other types)
+    if content is None:
+        content = ""
+    elif not isinstance(content, str):
+        content = str(content)
     
     # Remove Unicode characters that cause Windows encoding issues
     import re

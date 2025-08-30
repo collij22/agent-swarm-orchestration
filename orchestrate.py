@@ -59,7 +59,7 @@ class AgentOrchestrator:
             "rapid-builder": AgentConfig("rapid-builder", "sonnet", ["Write", "Read", "MultiEdit", "Bash", "Glob", "Task"], "green"),
             "ai-specialist": AgentConfig("ai-specialist", "opus", ["Write", "Read", "MultiEdit", "Bash", "WebFetch", "Task"], "cyan"),
             "quality-guardian": AgentConfig("quality-guardian", "sonnet", ["Read", "Write", "Bash", "Grep", "Glob", "Task"], "red"),
-            "devops-engineer": AgentConfig("devops-engineer", "sonnet", ["Bash", "Write", "Read", "Task"], "orange"),
+            "devops-engineer": AgentConfig("devops-engineer", "sonnet", ["Bash", "Write", "Read", "Task"], "yellow"),
         })
         
         # Specialized Technical Agents (Tier 2)  
@@ -75,7 +75,7 @@ class AgentOrchestrator:
         agents.update({
             "project-orchestrator": AgentConfig("project-orchestrator", "opus", ["Task", "Write", "Read"], "gold"),
             "requirements-analyst": AgentConfig("requirements-analyst", "sonnet", ["Write", "Read", "Task"], "blue"),
-            "code-migrator": AgentConfig("code-migrator", "sonnet", ["Read", "Write", "MultiEdit", "Grep", "Bash", "Task"], "orange"),
+            "code-migrator": AgentConfig("code-migrator", "sonnet", ["Read", "Write", "MultiEdit", "Grep", "Bash", "Task"], "bright_yellow"),
             "debug-specialist": AgentConfig("debug-specialist", "opus", ["Read", "Bash", "Grep", "Glob", "Task"], "red"),
             "meta-agent": AgentConfig("meta-agent", "opus", ["Write", "MultiEdit", "WebFetch", "Task"], "cyan"),
         })
