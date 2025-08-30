@@ -307,6 +307,63 @@ def process_payment(user_id: str, amount: float):
 - Maintain responsive design for all screen sizes
 - Support dark/light theme preferences
 
+## 📝 Enhanced Logging Standards
+
+### Human-Readable Logging
+The system now generates concise markdown summaries alongside detailed JSON logs:
+- **File Pattern**: `session_<id>_<timestamp>_human.md`
+- **Target Size**: 100-200 lines for full execution
+- **Real-time**: Updates as execution progresses
+
+### Configuration Options
+```yaml
+logging:
+  human_readable: true      # Enable markdown summaries (default: true)
+  summary_level: "concise"  # Options: concise|detailed|verbose
+  track_artifacts: true     # Log file operations
+  track_handoffs: true      # Log agent communication
+```
+
+### CLI Usage
+```bash
+# Enable human-readable logs (default)
+python orchestrate_enhanced.py --requirements=requirements.yaml --human-log
+
+# Disable human logs for minimal output
+python orchestrate_enhanced.py --requirements=requirements.yaml --no-human-log
+
+# Verbose human logs with all details
+python orchestrate_enhanced.py --requirements=requirements.yaml --summary-level=verbose
+```
+
+### Summary Contents
+The human-readable log captures:
+- **Agent Execution Flow**: Start/end times, status, requirements handled
+- **Key Outputs**: Files created, important decisions, artifacts produced
+- **Error Resolution**: Problems encountered and how they were resolved
+- **Agent Handoffs**: Communication between agents, shared artifacts
+- **Performance Metrics**: Duration, success rates, resource usage
+
+### Example Output
+```markdown
+# Agent Swarm Execution Summary
+Session: 715a6116-b285-45ec-9d16-0ffa0d4a7b1d
+
+## Agent Execution Flow
+
+### api-integrator [17:40:04 - 17:41:12] [OK]
+Requirements: PORTFOLIO-001, DEVTOOLS-001
+Key Outputs:
+- Created: integrations/config.json
+- Created: .env.example
+Decision: OAuth2 for GitHub, API key for OpenAI
+-> Handoff to: rapid-builder
+
+### rapid-builder [17:41:15 - 17:45:30] [OK]
+Files Created: 12 files (main.py, database.py, config.json, ...)
+-> Handoff to: database-expert, frontend-specialist
+```
+
 ## 🤝 Agent Communication Protocol
 
 ### Between Agents

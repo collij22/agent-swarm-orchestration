@@ -41,6 +41,7 @@ if env_file.exists():
 sys.path.append(str(Path(__file__).parent / "lib"))
 
 from lib.agent_logger import ReasoningLogger, create_new_session
+from lib.human_logger import SummaryLevel
 from lib.agent_runtime import (
     AnthropicAgentRunner, AgentContext, ModelType, Tool, 
     create_standard_tools, create_quality_tools
@@ -71,8 +72,15 @@ class EnhancedOrchestrator:
     """Enhanced orchestrator with Section 8 capabilities"""
     
     def __init__(self, api_key: Optional[str] = None, session_id: Optional[str] = None, 
-                 enable_dashboard: bool = False):
-        self.logger = create_new_session(session_id)
+                 enable_dashboard: bool = False, enable_human_log: bool = True,
+                 summary_level: str = "concise"):
+        # Convert string summary level to enum
+        level_map = {
+            "concise": SummaryLevel.CONCISE,
+            "detailed": SummaryLevel.DETAILED,
+            "verbose": SummaryLevel.VERBOSE
+        }
+        self.logger = create_new_session(session_id, enable_human_log, level_map.get(summary_level, SummaryLevel.CONCISE))
         self.runtime = AnthropicAgentRunner(api_key, self.logger)
         self.agents = self._load_agent_configs()
         
@@ -626,6 +634,10 @@ async def main():
     parser.add_argument("--api-key", help="Anthropic API key (or set ANTHROPIC_API_KEY env)")
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
     parser.add_argument("--output-dir", help="Output directory for project files (default: timestamped folder)")
+    parser.add_argument("--human-log", action="store_true", default=True, help="Generate human-readable markdown log (default: True)")
+    parser.add_argument("--no-human-log", dest="human_log", action="store_false", help="Disable human-readable log")
+    parser.add_argument("--summary-level", choices=["concise", "detailed", "verbose"], default="concise", 
+                       help="Human log detail level (default: concise)")
     
     args = parser.parse_args()
     
@@ -633,7 +645,12 @@ async def main():
     api_key = args.api_key or os.getenv("ANTHROPIC_API_KEY")
     
     # Create enhanced orchestrator
-    orchestrator = EnhancedOrchestrator(api_key, enable_dashboard=args.dashboard or args.progress)
+    orchestrator = EnhancedOrchestrator(
+        api_key, 
+        enable_dashboard=args.dashboard or args.progress,
+        enable_human_log=args.human_log,
+        summary_level=args.summary_level
+    )
     
     try:
         if args.project_type and args.requirements:
@@ -647,6 +664,7 @@ async def main():
                     f"Project: {requirements.get('project', {}).get('name', 'Unknown')}\n" +
                     f"Requirements: {args.requirements}\n" +
                     f"Dashboard: {'Enabled' if args.dashboard else 'Disabled'}\n" +
+                    f"Human Log: {'Enabled (' + args.summary_level + ')' if args.human_log else 'Disabled'}\n" +
                     f"Max Parallel: {args.max_parallel}",
                     border_style="green"
                 ))

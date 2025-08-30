@@ -19,6 +19,7 @@ from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict, field
 from enum import Enum
 import re
+from .human_logger import HumanReadableLogger, SummaryLevel
 
 try:
     from rich.console import Console
@@ -141,7 +142,8 @@ class AgentMetrics:
 class ReasoningLogger:
     """Main logger class with reasoning capture and rich output"""
     
-    def __init__(self, session_id: Optional[str] = None, log_dir: str = "./sessions"):
+    def __init__(self, session_id: Optional[str] = None, log_dir: str = "./sessions", 
+                 enable_human_log: bool = True, summary_level: SummaryLevel = SummaryLevel.CONCISE):
         self.session_id = session_id or str(uuid.uuid4())
         self.log_dir = Path(log_dir)
         self.log_dir.mkdir(exist_ok=True)
@@ -156,6 +158,15 @@ class ReasoningLogger:
         self.console = console
         self.progress = None
         self.current_task = None
+        
+        # Human-readable logger
+        self.human_logger = None
+        if enable_human_log:
+            self.human_logger = HumanReadableLogger(
+                self.session_id, 
+                str(self.log_dir),
+                summary_level
+            )
         
         # Initialize session
         self._initialize_session()
@@ -200,6 +211,20 @@ class ReasoningLogger:
         
         self._add_entry(entry)
         
+        # Log to human-readable logger
+        if self.human_logger:
+            # Extract requirements from context if available
+            requirements = []
+            if context:
+                try:
+                    import json
+                    context_data = json.loads(context) if isinstance(context, str) else context
+                    if isinstance(context_data, dict) and 'requirements' in context_data:
+                        requirements = context_data['requirements']
+                except:
+                    pass
+            self.human_logger.log_agent_start(agent_name, requirements)
+        
         if self.console:
             self.console.print(Panel(
                 f"[bold blue]Starting: {agent_name}[/bold blue]\n"
@@ -220,6 +245,10 @@ class ReasoningLogger:
                 self.metrics[agent_name].successful_calls += 1
             else:
                 self.metrics[agent_name].failed_calls += 1
+        
+        # Log to human-readable logger
+        if self.human_logger:
+            self.human_logger.log_agent_complete(agent_name, success, result[:200] if result else "")
         
         entry = LogEntry(
             timestamp=datetime.now().isoformat(),
@@ -251,6 +280,14 @@ class ReasoningLogger:
             if tool_name not in self.metrics[agent_name].tool_calls:
                 self.metrics[agent_name].tool_calls[tool_name] = 0
             self.metrics[agent_name].tool_calls[tool_name] += 1
+        
+        # Log file operations to human logger
+        if self.human_logger and tool_name == "write_file" and parameters:
+            file_path = parameters.get('file_path', '')
+            if file_path:
+                self.human_logger.log_file_operation(agent_name, "create", file_path)
+                # Also log as key output
+                self.human_logger.log_key_output(agent_name, f"Created: {file_path}")
         
         entry = LogEntry(
             timestamp=datetime.now().isoformat(),
@@ -295,6 +332,12 @@ class ReasoningLogger:
         
         self._add_entry(entry)
         
+        # Log decision to human logger
+        if self.human_logger and decision:
+            # Mark as critical if it contains certain keywords
+            critical = any(word in decision.lower() for word in ['architecture', 'security', 'oauth', 'database'])
+            self.human_logger.log_decision(agent_name, decision, critical)
+        
         if self.console:
             content = (
                 f"[cyan][THINK] {agent_name} Thinking[/cyan]\n"
@@ -320,6 +363,10 @@ class ReasoningLogger:
         )
         
         self._add_entry(entry)
+        
+        # Log error to human logger
+        if self.human_logger:
+            self.human_logger.log_error_resolution(agent_name, error[:100], "Attempting recovery")
         
         if self.console:
             content = (
@@ -429,6 +476,20 @@ class ReasoningLogger:
         with open(summary_file, 'w') as f:
             json.dump(session_data, f, indent=2)
         
+        # Finalize human-readable summary
+        if self.human_logger:
+            stats = {
+                "total_duration": f"{sum(m.total_duration_ms for m in self.metrics.values()) / 1000:.1f}s",
+                "success_rate": session_data['summary']['overall_success_rate'],
+                "requirements_completed": len([e for e in self.entries if e.event_type == EventType.DECISION])
+            }
+            human_summary_file = self.human_logger.finalize_summary(
+                overall_success=session_data['summary']['overall_success_rate'] > 90,
+                stats=stats
+            )
+            if self.console:
+                self.console.print(f"[dim]Human-readable summary: {human_summary_file}[/dim]")
+        
         if self.console:
             self.console.print(self.get_metrics_summary())
             self.console.print(Panel(
@@ -452,10 +513,12 @@ def get_logger(session_id: Optional[str] = None) -> ReasoningLogger:
         _logger_instance = ReasoningLogger(session_id)
     return _logger_instance
 
-def create_new_session(session_id: Optional[str] = None) -> ReasoningLogger:
+def create_new_session(session_id: Optional[str] = None, 
+                      enable_human_log: bool = True,
+                      summary_level: SummaryLevel = SummaryLevel.CONCISE) -> ReasoningLogger:
     """Force creation of a new logger session"""
     global _logger_instance
-    _logger_instance = ReasoningLogger(session_id)
+    _logger_instance = ReasoningLogger(session_id, enable_human_log=enable_human_log, summary_level=summary_level)
     return _logger_instance
 
 # Example usage
