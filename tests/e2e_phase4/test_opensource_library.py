@@ -185,18 +185,17 @@ class TestOpenSourceLibrary:
         
         start_time = time.time()
         
-        # Initialize test context
-        context = AgentContext(
-            project_id="opensource-library-test",
-            session_id=f"test-{datetime.now().strftime('%Y%m%d-%H%M%S')}",
-            working_directory=Path("./test_output/opensource_library"),
-            model=ModelType.SONNET,
-            max_iterations=10,
-            tools=[]
-        )
-        
         # Create requirements
         requirements = self.create_library_requirements()
+        
+        # Initialize test context
+        context = AgentContext(
+            project_requirements=requirements,
+            completed_tasks=[],
+            artifacts={},
+            decisions=[],
+            current_phase="Planning"
+        )
         
         # Configure failure injection for resilience testing
         failure_config = FailureInjection(

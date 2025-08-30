@@ -1,0 +1,65 @@
+{
+  "phase": "Phase 4 - Comprehensive Mock Mode Testing",
+  "timestamp": "2025-08-30T09:07:47.443718",
+  "duration": 0.013782739639282227,
+  "execution_mode": "sequential",
+  "summary": {
+    "total_tests": 5,
+    "successful": 0,
+    "failed": 5,
+    "success_rate": 0.0
+  },
+  "requirements": {
+    "total": 0,
+    "completed": 0,
+    "completion_rate": 0
+  },
+  "agents": {
+    "total_unique": 0,
+    "list": []
+  },
+  "quality": {
+    "overall_score": 0,
+    "by_test": {}
+  },
+  "performance": {},
+  "files_created": 0,
+  "issues": {
+    "total": 0,
+    "patterns": {},
+    "list": []
+  },
+  "recommendations": [],
+  "individual_results": [
+    {
+      "test_name": "Open Source Library",
+      "status": "failed",
+      "error": "AgentContext.__init__() got an unexpected keyword argument 'project_id'",
+      "duration": 0
+    },
+    {
+      "test_name": "Real-time Collaboration",
+      "status": "failed",
+      "error": "AgentContext.__init__() got an unexpected keyword argument 'project_id'",
+      "duration": 0
+    },
+    {
+      "test_name": "DevOps Pipeline",
+      "status": "failed",
+      "error": "AgentContext.__init__() got an unexpected keyword argument 'project_id'",
+      "duration": 0
+    },
+    {
+      "test_name": "AI Content Management",
+      "status": "failed",
+      "error": "AgentContext.__init__() got an unexpected keyword argument 'project_id'",
+      "duration": 0
+    },
+    {
+      "test_name": "Cross-Platform Game",
+      "status": "failed",
+      "error": "AgentContext.__init__() got an unexpected keyword argument 'project_id'",
+      "duration": 0
+    }
+  ]
+}

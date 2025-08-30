@@ -212,18 +212,17 @@ class TestRealtimeCollaboration:
         
         start_time = time.time()
         
-        # Initialize test context
-        context = AgentContext(
-            project_id="realtime-collab-test",
-            session_id=f"test-{datetime.now().strftime('%Y%m%d-%H%M%S')}",
-            working_directory=Path("./test_output/realtime_collaboration"),
-            model=ModelType.SONNET,
-            max_iterations=15,
-            tools=[]
-        )
-        
         # Create requirements
         requirements = self.create_collaboration_requirements()
+        
+        # Initialize test context
+        context = AgentContext(
+            project_requirements=requirements,
+            completed_tasks=[],
+            artifacts={},
+            decisions=[],
+            current_phase="Planning"
+        )
         
         # Configure failure injection for stress testing
         failure_config = FailureInjection(

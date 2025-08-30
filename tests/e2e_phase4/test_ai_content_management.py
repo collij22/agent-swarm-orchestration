@@ -233,18 +233,17 @@ class TestAIContentManagement:
         
         start_time = time.time()
         
-        # Initialize test context
-        context = AgentContext(
-            project_id="ai-content-test",
-            session_id=f"test-{datetime.now().strftime('%Y%m%d-%H%M%S')}",
-            working_directory=Path("./test_output/ai_content"),
-            model=ModelType.SONNET,
-            max_iterations=15,
-            tools=[]
-        )
-        
         # Create requirements
         requirements = self.create_ai_content_requirements()
+        
+        # Initialize test context
+        context = AgentContext(
+            project_requirements=requirements,
+            completed_tasks=[],
+            artifacts={},
+            decisions=[],
+            current_phase="Planning"
+        )
         
         # Configure failure injection
         failure_config = FailureInjection(

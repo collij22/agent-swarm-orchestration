@@ -398,6 +398,9 @@ cd web && python start_dashboard.py
 # Run full test suite with mock API (100% success rate)
 python tests/test_agents.py --mode mock
 
+# Run Phase 4 comprehensive scenarios (5 tests, 93.7% quality)
+python tests/e2e_phase4/run_phase4_tests.py --verbose
+
 # Run tests with real API (limited budget) - now stable
 python tests/test_agents.py --mode live --budget 1.00
 

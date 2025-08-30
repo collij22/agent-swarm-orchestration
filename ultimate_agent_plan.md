@@ -340,6 +340,9 @@ uv run sfa/sfa_devops_engineer_enhanced.py --project-path . --generate all
 python session_cli.py list
 python session_cli.py analyze <session_id>
 
+# Test comprehensive scenarios (Phase 4)
+python tests/e2e_phase4/run_phase4_tests.py --verbose
+
 # Test Section 8 features
 python test_section8_simple.py
 

@@ -216,18 +216,17 @@ class TestDevOpsPipeline:
         
         start_time = time.time()
         
-        # Initialize test context
-        context = AgentContext(
-            project_id="devops-pipeline-test",
-            session_id=f"test-{datetime.now().strftime('%Y%m%d-%H%M%S')}",
-            working_directory=Path("./test_output/devops_pipeline"),
-            model=ModelType.SONNET,
-            max_iterations=12,
-            tools=[]
-        )
-        
         # Create requirements
         requirements = self.create_devops_requirements()
+        
+        # Initialize test context
+        context = AgentContext(
+            project_requirements=requirements,
+            completed_tasks=[],
+            artifacts={},
+            decisions=[],
+            current_phase="Planning"
+        )
         
         # Configure failure injection
         failure_config = FailureInjection(
