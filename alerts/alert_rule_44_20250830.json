@@ -1,0 +1,17 @@
+{
+  "id": "rule_44_20250830",
+  "rule_name": "rule_44",
+  "severity": "info",
+  "status": "active",
+  "value": 0.8,
+  "threshold": 0.5,
+  "message": "Test rule 44: 0.80 greater_than (threshold)",
+  "triggered_at": "2025-08-30T21:42:57.863922",
+  "resolved_at": null,
+  "acknowledged_at": null,
+  "acknowledged_by": null,
+  "duration_seconds": 0.000144,
+  "labels": {},
+  "annotations": {},
+  "notification_sent": true
+}

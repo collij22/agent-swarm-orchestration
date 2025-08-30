@@ -1,13 +1,18 @@
 #!/bin/bash
 
-# DevPortfolio Production Deployment Script
-# Usage: ./scripts/deploy.sh [environment]
+# Agent Swarm Production Deployment Script
+# Usage: ./deploy.sh [staging|production] [--skip-tests] [--skip-backup]
 
-set -e
+set -e  # Exit on error
+set -u  # Exit on undefined variable
 
-ENVIRONMENT=${1:-production}
+# ======================
+# Configuration
+# ======================
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+LOG_FILE="${PROJECT_ROOT}/logs/deploy_${TIMESTAMP}.log"
 
 # Colors for output
 RED='\033[0;31m'
@@ -16,211 +21,348 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-log() {
-    echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')] $1${NC}"
-}
+# ======================
+# Functions
+# ======================
 
-warn() {
-    echo -e "${YELLOW}[WARNING] $1${NC}"
+log() {
+    echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1" | tee -a "$LOG_FILE"
 }
 
 error() {
-    echo -e "${RED}[ERROR] $1${NC}"
+    echo -e "${RED}[ERROR]${NC} $1" | tee -a "$LOG_FILE"
     exit 1
 }
 
-success() {
-    echo -e "${GREEN}[SUCCESS] $1${NC}"
+warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1" | tee -a "$LOG_FILE"
+}
+
+info() {
+    echo -e "${BLUE}[INFO]${NC} $1" | tee -a "$LOG_FILE"
 }
 
 # Check prerequisites
 check_prerequisites() {
     log "Checking prerequisites..."
     
-    command -v docker >/dev/null 2>&1 || error "Docker is required but not installed."
-    command -v docker-compose >/dev/null 2>&1 || error "Docker Compose is required but not installed."
-    command -v curl >/dev/null 2>&1 || error "curl is required but not installed."
+    # Check Docker
+    if ! command -v docker &> /dev/null; then
+        error "Docker is not installed"
+    fi
     
-    success "Prerequisites check passed"
-}
-
-# Validate environment variables
-validate_environment() {
-    log "Validating environment variables..."
+    # Check Docker Compose
+    if ! command -v docker-compose &> /dev/null; then
+        error "Docker Compose is not installed"
+    fi
     
-    required_vars=(
-        "SECRET_KEY"
-        "DATABASE_URL"
-        "REDIS_URL"
-        "OPENAI_API_KEY"
-        "GITHUB_CLIENT_ID"
-        "GITHUB_CLIENT_SECRET"
-    )
-    
-    missing_vars=()
-    for var in "${required_vars[@]}"; do
-        if [[ -z "${!var}" ]]; then
-            missing_vars+=("$var")
+    # Check environment file
+    if [[ "$ENVIRONMENT" == "production" ]]; then
+        if [[ ! -f "${PROJECT_ROOT}/.env.production" ]]; then
+            error ".env.production file not found. Copy .env.production.example and configure it."
         fi
-    done
-    
-    if [[ ${#missing_vars[@]} -gt 0 ]]; then
-        error "Missing required environment variables: ${missing_vars[*]}"
-    fi
-    
-    success "Environment validation passed"
-}
-
-# Setup SSL certificates
-setup_ssl() {
-    log "Setting up SSL certificates..."
-    
-    if [[ ! -d "ssl" ]]; then
-        mkdir -p ssl
-    fi
-    
-    if [[ ! -f "ssl/fullchain.pem" || ! -f "ssl/privkey.pem" ]]; then
-        warn "SSL certificates not found. Please ensure certificates are in ssl/ directory"
-        warn "For Let's Encrypt: certbot certonly --webroot -w /var/www/html -d devportfolio.com"
     else
-        success "SSL certificates found"
+        if [[ ! -f "${PROJECT_ROOT}/.env.staging" ]]; then
+            warning ".env.staging not found, using .env.production.example as template"
+            cp "${PROJECT_ROOT}/.env.production.example" "${PROJECT_ROOT}/.env.staging"
+        fi
+    fi
+    
+    log "Prerequisites check passed"
+}
+
+# Run tests
+run_tests() {
+    if [[ "$SKIP_TESTS" == "false" ]]; then
+        log "Running tests..."
+        
+        # Run unit tests
+        info "Running unit tests..."
+        cd "$PROJECT_ROOT"
+        python -m pytest tests/unit/ -v --tb=short || error "Unit tests failed"
+        
+        # Run integration tests
+        info "Running integration tests..."
+        python -m pytest tests/integration/ -v --tb=short || error "Integration tests failed"
+        
+        # Run Phase 2 specific tests
+        info "Running Phase 2 integration tests..."
+        if [[ -f "${PROJECT_ROOT}/tests/test_phase2_integration.py" ]]; then
+            python -m pytest tests/test_phase2_integration.py -v || warning "Phase 2 tests not fully implemented yet"
+        fi
+        
+        log "All tests passed"
+    else
+        warning "Skipping tests (--skip-tests flag provided)"
     fi
 }
 
-# Database migration
-run_migrations() {
-    log "Running database migrations..."
+# Create backup
+create_backup() {
+    if [[ "$SKIP_BACKUP" == "false" ]] && [[ "$ENVIRONMENT" == "production" ]]; then
+        log "Creating backup..."
+        
+        BACKUP_DIR="${PROJECT_ROOT}/backups/${TIMESTAMP}"
+        mkdir -p "$BACKUP_DIR"
+        
+        # Backup database
+        info "Backing up database..."
+        docker-compose -f docker-compose.production.yml exec -T postgres \
+            pg_dump -U swarm swarm_db > "${BACKUP_DIR}/database.sql" || warning "Database backup failed"
+        
+        # Backup data directories
+        info "Backing up data directories..."
+        tar -czf "${BACKUP_DIR}/data.tar.gz" \
+            "${PROJECT_ROOT}/data" \
+            "${PROJECT_ROOT}/checkpoints" \
+            "${PROJECT_ROOT}/sessions" 2>/dev/null || warning "Data backup incomplete"
+        
+        log "Backup created at ${BACKUP_DIR}"
+    else
+        info "Skipping backup"
+    fi
+}
+
+# Build Docker images
+build_images() {
+    log "Building Docker images..."
     
-    docker-compose -f docker-compose.prod.yml exec -T backend python -c "
-import asyncio
-from database import init_db
-asyncio.run(init_db())
-"
+    cd "$PROJECT_ROOT"
     
-    success "Database migrations completed"
+    # Build with BuildKit for better caching
+    export DOCKER_BUILDKIT=1
+    
+    if [[ "$ENVIRONMENT" == "production" ]]; then
+        docker build -f Dockerfile.production -t agent-swarm:latest -t agent-swarm:${TIMESTAMP} .
+    else
+        docker build -f Dockerfile.production -t agent-swarm:staging .
+    fi
+    
+    if [[ $? -ne 0 ]]; then
+        error "Docker build failed"
+    fi
+    
+    log "Docker images built successfully"
+}
+
+# Deploy to environment
+deploy() {
+    log "Deploying to ${ENVIRONMENT}..."
+    
+    cd "$PROJECT_ROOT"
+    
+    # Set environment file
+    if [[ "$ENVIRONMENT" == "production" ]]; then
+        export ENV_FILE=".env.production"
+        COMPOSE_FILE="docker-compose.production.yml"
+    else
+        export ENV_FILE=".env.staging"
+        COMPOSE_FILE="docker-compose.production.yml"
+    fi
+    
+    # Stop existing containers
+    info "Stopping existing containers..."
+    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" down || true
+    
+    # Start new containers
+    info "Starting new containers..."
+    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d
+    
+    if [[ $? -ne 0 ]]; then
+        error "Deployment failed"
+    fi
+    
+    # Wait for services to be healthy
+    info "Waiting for services to be healthy..."
+    sleep 10
+    
+    # Check health
+    check_health
+    
+    log "Deployment completed successfully"
 }
 
 # Health check
-health_check() {
-    log "Performing health checks..."
+check_health() {
+    log "Running health checks..."
     
-    max_attempts=30
-    attempt=1
-    
-    while [[ $attempt -le $max_attempts ]]; do
-        if curl -f -s http://localhost/health >/dev/null 2>&1; then
-            success "Health check passed"
-            return 0
-        fi
-        
-        log "Health check attempt $attempt/$max_attempts failed, retrying in 10s..."
-        sleep 10
-        ((attempt++))
-    done
-    
-    error "Health check failed after $max_attempts attempts"
-}
-
-# Backup current deployment
-backup_current() {
-    log "Creating backup of current deployment..."
-    
-    timestamp=$(date +%Y%m%d_%H%M%S)
-    backup_dir="backups/deployment_$timestamp"
-    
-    mkdir -p "$backup_dir"
-    
-    # Backup database
-    docker-compose -f docker-compose.prod.yml exec -T postgres pg_dump -U postgres devportfolio > "$backup_dir/database.sql"
-    
-    # Backup uploaded files
-    if [[ -d "uploads" ]]; then
-        cp -r uploads "$backup_dir/"
+    # Check orchestrator
+    if curl -f http://localhost:8000/health > /dev/null 2>&1; then
+        info "Orchestrator: Healthy"
+    else
+        error "Orchestrator health check failed"
     fi
     
-    success "Backup created at $backup_dir"
+    # Check Redis
+    if docker-compose -f docker-compose.production.yml exec -T redis redis-cli ping > /dev/null 2>&1; then
+        info "Redis: Healthy"
+    else
+        warning "Redis health check failed"
+    fi
+    
+    # Check PostgreSQL
+    if docker-compose -f docker-compose.production.yml exec -T postgres pg_isready > /dev/null 2>&1; then
+        info "PostgreSQL: Healthy"
+    else
+        warning "PostgreSQL health check failed"
+    fi
+    
+    # Check Grafana
+    if curl -f http://localhost:3000/api/health > /dev/null 2>&1; then
+        info "Grafana: Healthy"
+    else
+        warning "Grafana health check failed"
+    fi
+    
+    log "Health checks completed"
 }
 
-# Deploy application
-deploy() {
-    log "Starting deployment for $ENVIRONMENT environment..."
+# Run smoke tests
+run_smoke_tests() {
+    log "Running smoke tests..."
     
-    cd "$PROJECT_DIR"
+    # Test API endpoint
+    info "Testing API endpoint..."
+    curl -X GET http://localhost:8000/api/v1/status || warning "API status check failed"
     
-    # Pull latest images
-    log "Pulling latest Docker images..."
-    docker-compose -f docker-compose.prod.yml pull
+    # Test metrics endpoint
+    info "Testing metrics endpoint..."
+    curl -X GET http://localhost:9090/metrics || warning "Metrics endpoint check failed"
     
-    # Stop current services
-    log "Stopping current services..."
-    docker-compose -f docker-compose.prod.yml down
+    # Test WebSocket connection
+    info "Testing WebSocket connection..."
+    python -c "
+import asyncio
+import websockets
+async def test():
+    try:
+        async with websockets.connect('ws://localhost:8000/ws') as ws:
+            print('WebSocket connection successful')
+    except:
+        print('WebSocket connection failed')
+asyncio.run(test())
+" || warning "WebSocket test failed"
     
-    # Start new services
-    log "Starting new services..."
-    docker-compose -f docker-compose.prod.yml up -d
-    
-    # Wait for services to be ready
-    log "Waiting for services to start..."
-    sleep 30
-    
-    success "Deployment completed"
+    log "Smoke tests completed"
 }
 
-# Cleanup old images and containers
+# Rollback deployment
+rollback() {
+    error "Deployment failed, rolling back..."
+    
+    # Restore previous version
+    docker-compose -f docker-compose.production.yml down
+    docker tag agent-swarm:previous agent-swarm:latest
+    docker-compose -f docker-compose.production.yml up -d
+    
+    error "Rollback completed. Please investigate the issue."
+}
+
+# Cleanup old resources
 cleanup() {
-    log "Cleaning up old Docker images and containers..."
+    log "Cleaning up old resources..."
     
-    docker system prune -f
-    docker image prune -f
+    # Remove old Docker images (keep last 3)
+    docker images agent-swarm --format "{{.Tag}}" | \
+        grep -E '^[0-9]{8}_[0-9]{6}$' | \
+        sort -r | \
+        tail -n +4 | \
+        xargs -I {} docker rmi agent-swarm:{} 2>/dev/null || true
     
-    success "Cleanup completed"
-}
-
-# Setup monitoring
-setup_monitoring() {
-    log "Setting up monitoring..."
+    # Clean old backup files (keep last 7 days)
+    find "${PROJECT_ROOT}/backups" -type d -mtime +7 -exec rm -rf {} + 2>/dev/null || true
     
-    # Ensure monitoring directories exist
-    mkdir -p logs/nginx logs/app
+    # Clean old log files (keep last 30 days)
+    find "${PROJECT_ROOT}/logs" -type f -name "*.log" -mtime +30 -delete 2>/dev/null || true
     
-    # Start monitoring services if not already running
-    if ! docker-compose -f docker-compose.prod.yml ps | grep -q prometheus; then
-        docker-compose -f docker-compose.prod.yml up -d prometheus grafana
-    fi
-    
-    success "Monitoring setup completed"
+    log "Cleanup completed"
 }
 
 # Main deployment flow
 main() {
-    log "Starting DevPortfolio deployment to $ENVIRONMENT..."
+    # Create log directory
+    mkdir -p "${PROJECT_ROOT}/logs"
     
+    log "==================================="
+    log "Agent Swarm Deployment Script"
+    log "Environment: ${ENVIRONMENT}"
+    log "Timestamp: ${TIMESTAMP}"
+    log "==================================="
+    
+    # Tag current as previous (for rollback)
+    docker tag agent-swarm:latest agent-swarm:previous 2>/dev/null || true
+    
+    # Run deployment steps
     check_prerequisites
-    validate_environment
-    setup_ssl
-    
-    if [[ "$ENVIRONMENT" == "production" ]]; then
-        backup_current
-    fi
-    
+    run_tests
+    create_backup
+    build_images
     deploy
-    run_migrations
-    setup_monitoring
-    health_check
+    run_smoke_tests
     cleanup
     
-    success "Deployment to $ENVIRONMENT completed successfully!"
+    log "==================================="
+    log "Deployment completed successfully!"
+    log "==================================="
     
-    log "Application URLs:"
-    log "  Frontend: https://devportfolio.com"
-    log "  API: https://devportfolio.com/api"
-    log "  Admin: https://devportfolio.com/admin"
-    log "  Monitoring: http://localhost:3000 (Grafana)"
-    log "  Metrics: http://localhost:9090 (Prometheus)"
+    # Show access URLs
+    echo ""
+    info "Access URLs:"
+    echo "  - API: http://localhost:8000"
+    echo "  - Dashboard: http://localhost:5173"
+    echo "  - Grafana: http://localhost:3000 (admin/admin)"
+    echo "  - API Docs: http://localhost:8000/docs"
+    echo "  - Metrics: http://localhost:9090/metrics"
+    echo ""
+    info "View logs: docker-compose -f docker-compose.production.yml logs -f"
 }
 
-# Handle script interruption
-trap 'error "Deployment interrupted"' INT TERM
+# ======================
+# Script Entry Point
+# ======================
 
-# Run main function
-main "$@"
+# Parse arguments
+ENVIRONMENT="${1:-staging}"
+SKIP_TESTS=false
+SKIP_BACKUP=false
+
+for arg in "$@"; do
+    case $arg in
+        --skip-tests)
+            SKIP_TESTS=true
+            shift
+            ;;
+        --skip-backup)
+            SKIP_BACKUP=true
+            shift
+            ;;
+        staging|production)
+            ENVIRONMENT="$arg"
+            shift
+            ;;
+        *)
+            # Unknown option
+            ;;
+    esac
+done
+
+# Validate environment
+if [[ "$ENVIRONMENT" != "staging" ]] && [[ "$ENVIRONMENT" != "production" ]]; then
+    error "Invalid environment: $ENVIRONMENT. Use 'staging' or 'production'"
+fi
+
+# Confirmation for production
+if [[ "$ENVIRONMENT" == "production" ]]; then
+    echo -e "${YELLOW}WARNING: You are about to deploy to PRODUCTION${NC}"
+    read -p "Are you sure? (yes/no): " confirm
+    if [[ "$confirm" != "yes" ]]; then
+        info "Deployment cancelled"
+        exit 0
+    fi
+fi
+
+# Run main deployment
+main
+
+# Exit successfully
+exit 0

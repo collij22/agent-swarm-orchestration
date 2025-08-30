@@ -1,0 +1,17 @@
+{
+  "id": "rule_28_20250830",
+  "rule_name": "rule_28",
+  "severity": "info",
+  "status": "active",
+  "value": 0.6000000000000001,
+  "threshold": 0.5,
+  "message": "Test rule 28: 0.60 greater_than (threshold)",
+  "triggered_at": "2025-08-30T21:42:57.861027",
+  "resolved_at": null,
+  "acknowledged_at": null,
+  "acknowledged_by": null,
+  "duration_seconds": 0.000123,
+  "labels": {},
+  "annotations": {},
+  "notification_sent": true
+}
