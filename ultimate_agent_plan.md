@@ -48,12 +48,16 @@ Essential agents that handle 80% of development tasks:
    - Runs: Continuously during development
    - **Uses: claude-sonnet-4-20250514**
 
-5. **devops-engineer** (Model: Sonnet - Claude 4)
-   - CI/CD pipeline setup
-   - Cloud deployment and scaling
-   - Monitoring and logging
+5. **devops-engineer** (Model: Sonnet - Claude 4) - **ENHANCED**
+   - CI/CD pipeline setup with GitHub Actions/GitLab CI/Jenkins
+   - Docker configuration with multi-stage builds and security best practices
+   - docker-compose.yml generation with all services and health checks
+   - Testing infrastructure generation (pytest, fixtures, API tests)
+   - Cloud deployment and scaling strategies
+   - Monitoring and logging configuration
    - Runs: Final phase, parallel with documentation
    - **Uses: claude-sonnet-4-20250514**
+   - **Enhanced Version: sfa_devops_engineer_enhanced.py**
 
 ### Tier 2: Specialized Technical Agents (5)
 Domain experts for specific technical challenges:
@@ -318,8 +322,10 @@ success_metrics:
 # Run full workflow
 uv run orchestrate_v2.py --project-type=web_app --requirements=requirements.yaml
 
-# Run standalone agent
+# Run standalone agents
 uv run sfa/sfa_project_architect.py --prompt "Design system" --output design.md
+uv run sfa/sfa_ai_specialist_enhanced.py --project-path . --generate all
+uv run sfa/sfa_devops_engineer_enhanced.py --project-path . --generate all
 
 # Manage sessions
 python session_cli.py list
@@ -391,7 +397,7 @@ python -c "from lib.agent_runtime import get_optimal_model; print(get_optimal_mo
 
 ### 🔄 Latest Improvements (refinements_30aug2025.md)
 
-**Completed (Sections 1-5 of 10 - 50%):**
+**Completed (Sections 1-6 of 10 - 60%):**
 
 1. **Workflow Configuration Fixes** ✅
    - Added full_stack_api workflow combining backend + frontend
@@ -426,8 +432,16 @@ python -c "from lib.agent_runtime import get_optimal_model; print(get_optimal_mo
    - Prompt engineering with templates
    - Manual categorization fallback
 
-**Remaining (Sections 6-10):**
-6. DevOps-Engineer Completions - Docker generation
+6. **DevOps-Engineer Completions** ✅
+   - Intelligent project analysis (auto-detect language, framework, services)
+   - Multi-stage Docker builds with security best practices
+   - Comprehensive docker-compose.yml with health checks
+   - Testing infrastructure generation (pytest, fixtures, API tests)
+   - Environment template with auto-detected variables
+   - Makefile for common DevOps operations
+   - Cross-platform support (Python/Node.js frameworks)
+
+**Remaining (Sections 7-10):**
 7. Mock Mode Improvements - Realistic simulation
 8. Orchestration Enhancements - Adaptive workflows
 9. Session Analysis Improvements - Better reporting

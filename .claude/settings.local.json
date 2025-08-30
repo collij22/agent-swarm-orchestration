@@ -17,7 +17,8 @@
       "Bash(timeout 60 python:*)",
       "Bash(find:*)",
       "Bash(rg:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

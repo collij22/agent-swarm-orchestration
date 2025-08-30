@@ -4,8 +4,9 @@
 A production-ready 15-agent orchestration system with Claude 4 integration for automated technical development and business projects.
 
 **🎯 100% Success Rate Achieved** - All critical bugs fixed (August 30, 2025)  
-**📈 Enhanced with Refinements** - Sections 1-5 completed (August 30, 2025)  
-**🤖 AI-Specialist Enhanced** - Full OpenAI integration with caching & fallback
+**📈 60% Refinements Complete** - Sections 1-6 of 10 implemented (August 30, 2025)  
+**🤖 AI-Specialist Enhanced** - Full OpenAI integration with caching & fallback  
+**🚢 DevOps-Engineer Enhanced** - Docker & testing infrastructure generation
 
 ### Key Features
 - **15 Optimized Agents**: Intelligent model selection (Haiku/Sonnet/Opus)
@@ -32,9 +33,9 @@ A production-ready 15-agent orchestration system with Claude 4 integration for a
 ### Tier 1: Core Development Agents (5)
 - **project-architect** (Opus) - System design and database architecture
 - **rapid-builder** (Sonnet) - Fast prototyping and core feature implementation  
-- **ai-specialist** (Opus) - AI/ML integration with OpenAI/Anthropic, caching, fallback
+- **ai-specialist** (Opus) - **ENHANCED** - OpenAI integration, caching (70% cost reduction), fallback chains
 - **quality-guardian** (Sonnet) - Testing suite creation and security audit
-- **devops-engineer** (Sonnet) - CI/CD pipeline setup and cloud deployment
+- **devops-engineer** (Sonnet) - **ENHANCED** - Docker generation, testing infrastructure, project analysis
 
 ### Tier 2: Specialized Technical Agents (5)
 - **api-integrator** (Haiku) - Third-party service integration
@@ -159,8 +160,7 @@ uv run orchestrate_v2.py --project-type=api_service --requirements=test_requirem
 - **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)** - Complete feature overview and system status
 - **[ultimate_agent_plan.md](ultimate_agent_plan.md)** - Architecture blueprint and agent design
 - **[docs/MODEL_UPDATE.md](docs/MODEL_UPDATE.md)** - Claude 4 integration and cost optimization
-- **[docs/AI_SPECIALIST_SECTION5_COMPLETE.md](docs/AI_SPECIALIST_SECTION5_COMPLETE.md)** - AI-Specialist enhancements
-- **[refinements_30aug2025.md](refinements_30aug2025.md)** - Improvement roadmap (50% complete)
+- **[refinements_30aug2025.md](refinements_30aug2025.md)** - Improvement roadmap (60% complete - Sections 1-6 of 10)
 - **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Complete troubleshooting guide
 - **[CLAUDE.md](CLAUDE.md)** - Development standards and coding guidelines
 
@@ -220,10 +220,22 @@ uv run orchestrate_v2.py --project-type=api_service --requirements=examples/api.
 uv run sfa/sfa_ai_specialist.py --prompt "Add AI chat to existing app" --output ai_features/
 
 # With OpenAI integration and caching
-uv run sfa/sfa_ai_specialist_enhanced.py --prompt "Add task categorization" --with-caching --output ai_system/
+uv run sfa/sfa_ai_specialist_enhanced.py --project-path . --generate all
 
 # Test mode without API costs
 uv run sfa/sfa_ai_specialist_enhanced.py --test
+```
+
+### Example 4: DevOps Configuration (Enhanced)
+```bash
+# Generate Docker and testing infrastructure
+uv run sfa/sfa_devops_engineer_enhanced.py --project-path . --generate all
+
+# Docker configuration only
+uv run sfa/sfa_devops_engineer_enhanced.py --project-path . --generate docker
+
+# Testing infrastructure only
+uv run sfa/sfa_devops_engineer_enhanced.py --project-path . --generate testing --verbose
 ```
 
 ## 🤝 Contributing
