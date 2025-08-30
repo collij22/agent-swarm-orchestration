@@ -22,7 +22,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from lib.agent_runtime import AnthropicAgentRunner, AgentContext, ModelType, get_optimal_model
 from lib.mock_anthropic import MockAnthropicClient, use_mock_client, restore_real_client
-from lib.mock_anthropic_enhanced import use_enhanced_mock_client
+from lib.mock_anthropic_enhanced import use_enhanced_mock_client, restore_real_client
 from lib.agent_logger import get_logger
 
 class TestModelConfiguration(unittest.TestCase):
@@ -386,6 +386,12 @@ class TestEnhancedMockMode(unittest.TestCase):
     def test_realistic_file_creation(self):
         """Test that enhanced mock mode actually creates files"""
         runner = AnthropicAgentRunner()
+        
+        # Register tools (required for tool calls)
+        from lib.agent_runtime import create_standard_tools
+        for tool in create_standard_tools():
+            runner.register_tool(tool)
+        
         context = AgentContext(
             project_requirements={"name": "TestProject", "type": "web_app"},
             completed_tasks=[],
@@ -414,6 +420,12 @@ class TestEnhancedMockMode(unittest.TestCase):
     def test_requirement_tracking(self):
         """Test requirement completion tracking"""
         runner = AnthropicAgentRunner()
+        
+        # Register tools (required for tool calls)
+        from lib.agent_runtime import create_standard_tools
+        for tool in create_standard_tools():
+            runner.register_tool(tool)
+        
         context = AgentContext(
             project_requirements={
                 "name": "TestProject",

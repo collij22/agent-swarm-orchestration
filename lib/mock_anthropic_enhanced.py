@@ -200,13 +200,13 @@ class EnhancedMockAnthropicClient:
         # Enhanced agent behaviors with realistic patterns
         self.agent_responses = {
             "project-architect": self._enhanced_architect_response,
+            "requirements-analyst": self._enhanced_requirements_response,
             "rapid-builder": self._enhanced_builder_response,
             "quality-guardian": self._enhanced_quality_response,
             "ai-specialist": self._enhanced_ai_response,
             "devops-engineer": self._enhanced_devops_response,
             "frontend-specialist": self._enhanced_frontend_response,
-            "database-expert": self._enhanced_database_response,
-            "requirements-analyst": self._enhanced_requirements_response
+            "database-expert": self._enhanced_database_response
         }
         
         # Track costs
@@ -251,6 +251,14 @@ class EnhancedMockAnthropicClient:
         
         # Generate enhanced mock response based on context
         agent_name = self._detect_agent(messages)
+        # Enhanced agent detection based on prompt content
+        if messages:
+            content = messages[0].get('content', '')
+            # Check if the content contains agent prompts we can match
+            if 'analyze project requirements' in str(content).lower():
+                agent_name = "requirements-analyst"
+            elif 'create architecture documentation' in str(content).lower():
+                agent_name = "project-architect"
         response = self._generate_enhanced_response(agent_name, messages, tools)
         
         # Track usage
@@ -381,6 +389,65 @@ Microservices architecture with the following components:
         # Default architect behavior
         return MockMessage(content=[
             MockTextBlock(text="I'll design a scalable microservices architecture for this project.")
+        ])
+    
+    def _enhanced_requirements_response(self, messages: List[Dict], tools: List[Dict]) -> MockMessage:
+        """Enhanced requirements analyst with requirement tracking"""
+        tool_names = [t['name'] for t in tools] if tools else []
+        
+        # Track requirements based on project features
+        if self.requirement_tracker.total_requirements == 0:
+            # Add requirements based on features in the project
+            base_requirements = ["auth", "api", "frontend", "database", "deployment"]
+            for i, req in enumerate(base_requirements):
+                self.requirement_tracker.add_requirement(f"req_{i}_{req}")
+        
+        if 'write_file' in tool_names:
+            # Create requirements analysis document
+            content = """# Requirements Analysis
+
+## Project Requirements
+1. Authentication System - JWT-based user authentication
+2. API Development - RESTful APIs with proper validation
+3. Frontend Interface - React-based user interface
+4. Database Integration - PostgreSQL with proper schemas
+5. Deployment Strategy - Docker containerization
+
+## Technical Stack
+- Backend: FastAPI (Python 3.11)
+- Frontend: React + TypeScript
+- Database: PostgreSQL
+- Authentication: JWT tokens
+- Deployment: Docker + Kubernetes
+
+## Implementation Priority
+1. High: Authentication and API foundation
+2. Medium: Frontend interface and database setup
+3. Low: Advanced features and optimization
+"""
+            
+            if self.file_system:
+                self.file_system.write_file("docs/requirements.md", content)
+            
+            # Complete first requirement
+            self.requirement_tracker.complete_requirement("req_0_auth")
+            
+            return MockMessage(content=[
+                MockTextBlock(text="Analyzing project requirements and creating documentation."),
+                MockToolUseBlock(
+                    id=f"tool_{self.call_count}",
+                    name="write_file",
+                    input={
+                        "reasoning": "Creating comprehensive requirements analysis documentation",
+                        "file_path": "docs/requirements.md",
+                        "content": content
+                    }
+                )
+            ])
+        
+        # Default requirements behavior
+        return MockMessage(content=[
+            MockTextBlock(text="Requirements analysis complete. Ready to proceed with implementation.")
         ])
     
     def _enhanced_builder_response(self, messages: List[Dict], tools: List[Dict]) -> MockMessage:
@@ -775,12 +842,30 @@ CREATE INDEX idx_tasks_priority ON tasks(priority DESC);
         """Continue execution with more tools"""
         if tools:
             tool = tools[0]
+            tool_name = tool['name']
+            
+            # Provide proper parameters based on tool type
+            if tool_name == "write_file":
+                tool_input = {
+                    "reasoning": "Continuing task execution",
+                    "file_path": f"output/{agent_name}_output.txt",
+                    "content": f"Output from {agent_name} task execution."
+                }
+            elif tool_name == "record_decision":
+                tool_input = {
+                    "reasoning": "Continuing task execution",
+                    "decision": f"Continue with {agent_name} execution",
+                    "rationale": "Task requires completion"
+                }
+            else:
+                tool_input = {"reasoning": "Continuing task execution"}
+                
             return MockMessage(content=[
                 MockTextBlock(text=f"Continuing {agent_name} execution."),
                 MockToolUseBlock(
                     id=f"tool_{self.call_count}",
-                    name=tool['name'],
-                    input={"reasoning": "Continuing task execution"}
+                    name=tool_name,
+                    input=tool_input
                 )
             ])
         return self._complete_agent_task(agent_name)

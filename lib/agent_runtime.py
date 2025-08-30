@@ -240,7 +240,8 @@ class AnthropicAgentRunner:
     ) -> Tuple[bool, str, AgentContext]:
         """Run an agent asynchronously with real Claude API"""
         
-        if not HAS_ANTHROPIC:
+        # Use simulation mode only if no client is available (neither real nor mock)
+        if self.client is None:
             # Simulation mode
             return self._simulate_agent(agent_name, context)
         
