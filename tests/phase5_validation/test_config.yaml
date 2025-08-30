@@ -1,0 +1,204 @@
+# Phase 5 Validation Test Configuration
+# Settings for mock mode, logging, and test execution
+
+test_suite:
+  name: "Phase 5 Production Validation"
+  version: "1.0.0"
+  description: "Comprehensive testing of all 5 phases of agent swarm upgrades"
+
+# Mock mode configuration
+mock_mode:
+  enabled: true
+  enhanced: true  # Use enhanced mock with file creation
+  
+  # Failure simulation for resilience testing
+  failure_rates:
+    agent_failure: 0.05  # 5% agent failure rate
+    tool_failure: 0.02   # 2% tool failure rate
+    timeout_failure: 0.01  # 1% timeout rate
+  
+  # Response delays for realistic simulation
+  response_delays:
+    min_delay: 0.5  # seconds
+    max_delay: 2.0  # seconds
+    
+  # File creation settings
+  file_creation:
+    enabled: true
+    use_temp_dir: true
+    cleanup_after: false  # Keep files for inspection
+    
+  # Cost simulation
+  simulated_costs:
+    per_agent: 0.01
+    per_tool_call: 0.001
+    per_token: 0.00001
+
+# Logging configuration
+logging:
+  # Human-readable logs
+  human_readable: true
+  summary_level: "detailed"  # Options: concise, detailed, verbose
+  
+  # Session tracking
+  track_artifacts: true
+  track_handoffs: true
+  track_errors: true
+  track_performance: true
+  
+  # Log retention
+  keep_sessions: 30  # days
+  compress_old_logs: true
+  
+  # Output formats
+  formats:
+    - "json"
+    - "markdown"
+    - "html"  # For results viewer
+
+# Performance benchmarks
+benchmarks:
+  # Time limits (seconds)
+  max_workflow_time: 300
+  max_agent_time: 60
+  max_tool_time: 10
+  
+  # Quality thresholds
+  min_quality_score: 80
+  min_requirement_coverage: 0.85
+  max_error_rate: 0.1
+  
+  # Resource limits
+  max_memory_mb: 512
+  max_cpu_percent: 80
+
+# Agent configuration
+agents:
+  # Model selection for testing
+  model_overrides:
+    project-architect: "mock"
+    rapid-builder: "mock"
+    ai-specialist: "mock"
+    frontend-specialist: "mock"
+    devops-engineer: "mock"
+    
+  # Parallel execution
+  max_parallel: 3
+  
+  # Retry configuration
+  retry_attempts: 2
+  retry_delay: 5  # seconds
+
+# Test execution settings
+execution:
+  # Parallel test execution
+  parallel_tests: false  # Run tests sequentially by default
+  max_parallel_tests: 2
+  
+  # Timeout settings
+  test_timeout: 300  # seconds per test
+  global_timeout: 1800  # 30 minutes for all tests
+  
+  # Error handling
+  continue_on_failure: true
+  save_checkpoints: true
+  
+  # Output settings
+  verbose_output: false
+  show_progress: true
+  real_time_logs: true
+
+# Validation rules
+validation:
+  # Required agents per workflow type
+  required_agents:
+    full_stack_api:
+      - "requirements-analyst"
+      - "project-architect"
+      - "rapid-builder"
+      - "frontend-specialist"
+      - "quality-guardian"
+      
+    ai_solution:
+      - "requirements-analyst"
+      - "project-architect"
+      - "ai-specialist"
+      - "rapid-builder"
+      - "quality-guardian"
+      
+    api_service:
+      - "requirements-analyst"
+      - "project-architect"
+      - "rapid-builder"
+      - "api-integrator"
+      - "quality-guardian"
+  
+  # Minimum file counts
+  min_files:
+    full_stack_api: 15
+    ai_solution: 12
+    api_service: 10
+  
+  # Required deliverables
+  required_files:
+    - "main.py OR app.py OR index.js"
+    - "requirements.txt OR package.json"
+    - "README.md"
+    - "Dockerfile OR docker-compose.yml"
+
+# Reporting configuration
+reporting:
+  # Report generation
+  generate_html: true
+  generate_json: true
+  generate_markdown: true
+  
+  # Metrics to track
+  metrics:
+    - "execution_time"
+    - "quality_score"
+    - "requirement_coverage"
+    - "agent_utilization"
+    - "error_rate"
+    - "file_count"
+    - "cost_estimate"
+  
+  # Comparison baselines
+  compare_to_baseline: true
+  baseline_file: "baseline_metrics.json"
+  
+  # Notifications (optional)
+  notifications:
+    enabled: false
+    email: null
+    slack_webhook: null
+
+# Phase-specific validation
+phase_validation:
+  phase1:  # Core Integration
+    - "requirement_tracking"
+    - "validation_checkpoints"
+    - "agent_fixes"
+    
+  phase2:  # Production Infrastructure
+    - "monitoring_active"
+    - "recovery_mechanism"
+    - "metrics_export"
+    - "alert_rules"
+    
+  phase3:  # Quality Assurance
+    - "quality_gates"
+    - "performance_benchmarks"
+    - "test_coverage"
+    
+  phase4:  # Advanced Features
+    - "ml_orchestration"
+    - "observability"
+    - "self_healing"
+    - "knowledge_base"
+    
+  phase5:  # Production Readiness
+    - "security_rbac"
+    - "multi_tier_caching"
+    - "performance_optimization"
+    - "documentation_complete"

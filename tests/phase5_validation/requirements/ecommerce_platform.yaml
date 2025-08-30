@@ -1,0 +1,130 @@
+# E-Commerce Platform MVP Requirements
+# Tests: Frontend, Backend, Database, Payment Integration, Admin Panel
+
+project:
+  name: "QuickShop MVP"
+  type: "full_stack_api"
+  description: "Modern e-commerce platform with essential features"
+  timeline: "2 weeks"
+  priority: "MVP"
+
+features:
+  - id: "REQ-001"
+    title: "User Authentication System"
+    description: "Secure user registration and login with JWT"
+    priority: "high"
+    agents: ["rapid-builder", "api-integrator"]
+    
+  - id: "REQ-002"
+    title: "Product Catalog Management"
+    description: "CRUD operations for products with categories and search"
+    priority: "high"
+    agents: ["database-expert", "rapid-builder"]
+    
+  - id: "REQ-003"
+    title: "Shopping Cart Functionality"
+    description: "Add/remove items, quantity management, price calculation"
+    priority: "high"
+    agents: ["rapid-builder", "frontend-specialist"]
+    
+  - id: "REQ-004"
+    title: "Payment Integration"
+    description: "Stripe integration for secure payments"
+    priority: "high"
+    agents: ["api-integrator", "quality-guardian"]
+    
+  - id: "REQ-005"
+    title: "Order Management System"
+    description: "Order tracking, status updates, history"
+    priority: "medium"
+    agents: ["database-expert", "rapid-builder"]
+    
+  - id: "REQ-006"
+    title: "Admin Dashboard"
+    description: "Product management, order processing, analytics"
+    priority: "medium"
+    agents: ["frontend-specialist", "rapid-builder"]
+    
+  - id: "REQ-007"
+    title: "Email Notifications"
+    description: "Order confirmations, shipping updates"
+    priority: "low"
+    agents: ["api-integrator"]
+    
+  - id: "REQ-008"
+    title: "Responsive UI Design"
+    description: "Mobile-first responsive design with Tailwind CSS"
+    priority: "high"
+    agents: ["frontend-specialist"]
+
+technical_requirements:
+  - id: "TECH-001"
+    title: "Database Schema Design"
+    description: "PostgreSQL with proper indexes and relationships"
+    agents: ["database-expert"]
+    
+  - id: "TECH-002"
+    title: "API Security"
+    description: "Rate limiting, input validation, CORS configuration"
+    agents: ["quality-guardian", "api-integrator"]
+    
+  - id: "TECH-003"
+    title: "Performance Optimization"
+    description: "Caching strategy, query optimization, CDN setup"
+    agents: ["performance-optimizer"]
+    
+  - id: "TECH-004"
+    title: "Docker Deployment"
+    description: "Containerization with Docker and docker-compose"
+    agents: ["devops-engineer"]
+    
+  - id: "TECH-005"
+    title: "Testing Infrastructure"
+    description: "Unit tests, integration tests, E2E tests"
+    agents: ["quality-guardian"]
+
+tech_stack:
+  frontend:
+    framework: "React + TypeScript"
+    styling: "Tailwind CSS"
+    state: "Zustand"
+    build: "Vite"
+    
+  backend:
+    language: "Python"
+    framework: "FastAPI"
+    database: "PostgreSQL"
+    cache: "Redis"
+    auth: "JWT"
+    
+  infrastructure:
+    deployment: "Docker"
+    ci_cd: "GitHub Actions"
+    monitoring: "Sentry"
+    
+  integrations:
+    payment: "Stripe"
+    email: "SendGrid"
+    storage: "AWS S3"
+
+constraints:
+  budget: "$5000"
+  team_size: 2
+  deployment: "AWS EC2"
+  compliance: ["PCI DSS Level 1", "GDPR"]
+
+success_metrics:
+  - "Page load time < 2s"
+  - "API response time < 200ms"
+  - "99.9% uptime"
+  - "Mobile responsive design"
+  - "Secure payment processing"
+  - "Admin functionality complete"
+
+deliverables:
+  - "Full source code with documentation"
+  - "Database schema and migrations"
+  - "API documentation (OpenAPI)"
+  - "Deployment scripts and configuration"
+  - "User and admin guides"
+  - "Test suite with >80% coverage"

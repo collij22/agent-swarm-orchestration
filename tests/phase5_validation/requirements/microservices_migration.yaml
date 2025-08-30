@@ -1,0 +1,145 @@
+# Microservices Migration Requirements
+# Tests: Code Migration, DevOps, Docker, Service Mesh, CI/CD
+
+project:
+  name: "LegacyBreaker Migration"
+  type: "api_service"
+  description: "Migrate monolithic application to microservices architecture"
+  timeline: "3 weeks"
+  priority: "enterprise"
+
+features:
+  - id: "REQ-001"
+    title: "Monolith Analysis"
+    description: "Analyze existing codebase and identify service boundaries"
+    priority: "high"
+    agents: ["code-migrator", "project-architect"]
+    
+  - id: "REQ-002"
+    title: "Service Decomposition"
+    description: "Extract user, product, order, and payment services"
+    priority: "high"
+    agents: ["code-migrator", "rapid-builder"]
+    
+  - id: "REQ-003"
+    title: "API Gateway Implementation"
+    description: "Central entry point with routing and authentication"
+    priority: "high"
+    agents: ["api-integrator", "rapid-builder"]
+    
+  - id: "REQ-004"
+    title: "Service Communication"
+    description: "gRPC for internal, REST for external communication"
+    priority: "high"
+    agents: ["api-integrator"]
+    
+  - id: "REQ-005"
+    title: "Database Per Service"
+    description: "Separate databases with event sourcing"
+    priority: "medium"
+    agents: ["database-expert"]
+    
+  - id: "REQ-006"
+    title: "Service Discovery"
+    description: "Consul or Eureka for service registration"
+    priority: "medium"
+    agents: ["devops-engineer", "api-integrator"]
+    
+  - id: "REQ-007"
+    title: "Distributed Tracing"
+    description: "OpenTelemetry for cross-service tracing"
+    priority: "medium"
+    agents: ["devops-engineer"]
+    
+  - id: "REQ-008"
+    title: "Circuit Breaker Pattern"
+    description: "Resilience patterns for fault tolerance"
+    priority: "high"
+    agents: ["rapid-builder", "quality-guardian"]
+
+technical_requirements:
+  - id: "TECH-001"
+    title: "Container Orchestration"
+    description: "Kubernetes deployment with Helm charts"
+    agents: ["devops-engineer"]
+    
+  - id: "TECH-002"
+    title: "CI/CD Pipeline"
+    description: "GitLab CI with multi-stage deployments"
+    agents: ["devops-engineer"]
+    
+  - id: "TECH-003"
+    title: "Service Mesh"
+    description: "Istio for traffic management and security"
+    agents: ["devops-engineer", "api-integrator"]
+    
+  - id: "TECH-004"
+    title: "Message Queue"
+    description: "RabbitMQ or Kafka for async communication"
+    agents: ["api-integrator", "database-expert"]
+    
+  - id: "TECH-005"
+    title: "Monitoring Stack"
+    description: "Prometheus, Grafana, ELK stack"
+    agents: ["devops-engineer"]
+    
+  - id: "TECH-006"
+    title: "Security Implementation"
+    description: "mTLS, OAuth2, API key management"
+    agents: ["quality-guardian", "api-integrator"]
+
+tech_stack:
+  services:
+    user_service: "Python/FastAPI"
+    product_service: "Node.js/Express"
+    order_service: "Python/FastAPI"
+    payment_service: "Go/Gin"
+    
+  databases:
+    user_db: "PostgreSQL"
+    product_db: "MongoDB"
+    order_db: "PostgreSQL"
+    payment_db: "PostgreSQL"
+    
+  infrastructure:
+    orchestration: "Kubernetes"
+    service_mesh: "Istio"
+    api_gateway: "Kong"
+    message_queue: "RabbitMQ"
+    cache: "Redis"
+    
+  devops:
+    ci_cd: "GitLab CI"
+    monitoring: "Prometheus + Grafana"
+    logging: "ELK Stack"
+    tracing: "Jaeger"
+
+migration_strategy:
+  phase1: "Strangler pattern - new features as services"
+  phase2: "Extract user and product services"
+  phase3: "Extract order and payment services"
+  phase4: "Decommission monolith"
+
+constraints:
+  budget: "$12000"
+  team_size: 4
+  downtime: "Zero downtime migration"
+  data_consistency: "Eventual consistency acceptable"
+
+success_metrics:
+  - "All services containerized"
+  - "Zero downtime during migration"
+  - "API response time < 150ms"
+  - "Service startup time < 30s"
+  - "95% test coverage"
+  - "Automated deployment pipeline"
+  - "Complete monitoring stack"
+
+deliverables:
+  - "4 microservices with APIs"
+  - "Kubernetes deployment configs"
+  - "CI/CD pipeline configuration"
+  - "Service mesh configuration"
+  - "Migration documentation"
+  - "Monitoring dashboards"
+  - "Rollback procedures"

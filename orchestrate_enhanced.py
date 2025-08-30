@@ -46,6 +46,10 @@ from lib.agent_runtime import (
     AnthropicAgentRunner, AgentContext, ModelType, Tool, 
     create_standard_tools, create_quality_tools
 )
+
+# Import mock handler for testing
+if os.environ.get('MOCK_MODE') == 'true':
+    from lib.mock_anthropic_enhanced import MockAnthropicEnhancedRunner
 from lib.orchestration_enhanced import (
     AdaptiveWorkflowEngine, RequirementItem, AgentExecutionPlan,
     RequirementStatus, AgentExecutionStatus
@@ -81,7 +85,12 @@ class EnhancedOrchestrator:
             "verbose": SummaryLevel.VERBOSE
         }
         self.logger = create_new_session(session_id, enable_human_log, level_map.get(summary_level, SummaryLevel.CONCISE))
-        self.runtime = AnthropicAgentRunner(api_key, self.logger)
+        
+        # Use mock runner if in mock mode
+        if os.environ.get('MOCK_MODE') == 'true':
+            self.runtime = MockAnthropicEnhancedRunner(self.logger)
+        else:
+            self.runtime = AnthropicAgentRunner(api_key, self.logger)
         self.agents = self._load_agent_configs()
         
         # Enhanced orchestration components

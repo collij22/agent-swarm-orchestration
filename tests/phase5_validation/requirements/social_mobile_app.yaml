@@ -1,0 +1,140 @@
+# Mobile-First Social App Requirements
+# Tests: Frontend Specialist, Mobile Optimization, Real-time Features
+
+project:
+  name: "ConnectSphere"
+  type: "full_stack_api"
+  description: "Mobile-first social networking app with real-time features"
+  timeline: "2 weeks"
+  priority: "MVP"
+
+features:
+  - id: "REQ-001"
+    title: "User Profiles"
+    description: "Profile creation, editing, avatar upload"
+    priority: "high"
+    agents: ["rapid-builder", "frontend-specialist"]
+    
+  - id: "REQ-002"
+    title: "Social Feed"
+    description: "Infinite scroll feed with posts, likes, comments"
+    priority: "high"
+    agents: ["frontend-specialist", "performance-optimizer"]
+    
+  - id: "REQ-003"
+    title: "Real-Time Chat"
+    description: "WebSocket-based instant messaging"
+    priority: "high"
+    agents: ["api-integrator", "frontend-specialist"]
+    
+  - id: "REQ-004"
+    title: "Media Upload"
+    description: "Image and video uploads with compression"
+    priority: "high"
+    agents: ["api-integrator", "performance-optimizer"]
+    
+  - id: "REQ-005"
+    title: "Push Notifications"
+    description: "FCM for mobile push notifications"
+    priority: "medium"
+    agents: ["api-integrator"]
+    
+  - id: "REQ-006"
+    title: "Friend System"
+    description: "Friend requests, followers, blocking"
+    priority: "medium"
+    agents: ["rapid-builder", "database-expert"]
+    
+  - id: "REQ-007"
+    title: "Search Functionality"
+    description: "User search, content search, hashtags"
+    priority: "medium"
+    agents: ["database-expert", "performance-optimizer"]
+    
+  - id: "REQ-008"
+    title: "Stories Feature"
+    description: "24-hour ephemeral content"
+    priority: "low"
+    agents: ["frontend-specialist", "rapid-builder"]
+
+technical_requirements:
+  - id: "TECH-001"
+    title: "Progressive Web App"
+    description: "PWA with offline capabilities"
+    agents: ["frontend-specialist"]
+    
+  - id: "TECH-002"
+    title: "Mobile Performance"
+    description: "Optimization for mobile networks"
+    agents: ["performance-optimizer", "frontend-specialist"]
+    
+  - id: "TECH-003"
+    title: "Responsive Design"
+    description: "Mobile-first responsive UI"
+    agents: ["frontend-specialist"]
+    
+  - id: "TECH-004"
+    title: "Image Optimization"
+    description: "CDN, lazy loading, WebP format"
+    agents: ["performance-optimizer", "api-integrator"]
+    
+  - id: "TECH-005"
+    title: "Real-Time Infrastructure"
+    description: "WebSocket server with scaling"
+    agents: ["api-integrator", "devops-engineer"]
+
+tech_stack:
+  frontend:
+    framework: "React Native / React PWA"
+    styling: "Tailwind CSS"
+    state: "Redux Toolkit"
+    realtime: "Socket.io-client"
+    
+  backend:
+    language: "Node.js"
+    framework: "Express + TypeScript"
+    database: "PostgreSQL"
+    cache: "Redis"
+    realtime: "Socket.io"
+    
+  mobile:
+    push: "Firebase Cloud Messaging"
+    storage: "AWS S3"
+    cdn: "CloudFront"
+    
+  infrastructure:
+    deployment: "Docker + AWS ECS"
+    scaling: "Auto-scaling groups"
+    monitoring: "New Relic"
+
+ui_requirements:
+  - "Touch-optimized interface"
+  - "Gesture navigation"
+  - "Dark mode support"
+  - "Accessibility compliance"
+  - "60fps animations"
+  - "Skeleton loading states"
+
+constraints:
+  budget: "$6000"
+  team_size: 2
+  platforms: ["iOS", "Android", "Web"]
+  performance: "First paint < 1s on 3G"
+
+success_metrics:
+  - "App load time < 2s on 3G"
+  - "Time to interactive < 3s"
+  - "Lighthouse score > 90"
+  - "Real-time message latency < 200ms"
+  - "Support 10,000 concurrent users"
+  - "Offline mode functionality"
+  - "Push notification delivery > 95%"
+
+deliverables:
+  - "React Native mobile app"
+  - "Progressive Web App"
+  - "Backend API with WebSocket"
+  - "Push notification system"
+  - "Media upload pipeline"
+  - "Deployment configuration"
+  - "Performance benchmarks"

@@ -1,0 +1,10 @@
+
+project:
+  name: "Test API"
+  type: "api_service"
+  description: "Simple test API"
+
+requirements:
+  - id: "REQ-001"
+    description: "Create main.py"
+    priority: "high"

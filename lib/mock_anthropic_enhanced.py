@@ -1124,6 +1124,261 @@ openai==1.3.5
         if self.file_system:
             self.file_system.cleanup()
 
+class MockAnthropicEnhancedRunner:
+    """Mock runner that mimics AnthropicAgentRunner for testing"""
+    
+    def __init__(self, logger=None):
+        """Initialize mock runner with enhanced mock client"""
+        self.logger = logger
+        self.tools = {}
+        self.max_retries = 5
+        self.retry_delay = 2
+        
+        # Rate limiting
+        self.api_calls_per_minute = []
+        self.max_calls_per_minute = 20
+        
+        # Inter-agent delays
+        self.min_delay_between_agents = 3
+        
+        # Set up enhanced mock API client
+        self.api_key = "mock-key"
+        self.client = EnhancedMockAnthropicClient(
+            enable_file_creation=True,
+            failure_rate=0.05,  # 5% failure rate for testing
+            progress_tracking=True
+        )
+        
+        # Track mock tool executions
+        self.mock_tool_results = {}
+    
+    def register_tool(self, tool):
+        """Register a tool for use by agents"""
+        self.tools[tool.name] = tool
+    
+    def _tool_to_claude_format(self, tool):
+        """Convert tool to Claude API format"""
+        properties = {}
+        required = []
+        
+        for param_name, param_info in tool.parameters.items():
+            param_def = {
+                "type": param_info.get("type", "string"),
+                "description": param_info.get("description", "")
+            }
+            
+            if "enum" in param_info:
+                param_def["enum"] = param_info["enum"]
+            
+            properties[param_name] = param_def
+            
+            if param_info.get("required", False):
+                required.append(param_name)
+        
+        return {
+            "name": tool.name,
+            "description": tool.description,
+            "input_schema": {
+                "type": "object",
+                "properties": properties,
+                "required": required,
+                "additionalProperties": False
+            }
+        }
+    
+    async def run_agent_async(self, agent_name, agent_prompt, context, model=None, max_iterations=10, temperature=0.7):
+        """Run an agent asynchronously with mock responses and tool execution"""
+        if self.logger:
+            self.logger.log_agent_start(agent_name)
+        
+        try:
+            # Prepare tools
+            tools = [self._tool_to_claude_format(tool) for tool in self.tools.values()]
+            messages = [{"role": "user", "content": agent_prompt}]
+            
+            success = True
+            final_result = ""
+            iterations = 0
+            
+            while iterations < max_iterations:
+                iterations += 1
+                
+                # Create mock response
+                response = self.client.messages.create(
+                    model="claude-sonnet-4-20250514",
+                    messages=messages,
+                    tools=tools,
+                    temperature=temperature
+                )
+                
+                # Process response
+                text_blocks = []
+                tool_called = False
+                
+                for block in response.content:
+                    if hasattr(block, 'text'):
+                        text_blocks.append(block.text)
+                        if self.logger:
+                            self.logger.log_reasoning(agent_name, block.text[:500])
+                    elif hasattr(block, 'name'):
+                        tool_called = True
+                        tool_name = block.name
+                        tool_args = block.input if hasattr(block, 'input') else {}
+                        tool_id = block.id if hasattr(block, 'id') else f"tool_{iterations}"
+                        
+                        # Log tool call
+                        reasoning = tool_args.get('reasoning', 'Mock tool execution')
+                        if self.logger:
+                            self.logger.log_tool_call(agent_name, tool_name, tool_args, reasoning)
+                        
+                        # Execute tool
+                        if tool_name in self.tools:
+                            try:
+                                # Execute the mock tool
+                                tool_result = await self._execute_mock_tool(
+                                    self.tools[tool_name],
+                                    tool_args,
+                                    context,
+                                    agent_name
+                                )
+                                
+                                # Add tool result to messages
+                                messages.append({
+                                    "role": "assistant",
+                                    "content": response.content
+                                })
+                                
+                                messages.append({
+                                    "role": "user",
+                                    "content": [{
+                                        "type": "tool_result",
+                                        "tool_use_id": tool_id,
+                                        "content": str(tool_result)
+                                    }]
+                                })
+                                
+                            except Exception as e:
+                                if self.logger:
+                                    self.logger.log_error(agent_name, str(e), reasoning)
+                                success = False
+                                final_result = f"Tool execution failed: {str(e)}"
+                                break
+                        else:
+                            # Unknown tool - provide mock result
+                            tool_result = f"Mock result for {tool_name}"
+                            messages.append({
+                                "role": "assistant",
+                                "content": response.content
+                            })
+                            messages.append({
+                                "role": "user",
+                                "content": [{
+                                    "type": "tool_result",
+                                    "tool_use_id": tool_id,
+                                    "content": tool_result
+                                }]
+                            })
+                
+                # If no tools were called, agent is done
+                if not tool_called:
+                    final_result = "\n".join(text_blocks) if text_blocks else "Mock agent completed successfully"
+                    break
+                
+                # Stop after a reasonable number of tool calls in mock mode
+                if iterations >= 3:
+                    final_result = "Mock agent completed after executing tools"
+                    break
+            
+            # Update context with agent results
+            if success:
+                context.completed_tasks.append(agent_name)
+                context.artifacts[agent_name] = final_result
+            
+            if self.logger:
+                self.logger.log_agent_complete(agent_name, success, final_result[:500])
+            
+            return success, final_result, context
+            
+        except Exception as e:
+            if self.logger:
+                self.logger.log_error(agent_name, str(e))
+                self.logger.log_agent_complete(agent_name, False)
+            return False, str(e), context
+    
+    def run_agent(self, agent_name, agent_prompt, context, model=None, max_iterations=10, temperature=0.7):
+        """Synchronous wrapper for run_agent_async"""
+        import asyncio
+        return asyncio.run(self.run_agent_async(
+            agent_name, agent_prompt, context, model, max_iterations, temperature
+        ))
+    
+    async def _execute_mock_tool(self, tool, args, context, agent_name):
+        """Execute a mock tool and return simulated results"""
+        tool_name = tool.name
+        
+        # Simulate common tools with realistic responses
+        if tool_name == "write_file":
+            file_path = args.get("file_path", "unknown.txt")
+            content = args.get("content", "# Mock content")
+            # Track the file creation
+            if self.client.file_system:
+                self.client.file_system.write_file(file_path, content)
+            return f"File {file_path} created successfully (mock)"
+            
+        elif tool_name == "read_file":
+            file_path = args.get("file_path", "unknown.txt")
+            if self.client.file_system and self.client.file_system.exists(file_path):
+                return self.client.file_system.read_file(file_path)
+            return f"Mock content of {file_path}"
+            
+        elif tool_name == "dependency_check":
+            return {"dependencies": [], "missing": [], "status": "ready"}
+            
+        elif tool_name == "run_tests":
+            return {"passed": 10, "failed": 0, "skipped": 2, "status": "success"}
+            
+        elif tool_name == "analyze_requirements":
+            return {"total": 10, "analyzed": 10, "issues": [], "status": "complete"}
+            
+        elif tool_name == "create_directory":
+            dir_path = args.get("path", "mock_dir")
+            if self.client.file_system:
+                self.client.file_system.create_directory(dir_path)
+            return f"Directory {dir_path} created"
+            
+        elif tool_name == "execute_command":
+            command = args.get("command", "echo test")
+            return f"Mock output of: {command}"
+            
+        elif tool_name == "git_status":
+            return "On branch main\nnothing to commit, working tree clean"
+            
+        elif tool_name == "install_dependencies":
+            return "All dependencies installed successfully (mock)"
+            
+        elif tool_name == "build_project":
+            return "Build completed successfully (mock)"
+            
+        elif tool_name == "deploy":
+            return "Deployment completed successfully (mock)"
+            
+        elif tool_name == "quality_check":
+            return {"score": 85, "issues": [], "recommendations": [], "status": "passed"}
+            
+        elif tool_name == "performance_test":
+            return {"response_time": "50ms", "throughput": "1000 req/s", "status": "passed"}
+            
+        elif tool_name == "security_scan":
+            return {"vulnerabilities": 0, "warnings": 2, "status": "passed"}
+            
+        else:
+            # Generic mock response for unknown tools
+            return f"Mock execution of {tool_name} completed"
+    
+    def get_usage_summary(self):
+        """Get usage summary from mock client"""
+        return self.client.get_usage_summary()
+
 # Enhanced monkey-patch function for testing
 def use_enhanced_mock_client(enable_file_creation=True, failure_rate=0.0):
     """Replace real Anthropic client with enhanced mock in agent_runtime"""

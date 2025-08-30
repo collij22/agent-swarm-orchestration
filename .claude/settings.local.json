@@ -22,7 +22,10 @@
       "Bash(cat:*)",
       "Bash(npm run build:*)",
       "Bash(npx tsc:*)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(set MOCK_MODE=true)",
+      "Bash(simple_test.bat)",
+      "Bash(cmd /c:*)"
     ],
     "deny": [],
     "ask": []
