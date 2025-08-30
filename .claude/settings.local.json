@@ -15,7 +15,8 @@
       "Bash(gh:*)",
       "Bash(grep:*)",
       "Bash(timeout 60 python:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(rg:*)"
     ],
     "deny": [],
     "ask": []

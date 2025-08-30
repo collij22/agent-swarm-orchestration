@@ -39,7 +39,7 @@ if env_file.exists():
 sys.path.append(str(Path(__file__).parent / "lib"))
 
 from lib.agent_logger import ReasoningLogger, create_new_session
-from lib.agent_runtime import AnthropicAgentRunner, AgentContext, ModelType, Tool, create_standard_tools
+from lib.agent_runtime import AnthropicAgentRunner, AgentContext, ModelType, Tool, create_standard_tools, create_quality_tools
 
 try:
     from rich.console import Console
@@ -66,6 +66,10 @@ class EnhancedOrchestrator:
         
         # Register standard tools
         for tool in create_standard_tools():
+            self.runtime.register_tool(tool)
+        
+        # Register quality validation tools
+        for tool in create_quality_tools():
             self.runtime.register_tool(tool)
         
         # Add orchestration-specific tools
@@ -118,6 +122,17 @@ class EnhancedOrchestrator:
                 ["rapid-builder"],
                 ["api-integrator", "documentation-writer"],
                 ["quality-guardian"],
+                ["devops-engineer"]
+            ],
+            "full_stack_api": [
+                ["requirements-analyst"],
+                ["project-architect", "database-expert"],
+                ["rapid-builder"],
+                ["api-integrator", "documentation-writer"],
+                ["frontend-specialist"],  # Added frontend for full-stack
+                ["ai-specialist"],  # AI features if needed
+                ["quality-guardian"],
+                ["performance-optimizer"],
                 ["devops-engineer"]
             ],
             "ai_solution": [
@@ -184,6 +199,152 @@ class EnhancedOrchestrator:
         }
         return model_map.get(model_name, ModelType.SONNET)
     
+    def _detect_frontend_requirements(self, requirements: Dict) -> bool:
+        """Detect if project requires frontend implementation"""
+        frontend_indicators = [
+            "frontend", "react", "vue", "angular", "ui", "interface",
+            "dashboard", "webpage", "website", "client", "browser",
+            "tailwind", "css", "html", "user interface", "gui"
+        ]
+        
+        # Check in features
+        features = requirements.get("features", [])
+        for feature in features:
+            if any(indicator in feature.lower() for indicator in frontend_indicators):
+                return True
+        
+        # Check in tech_overrides
+        tech_overrides = requirements.get("tech_overrides", {})
+        if "frontend" in tech_overrides:
+            return True
+        
+        # Check in project description
+        description = requirements.get("project", {}).get("description", "")
+        if any(indicator in description.lower() for indicator in frontend_indicators):
+            return True
+            
+        return False
+    
+    def _detect_ai_requirements(self, requirements: Dict) -> bool:
+        """Detect if project requires AI/ML features"""
+        ai_indicators = [
+            "ai", "ml", "machine learning", "artificial intelligence",
+            "llm", "openai", "anthropic", "gpt", "claude", "neural",
+            "categorization", "classification", "prediction", "recommendation",
+            "intelligent", "smart", "automated analysis"
+        ]
+        
+        # Check features
+        features = requirements.get("features", [])
+        for feature in features:
+            if any(indicator in feature.lower() for indicator in ai_indicators):
+                return True
+        
+        # Check tech_overrides
+        if "ai" in requirements.get("tech_overrides", {}):
+            return True
+            
+        return False
+    
+    def _upgrade_project_type(self, project_type: str, requirements: Dict) -> str:
+        """Auto-upgrade project type based on detected requirements"""
+        needs_frontend = self._detect_frontend_requirements(requirements)
+        needs_ai = self._detect_ai_requirements(requirements)
+        
+        # Log detection results
+        self.logger.log_reasoning(
+            "orchestrator",
+            f"Frontend detected: {needs_frontend}, AI detected: {needs_ai}",
+            "Analyzing requirements for project type upgrade"
+        )
+        
+        # Upgrade logic
+        if project_type == "api_service" and needs_frontend:
+            self.logger.log_reasoning(
+                "orchestrator",
+                "Upgrading api_service to full_stack_api due to frontend requirements",
+                "Project type auto-upgrade"
+            )
+            return "full_stack_api"
+        
+        # Keep original if no upgrade needed
+        return project_type
+    
+    def _validate_requirements_coverage(self, requirements: Dict, workflow: List) -> Dict:
+        """Validate that all requirements have corresponding agents"""
+        # Map requirement patterns to required agents
+        requirement_agent_map = {
+            "docker": ["devops-engineer"],
+            "containerization": ["devops-engineer"],
+            "deployment": ["devops-engineer"],
+            "ci/cd": ["devops-engineer"],
+            "test": ["quality-guardian"],
+            "unit test": ["quality-guardian"],
+            "integration test": ["quality-guardian"],
+            "frontend": ["frontend-specialist"],
+            "react": ["frontend-specialist"],
+            "ui": ["frontend-specialist"],
+            "database": ["database-expert"],
+            "sql": ["database-expert"],
+            "api": ["api-integrator", "rapid-builder"],
+            "rest": ["api-integrator", "rapid-builder"],
+            "authentication": ["rapid-builder"],
+            "jwt": ["rapid-builder"],
+            "ai": ["ai-specialist"],
+            "categorization": ["ai-specialist"],
+            "machine learning": ["ai-specialist"],
+            "documentation": ["documentation-writer"],
+            "openapi": ["documentation-writer"],
+            "swagger": ["documentation-writer"],
+            "performance": ["performance-optimizer"],
+            "optimization": ["performance-optimizer"],
+            "security": ["quality-guardian"],
+            "rate limiting": ["api-integrator", "quality-guardian"]
+        }
+        
+        # Flatten workflow to get all agents
+        workflow_agents = set()
+        for phase in workflow:
+            workflow_agents.update(phase)
+        
+        # Check requirements
+        missing_coverage = []
+        features = requirements.get("features", [])
+        
+        for feature in features:
+            feature_lower = feature.lower()
+            covered = False
+            
+            # Check if any requirement pattern is in the feature
+            for pattern, required_agents in requirement_agent_map.items():
+                if pattern in feature_lower:
+                    # Check if at least one required agent is in workflow
+                    if any(agent in workflow_agents for agent in required_agents):
+                        covered = True
+                        break
+            
+            if not covered:
+                # Check if it's a general feature that rapid-builder handles
+                general_patterns = ["crud", "endpoint", "service", "system", "platform"]
+                if not any(pattern in feature_lower for pattern in general_patterns):
+                    missing_coverage.append(feature)
+        
+        # Also check testing requirements
+        testing_reqs = requirements.get("testing_requirements", [])
+        if testing_reqs and "quality-guardian" not in workflow_agents:
+            missing_coverage.append("Testing requirements specified but quality-guardian not in workflow")
+        
+        # Check documentation requirements  
+        doc_reqs = requirements.get("documentation_requirements", [])
+        if doc_reqs and "documentation-writer" not in workflow_agents:
+            missing_coverage.append("Documentation requirements specified but documentation-writer not in workflow")
+        
+        return {
+            "workflow_agents": list(workflow_agents),
+            "missing_coverage": missing_coverage,
+            "coverage_complete": len(missing_coverage) == 0
+        }
+    
     async def execute_workflow(
         self,
         project_type: str,
@@ -193,11 +354,36 @@ class EnhancedOrchestrator:
     ) -> bool:
         """Execute complete workflow with logging"""
         
+        # Auto-upgrade project type based on requirements
+        original_type = project_type
+        project_type = self._upgrade_project_type(project_type, requirements)
+        
+        if original_type != project_type:
+            console.print(Panel(
+                f"[yellow]Project type upgraded: {original_type} → {project_type}[/yellow]\n"
+                "Based on detected requirements",
+                border_style="yellow"
+            ))
+        
         if project_type not in self.workflows:
             self.logger.log_error("orchestrator", f"Unknown project type: {project_type}")
             return False
         
         workflow = self.workflows[project_type]
+        
+        # Validate requirements coverage
+        validation_result = self._validate_requirements_coverage(requirements, workflow)
+        if validation_result["missing_coverage"]:
+            console.print(Panel(
+                "[yellow]Warning: Some requirements may not be fully covered:[/yellow]\n" +
+                "\n".join(f"• {req}" for req in validation_result["missing_coverage"]),
+                border_style="yellow"
+            ))
+            self.logger.log_reasoning(
+                "orchestrator",
+                f"Missing coverage for: {validation_result['missing_coverage']}",
+                "Requirement validation warning"
+            )
         
         # Initialize context
         context = AgentContext(
@@ -254,13 +440,50 @@ class EnhancedOrchestrator:
                     "current_phase": phase_num
                 }, f, indent=2)
         
-        console.print(Panel(
-            "[bold green]Workflow Complete![/bold green]\n" +
-            f"Completed tasks: {len(context.completed_tasks)}\n" +
-            f"Artifacts created: {len(context.artifacts)}\n" +
-            f"Decisions made: {len(context.decisions)}",
-            border_style="green"
-        ))
+        # Run final validation if quality-guardian was in workflow
+        workflow_agents = set()
+        for phase in workflow:
+            workflow_agents.update(phase)
+        
+        if "quality-guardian" in workflow_agents:
+            # Attempt to run final validation
+            try:
+                from lib.quality_validation import RequirementValidator
+                validator = RequirementValidator()
+                validation_report = await validator.validate_requirements(requirements, context)
+                
+                console.print(Panel(
+                    "[bold green]Workflow Complete![/bold green]\n" +
+                    f"Completed tasks: {len(context.completed_tasks)}\n" +
+                    f"Artifacts created: {len(context.artifacts)}\n" +
+                    f"Decisions made: {len(context.decisions)}\n" +
+                    f"[yellow]Requirement Completion: {validation_report.completion_percentage:.1f}%[/yellow]",
+                    border_style="green"
+                ))
+                
+                # Log validation summary
+                self.logger.log_reasoning(
+                    "orchestrator",
+                    f"Requirements: {validation_report.completed}/{validation_report.total_requirements} completed",
+                    "Final validation complete"
+                )
+            except:
+                # Fallback to simple completion message
+                console.print(Panel(
+                    "[bold green]Workflow Complete![/bold green]\n" +
+                    f"Completed tasks: {len(context.completed_tasks)}\n" +
+                    f"Artifacts created: {len(context.artifacts)}\n" +
+                    f"Decisions made: {len(context.decisions)}",
+                    border_style="green"
+                ))
+        else:
+            console.print(Panel(
+                "[bold green]Workflow Complete![/bold green]\n" +
+                f"Completed tasks: {len(context.completed_tasks)}\n" +
+                f"Artifacts created: {len(context.artifacts)}\n" +
+                f"Decisions made: {len(context.decisions)}",
+                border_style="green"
+            ))
         
         return True
     
