@@ -1,0 +1,88 @@
+{
+  "multi_llm": {
+    "enabled": true,
+    "providers": [
+      "anthropic",
+      "openai",
+      "gemini"
+    ],
+    "fallback_chain": [
+      "anthropic",
+      "openai",
+      "gemini"
+    ],
+    "cost_optimization": true,
+    "cache_settings": {
+      "enabled": true,
+      "ttl": 3600,
+      "max_entries": 1000,
+      "similarity_threshold": 0.85
+    }
+  },
+  "agent_model_assignments": {
+    "rapid-builder": {
+      "provider": "anthropic",
+      "model": "claude-3-5-sonnet-20241022"
+    },
+    "frontend-specialist": {
+      "provider": "anthropic",
+      "model": "claude-3-5-sonnet-20241022"
+    },
+    "documentation-writer": {
+      "provider": "gemini",
+      "model": "gemini-pro"
+    },
+    "quality-guardian": {
+      "provider": "openai",
+      "model": "gpt-4-turbo-preview"
+    },
+    "api-integrator": {
+      "provider": "openai",
+      "model": "gpt-4"
+    },
+    "performance-optimizer": {
+      "provider": "anthropic",
+      "model": "claude-3-5-sonnet-20241022"
+    },
+    "security-auditor": {
+      "provider": "anthropic",
+      "model": "claude-3-5-sonnet-20241022"
+    },
+    "devops-engineer": {
+      "provider": "openai",
+      "model": "gpt-4"
+    },
+    "database-expert": {
+      "provider": "anthropic",
+      "model": "claude-3-5-sonnet-20241022"
+    },
+    "debug-specialist": {
+      "provider": "anthropic",
+      "model": "claude-3-opus-20240229"
+    },
+    "ai-specialist": {
+      "provider": "openai",
+      "model": "gpt-4-turbo-preview"
+    },
+    "project-orchestrator": {
+      "provider": "anthropic",
+      "model": "claude-3-opus-20240229"
+    },
+    "project-architect": {
+      "provider": "anthropic",
+      "model": "claude-3-opus-20240229"
+    },
+    "requirements-analyst": {
+      "provider": "openai",
+      "model": "gpt-4"
+    },
+    "code-migrator": {
+      "provider": "anthropic",
+      "model": "claude-3-5-sonnet-20241022"
+    },
+    "meta-agent": {
+      "provider": "anthropic",
+      "model": "claude-3-opus-20240229"
+    }
+  }
+}

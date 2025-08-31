@@ -232,4 +232,6 @@ test_*.md
 test_**/
 
 # Anthropic API responses cache
-.anthropic_cache/
+.anthropic_cache/# Backup files with potential secrets
+.env.backup*
+.env

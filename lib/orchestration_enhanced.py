@@ -527,12 +527,15 @@ class AdaptiveWorkflowEngine:
                 
                 self._update_progress()
                 
-                # Execute agent with timeout (60 seconds per agent in API mode)
+                # Execute agent with timeout (much longer for API mode to handle real Claude calls)
                 try:
                     # Check if we're in API mode (not mock mode)
                     import os
                     is_api_mode = os.environ.get('MOCK_MODE') != 'true'
-                    timeout_seconds = 60 if is_api_mode else 30  # Shorter timeout for mock mode
+                    # Increase timeout for API mode to handle real Claude API calls which can be slow
+                    # Claude API calls can take 30-60 seconds each, and agents may make multiple calls
+                    # Some agents like ai-specialist may make many API calls
+                    timeout_seconds = 480 if is_api_mode else 30  # 8 minutes for API mode, 30s for mock
                     
                     success, result, updated_context = await asyncio.wait_for(
                         runtime.run_agent_async(

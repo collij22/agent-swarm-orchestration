@@ -1,0 +1,41 @@
+# Simple API Test - Minimal Requirements for Faster Testing
+# Tests: Basic API with 2-3 agents only
+# Expected time: 10-15 minutes in API mode
+
+project:
+  name: "Simple API Test"
+  type: "api"
+  description: "Minimal API for quick testing"
+  timeline: "1 day"
+  priority: "test"
+
+features:
+  - id: "REQ-001"
+    title: "Basic API Structure"
+    description: "Create basic FastAPI application with health endpoint"
+    priority: "high"
+    agents: ["rapid-builder"]
+    
+  - id: "REQ-002"
+    title: "External Service Integration"
+    description: "Add one external service integration"
+    priority: "high"
+    agents: ["api-integrator"]
+    
+  - id: "REQ-003"
+    title: "Basic Testing"
+    description: "Add basic tests and validation"
+    priority: "medium"
+    agents: ["quality-guardian"]
+
+technical_requirements:
+  - "FastAPI backend"
+  - "Basic error handling"
+  - "Simple test coverage"
+  - "One external service"
+
+constraints:
+  - "Minimize agent count for faster testing"
+  - "Focus on core functionality only"
+  - "No frontend required"
+  - "No complex features"

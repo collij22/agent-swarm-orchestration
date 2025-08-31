@@ -37,13 +37,30 @@ except ImportError:
 # Initialize console with Windows encoding fix
 if Console:
     import sys
-    # Force UTF-8 encoding on Windows to handle Unicode characters
-    console = Console(
-        file=sys.stdout,
-        force_terminal=True,
-        width=120,
-        legacy_windows=False
+    import os
+    
+    # Detect if we're running in a subprocess or non-interactive environment
+    # Rich console can hang in Windows subprocesses, so disable it in those cases
+    is_subprocess = (
+        # Check if we're not in a terminal
+        not sys.stdout.isatty() or
+        # Check for common subprocess indicators
+        os.environ.get('DISABLE_RICH_CONSOLE') or
+        # Check if we're being piped
+        not sys.stderr.isatty()
     )
+    
+    if is_subprocess:
+        # Disable Rich console to prevent hanging
+        console = None
+    else:
+        # Force UTF-8 encoding on Windows to handle Unicode characters
+        console = Console(
+            file=sys.stdout,
+            force_terminal=True,
+            width=120,
+            legacy_windows=False
+        )
     # Set console encoding to handle Unicode on Windows
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
@@ -374,10 +391,17 @@ class ReasoningLogger:
                 f"[red]{clean_unicode_for_windows(error)}[/red]\n"
                 + (f"[dim]Reasoning: {clean_unicode_for_windows(reasoning)}[/dim]" if reasoning else "")
             )
-            self.console.print(Panel(
-                content,
-                border_style="red"
-            ))
+            try:
+                self.console.print(Panel(
+                    content,
+                    border_style="red"
+                ))
+                # Force flush to ensure output is written
+                import sys
+                sys.stdout.flush()
+            except Exception as e:
+                # Fallback to simple print if Rich has issues
+                print(f"[ERROR] {agent_name}: {error}")
     
     def log_phase(self, phase_name: str, agents: List[str], is_start: bool = True):
         """Log workflow phase start or completion"""

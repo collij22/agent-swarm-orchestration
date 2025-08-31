@@ -1,0 +1,5 @@
+SIMPLE-001:
+  description: Test requirement
+  agent: rapid-builder
+  priority: high
+  dependencies: []

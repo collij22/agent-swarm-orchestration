@@ -195,15 +195,102 @@ class AnthropicAgentRunner:
             )
             # Treat invalid key format as no key to avoid hanging on API calls
             self.api_key = None
+            self.client = None  # Explicitly set client to None for invalid keys
         
         # Only require API key if we have the anthropic library AND we're not in test mode
         if HAS_ANTHROPIC and self.api_key:
-            self.client = Anthropic(api_key=self.api_key)
+            self.logger.log_reasoning("agent_runtime", f"Creating Anthropic client with key: {self.api_key[:20]}...")
+            try:
+                # Create the client with a timeout-enabled HTTP client
+                import httpx
+                # Use httpx client with timeout for all API calls
+                # Claude API calls can take a long time, especially with complex prompts
+                # Set much longer timeouts to avoid premature timeouts
+                http_client = httpx.Client(
+                    timeout=httpx.Timeout(
+                        connect=10.0,    # 10 seconds to connect
+                        read=120.0,      # 120 seconds to read response (Claude can take time)  
+                        write=10.0,      # 10 seconds to write request
+                        pool=10.0        # 10 seconds to acquire connection from pool
+                    )
+                )
+                self.client = Anthropic(api_key=self.api_key, http_client=http_client)
+                
+                # Validate the API key by making a minimal test call
+                if not os.environ.get('SKIP_API_VALIDATION'):
+                    import threading
+                    import queue
+                    
+                    def validate_api_key():
+                        """Validate API key in a thread to prevent hanging"""
+                        try:
+                            self.logger.log_reasoning("agent_runtime", "Validating API key with test call...")
+                            # Make a minimal API call to validate the key
+                            # Use a very simple prompt that should return quickly
+                            test_response = self.client.messages.create(
+                                model="claude-3-5-haiku-20241022",  # Use cheapest model
+                                max_tokens=1,  # Minimal tokens
+                                messages=[{"role": "user", "content": "Hi"}],
+                                temperature=0
+                            )
+                            return True, None
+                        except Exception as e:
+                            return False, str(e)
+                    
+                    # Run validation in a thread with timeout
+                    result_queue = queue.Queue()
+                    
+                    def run_validation():
+                        success, error = validate_api_key()
+                        result_queue.put((success, error))
+                    
+                    validation_thread = threading.Thread(target=run_validation)
+                    validation_thread.daemon = True
+                    validation_thread.start()
+                    
+                    # Wait for validation with timeout
+                    validation_thread.join(timeout=30.0)  # 30 second timeout for validation (increased for slower connections)
+                    
+                    if validation_thread.is_alive():
+                        # Validation timed out
+                        self.logger.log_error("agent_runtime", "API validation timed out after 30 seconds", "Validation timeout")
+                        self.client = None
+                        self.api_key = None
+                    else:
+                        # Get validation result
+                        try:
+                            success, error = result_queue.get_nowait()
+                            if success:
+                                self.logger.log_reasoning("agent_runtime", "API key validated successfully")
+                            else:
+                                # API key validation failed
+                                if "401" in error or "authentication" in error.lower() or "invalid" in error.lower():
+                                    self.logger.log_error("agent_runtime", "Invalid API key - authentication failed", "API validation failed")
+                                else:
+                                    self.logger.log_error("agent_runtime", f"API validation failed: {error[:200]}", "Validation error")
+                                
+                                # Set client to None so orchestrator knows to exit
+                                self.client = None
+                                self.api_key = None
+                        except queue.Empty:
+                            # No result in queue (shouldn't happen)
+                            self.logger.log_error("agent_runtime", "API validation failed - no result", "Validation error")
+                            self.client = None
+                            self.api_key = None
+                        
+            except Exception as e:
+                # If client creation fails immediately, handle it
+                self.client = None
+                self.logger.log_error("agent_runtime", f"Failed to create Anthropic client: {str(e)}", "Client initialization error")
+                self.api_key = None
         else:
             self.client = None
-            if not self.api_key and HAS_ANTHROPIC:
-                # Only warn, don't fail - allows for mock mode testing
-                self.logger.log_error("agent_runtime", "No API key provided, running in simulation mode", "API key missing")
+            if not self.api_key:
+                if HAS_ANTHROPIC:
+                    # Only warn, don't fail - allows for mock mode testing
+                    self.logger.log_error("agent_runtime", "No API key provided, running in simulation mode", "API key missing")
+                else:
+                    self.logger.log_reasoning("agent_runtime", "Anthropic library not available, using mock mode")
     
     def register_tool(self, tool: Tool):
         """Register a tool for agent use"""
@@ -258,9 +345,13 @@ class AnthropicAgentRunner:
         if self.client is None:
             # Check if we're supposed to be in API mode but missing key
             import os
-            if os.environ.get('MOCK_MODE') != 'true' and not self.api_key:
-                error_msg = "API mode requested but no ANTHROPIC_API_KEY found. Set it with: set ANTHROPIC_API_KEY=your-key-here"
-                self.logger.log_error("agent_runtime", error_msg, "Missing API key")
+            if os.environ.get('MOCK_MODE') != 'true':
+                # We're in API mode but have no client
+                if not self.api_key:
+                    error_msg = "API mode requested but no valid ANTHROPIC_API_KEY found. Set it with: set ANTHROPIC_API_KEY=your-key-here"
+                else:
+                    error_msg = "API mode requested but Anthropic client initialization failed. Check your API key and network connection."
+                self.logger.log_error("agent_runtime", error_msg, "API client unavailable")
                 return False, error_msg, context
             # Simulation mode
             return self._simulate_agent(agent_name, context)

@@ -44,6 +44,14 @@ SESSION_DIR = PROJECT_ROOT / "sessions"
 
 # Test scenarios
 TEST_SCENARIOS = {
+    "simple": {
+        "name": "Simple API Test",
+        "requirements": "simple_api_test.yaml",
+        "project_type": "api",
+        "agents_expected": ["rapid-builder", "api-integrator", "quality-guardian"],
+        "complexity": "simple",
+        "estimated_time": 60
+    },
     "ecommerce": {
         "name": "E-Commerce Platform MVP",
         "requirements": "ecommerce_platform.yaml",
@@ -166,29 +174,67 @@ class TestRunner:
             if self.verbose:
                 print(f"Executing: {' '.join(cmd)}")
             
-            # Run orchestrator
-            process = subprocess.run(
+            # Run orchestrator with explicit environment
+            # Pass the current environment to subprocess
+            env = os.environ.copy()
+            
+            # Skip API validation for tests to prevent hanging
+            if self.api_mode:
+                # In API mode, we want to validate but with a shorter timeout
+                env['SKIP_API_VALIDATION'] = 'false'
+            else:
+                # In mock mode, no validation needed
+                env['SKIP_API_VALIDATION'] = 'true'
+            
+            # Use longer timeout for API mode since real Claude API calls take time
+            if self.api_mode:
+                # API mode needs MUCH more time - ecommerce test runs 7-8 agents
+                # Each agent can take 5-10 minutes with real Claude API calls
+                # Total time needed: 7 agents * 8 minutes = ~45-60 minutes
+                # Use a very generous timeout to handle all agents
+                timeout_seconds = 2700  # 45 minutes for API mode
+                print(f"[INFO] Using {timeout_seconds}s timeout ({timeout_seconds/60:.0f} minutes) for API mode")
+            else:
+                timeout_seconds = test_config.get("estimated_time", 300)
+            
+            # Use Popen for better process control
+            process = subprocess.Popen(
                 cmd,
-                capture_output=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 text=True,
                 encoding='utf-8',
                 errors='replace',
-                timeout=test_config.get("estimated_time", 300)
+                env=env  # Pass environment explicitly
             )
+            
+            try:
+                stdout, stderr = process.communicate(timeout=timeout_seconds)
+                return_code = process.returncode
+            except subprocess.TimeoutExpired:
+                # Try to terminate gracefully first
+                process.terminate()
+                try:
+                    stdout, stderr = process.communicate(timeout=5)
+                except subprocess.TimeoutExpired:
+                    # Force kill if it doesn't terminate
+                    process.kill()
+                    stdout, stderr = process.communicate()
+                raise subprocess.TimeoutExpired(cmd, timeout_seconds)
             
             execution_time = time.time() - start_time
             
             # Parse results
             result.update({
-                "success": process.returncode == 0,
+                "success": return_code == 0,
                 "execution_time": execution_time,
-                "stdout": process.stdout if self.verbose else process.stdout[-1000:],
-                "stderr": process.stderr,
-                "return_code": process.returncode
+                "stdout": stdout if self.verbose else stdout[-1000:] if stdout else "",
+                "stderr": stderr,
+                "return_code": return_code
             })
             
             # Extract metrics from output
-            result["metrics"] = self._extract_metrics(process.stdout)
+            result["metrics"] = self._extract_metrics(stdout)
             
             # Find session files
             result["session_files"] = self._find_session_files(start_time)
@@ -199,13 +245,15 @@ class TestRunner:
             print(f"[OK] Test completed in {execution_time:.2f}s - Quality Score: {result['quality_score']:.1f}%")
             
         except subprocess.TimeoutExpired:
+            # Use the actual timeout value, not the estimated time
+            actual_timeout = timeout_seconds
             result.update({
                 "success": False,
-                "execution_time": test_config.get("estimated_time", 300),
+                "execution_time": actual_timeout,
                 "error": "Test timeout exceeded",
                 "quality_score": 0
             })
-            print(f"[FAIL] Test timeout after {test_config.get('estimated_time', 300)}s")
+            print(f"[FAIL] Test timeout after {actual_timeout}s")
             
         except Exception as e:
             result.update({
@@ -477,13 +525,14 @@ Examples:
         print("Use --list to see available tests")
         return
     
-    # Check for API key if in API mode
+    # Check for API key if in API mode (warn but don't block - let agent_runtime handle validation)
     if args.api_mode and not os.environ.get('ANTHROPIC_API_KEY'):
-        print("\nERROR: API mode requires ANTHROPIC_API_KEY environment variable")
-        print("Please set your API key:")
+        print("\nWARNING: API mode selected but ANTHROPIC_API_KEY not found.")
+        print("The test will likely fail. To set your API key:")
         print("  Windows:   set ANTHROPIC_API_KEY=your-key-here")
         print("  Linux/Mac: export ANTHROPIC_API_KEY=your-key-here")
-        return
+        print("\nContinuing anyway to test error handling...")
+        print("-" * 60)
     
     # Run tests
     runner = TestRunner(verbose=args.verbose, parallel=args.parallel, api_mode=args.api_mode)

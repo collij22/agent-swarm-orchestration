@@ -703,12 +703,42 @@ async def main():
     api_key = args.api_key or os.getenv("ANTHROPIC_API_KEY")
     
     # Create enhanced orchestrator
-    orchestrator = EnhancedOrchestrator(
-        api_key, 
-        enable_dashboard=args.dashboard or args.progress,
-        enable_human_log=args.human_log,
-        summary_level=args.summary_level
-    )
+    try:
+        orchestrator = EnhancedOrchestrator(
+            api_key, 
+            enable_dashboard=args.dashboard or args.progress,
+            enable_human_log=args.human_log,
+            summary_level=args.summary_level
+        )
+    except Exception as e:
+        if HAS_RICH:
+            console.print(f"[red]Failed to initialize orchestrator: {str(e)}[/red]")
+        else:
+            print(f"Failed to initialize orchestrator: {str(e)}")
+        sys.exit(1)
+    
+    # Check if we're in API mode but have no client
+    if os.environ.get('MOCK_MODE') != 'true' and orchestrator.runtime.client is None:
+        error_msg = "\n[ERROR] API mode requested but Anthropic client is not available.\n"
+        if not api_key:
+            error_msg += "No API key found. Set ANTHROPIC_API_KEY environment variable or use --api-key flag.\n"
+        else:
+            # API key was provided but rejected
+            if not api_key.startswith('sk-ant-'):
+                error_msg += f"Invalid API key format. API key should start with 'sk-ant-' but got '{api_key[:10]}...'\n"
+            else:
+                error_msg += "API key was provided but client initialization failed. Check your API key and network connection.\n"
+        
+        error_msg += "\nTo use mock mode instead, set: MOCK_MODE=true"
+        
+        if HAS_RICH:
+            console.print(f"[red]{error_msg}[/red]")
+        else:
+            print(error_msg)
+        
+        # Close the logger session before exiting
+        orchestrator.logger.close_session()
+        sys.exit(1)
     
     try:
         if args.project_type and args.requirements:
