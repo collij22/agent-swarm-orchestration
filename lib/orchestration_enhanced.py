@@ -34,10 +34,12 @@ except ImportError:
 try:
     from .agent_logger import ReasoningLogger, get_logger
     from .agent_runtime import AnthropicAgentRunner, AgentContext, ModelType
+    from .mcp_manager import get_mcp_manager
 except ImportError:
     # For standalone imports
     from agent_logger import ReasoningLogger, get_logger
     from agent_runtime import AnthropicAgentRunner, AgentContext, ModelType
+    from mcp_manager import get_mcp_manager
 
 
 class RequirementStatus(Enum):
@@ -526,6 +528,47 @@ class AdaptiveWorkflowEngine:
                             self.requirements[req_id].started_at = datetime.now().isoformat()
                 
                 self._update_progress()
+                
+                # Activate conditional MCPs for this agent
+                mcp_manager = get_mcp_manager()
+                activated_mcps = []
+                
+                try:
+                    # Extract project requirements for MCP activation
+                    project_requirements = {}
+                    for req_id in plan.requirements:
+                        if req_id in self.requirements:
+                            req = self.requirements[req_id]
+                            project_requirements[req_id] = {
+                                'description': req.description,
+                                'priority': req.priority
+                            }
+                    
+                    # Determine project type from context
+                    project_type = context.artifacts.get('project_type', 'general')
+                    
+                    # Activate conditional MCPs based on agent and requirements
+                    activated_mcps = await mcp_manager.activate_conditional_mcps(
+                        agent_name=agent_name,
+                        requirements=project_requirements,
+                        project_type=project_type
+                    )
+                    
+                    if activated_mcps:
+                        self.logger.log_reasoning(
+                            "orchestrator",
+                            f"Activated MCPs for {agent_name}",
+                            f"MCPs: {', '.join(activated_mcps)}"
+                        )
+                        # Add activated MCPs to context for agent awareness
+                        context.artifacts['activated_mcps'] = activated_mcps
+                    
+                except Exception as e:
+                    self.logger.log_error(
+                        "orchestrator",
+                        f"Failed to activate MCPs for {agent_name}: {e}"
+                    )
+                    # Continue without MCPs on activation failure
                 
                 # Execute agent with timeout (much longer for API mode to handle real Claude calls)
                 try:
