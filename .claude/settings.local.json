@@ -26,7 +26,8 @@
       "Bash(set MOCK_MODE=true)",
       "Bash(simple_test.bat)",
       "Bash(cmd /c:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(set ANTHROPIC_API_KEY=test-key)"
     ],
     "deny": [],
     "ask": []

@@ -186,6 +186,16 @@ class AnthropicAgentRunner:
         # Set up API client (only if anthropic is available)
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
         
+        # Validate API key format (should start with 'sk-ant-' for real keys)
+        if self.api_key and not (self.api_key.startswith('sk-ant-') or os.environ.get('MOCK_MODE') == 'true'):
+            self.logger.log_error(
+                "agent_runtime",
+                f"Invalid API key format. Expected 'sk-ant-...' but got '{self.api_key[:10]}...'",
+                "API key validation failed"
+            )
+            # Treat invalid key format as no key to avoid hanging on API calls
+            self.api_key = None
+        
         # Only require API key if we have the anthropic library AND we're not in test mode
         if HAS_ANTHROPIC and self.api_key:
             self.client = Anthropic(api_key=self.api_key)
@@ -441,8 +451,17 @@ class AnthropicAgentRunner:
             except Exception as e:
                 error_str = str(e).lower()
                 
+                # Check for authentication errors (401) - don't retry these
+                if "401" in error_str or "authentication_error" in error_str or "invalid x-api-key" in error_str:
+                    self.logger.log_error(
+                        "claude_api",
+                        "Authentication failed - invalid API key",
+                        str(e)
+                    )
+                    raise e  # Don't retry authentication errors
+                
                 # Handle rate limiting specifically
-                if "rate_limit" in error_str or "429" in error_str:
+                elif "rate_limit" in error_str or "429" in error_str:
                     if attempt < self.max_retries - 1:
                         # Exponential backoff with longer delays for rate limits
                         wait_time = min(60, self.retry_delay * (2 ** attempt) * 3)  # Up to 60 seconds

@@ -52,6 +52,50 @@ except asyncio.TimeoutError:
 ### 2. Added Clear Error for Missing API Key
 **File**: `lib/agent_runtime.py` (line 247-256)
 
+### 3. Added API Key Format Validation
+**File**: `lib/agent_runtime.py` (line 189-197)
+
+```python
+# Validate API key format (should start with 'sk-ant-' for real keys)
+if self.api_key and not (self.api_key.startswith('sk-ant-') or os.environ.get('MOCK_MODE') == 'true'):
+    self.logger.log_error(
+        "agent_runtime",
+        f"Invalid API key format. Expected 'sk-ant-...' but got '{self.api_key[:10]}...'",
+        "API key validation failed"
+    )
+    # Treat invalid key format as no key to avoid hanging on API calls
+    self.api_key = None
+```
+
+**Benefits**:
+- Validates API key format before attempting to use it
+- Prevents attempts to use invalid keys (e.g., placeholder keys)
+- Clear error message shows expected format
+- Falls back to simulation mode for invalid keys
+
+### 4. No Retry on Authentication Errors
+**File**: `lib/agent_runtime.py` (line 445-451)
+
+```python
+# Check for authentication errors (401) - don't retry these
+if "401" in error_str or "authentication_error" in error_str or "invalid x-api-key" in error_str:
+    self.logger.log_error(
+        "claude_api",
+        "Authentication failed - invalid API key",
+        str(e)
+    )
+    raise e  # Don't retry authentication errors
+```
+
+**Benefits**:
+- Authentication errors (401) fail immediately without retries
+- Prevents wasting time on retries that will always fail
+- Clear error message for authentication failures
+- Faster feedback when API key is invalid
+
+### 5. Clear Error for Missing API Key (Enhanced)
+**File**: `lib/agent_runtime.py` (line 247-256)
+
 ```python
 # Use simulation mode only if no client is available (neither real nor mock)
 if self.client is None:
@@ -123,10 +167,14 @@ python tests/phase5_validation/run_tests.py --test ecommerce
 
 ## Files Modified
 
-1. `lib/orchestration_enhanced.py` - Added timeout wrapper
-2. `lib/agent_runtime.py` - Added API key validation
-3. `test_api_fix.py` - Created test verification script
-4. `docs/API_MODE_TIMEOUT_FIX.md` - This documentation
+1. `lib/orchestration_enhanced.py` - Added timeout wrapper (lines 530-553)
+2. `lib/agent_runtime.py` - Multiple fixes:
+   - API key format validation (lines 189-197)
+   - No retry on authentication errors (lines 445-451)
+   - Clear error for missing API key (lines 247-256)
+3. `test_api_fix.py` - Created initial test verification script
+4. `test_api_fix_v2.py` - Enhanced test script with all validations
+5. `docs/API_MODE_TIMEOUT_FIX.md` - This documentation
 
 ---
 
