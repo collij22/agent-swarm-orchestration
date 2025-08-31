@@ -1029,6 +1029,15 @@ def create_standard_tools() -> List[Tool]:
     
     return tools
 
+def create_mcp_enhanced_tools() -> List[Tool]:
+    """Create MCP-enhanced tools if MCP servers are available"""
+    try:
+        from .mcp_tools import create_mcp_tools
+        return create_mcp_tools()
+    except ImportError:
+        # MCP not available, return empty list
+        return []
+
 def create_quality_tools() -> List[Tool]:
     """Create quality validation tools for quality-guardian agent"""
     # Import quality validation functions

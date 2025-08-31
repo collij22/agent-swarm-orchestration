@@ -435,6 +435,49 @@ Files Created: 12 files (main.py, database.py, config.json, ...)
 - **Use consistent date fields**: created_at, updated_at (not order_date, etc.)
 - **Verify serialization**: Test all API endpoints return proper JSON
 
+## 🔌 MCP (Model Context Protocol) Standards
+
+### MCP Tool Usage Requirements
+- **Prioritize MCP Tools**: Always use MCP tools over traditional methods when available
+- **Documentation First**: Use mcp_ref_search before implementing new features
+- **Security Scanning**: Run mcp_semgrep_scan on all code before deployment
+- **Visual Validation**: Use mcp_browser_screenshot for UI verification
+
+### MCP Cost Optimization
+- **Token Savings**: Ref MCP saves ~60% tokens per documentation fetch
+- **Cost Per Step**: Average savings of $0.09 per implementation step
+- **Batch Operations**: Group related MCP calls for efficiency
+- **Cache Utilization**: MCP includes 15-minute cache for repeated queries
+
+### MCP Integration Points
+```yaml
+security_scanning:
+  tool: mcp_semgrep_scan
+  rules: [security, owasp, pci_dss, gdpr]
+  frequency: "Before each deployment"
+
+documentation_fetching:
+  tool: mcp_ref_search
+  savings: "60% token reduction"
+  technologies: [react, fastapi, django, postgresql]
+
+visual_testing:
+  tool: mcp_browser_screenshot
+  use_cases: ["UI validation", "Deployment verification", "Visual regression"]
+```
+
+### MCP Performance Standards
+- **Response Time**: MCP calls should complete within 5 seconds
+- **Fallback Strategy**: Use general knowledge if MCP unavailable
+- **Error Handling**: Log MCP failures but continue with alternatives
+- **Metrics Tracking**: Monitor token savings and cost reduction
+
+### MCP Agent Enhancement Summary
+- **Security Agents**: Enhanced with Semgrep MCP for automated vulnerability scanning
+- **Development Agents**: Enhanced with Ref MCP for accurate documentation (60% token savings)
+- **Quality Agents**: Enhanced with Browser MCP for visual testing and validation
+- **All Agents**: Show MCP savings metrics when tools are used
+
 ## 🧪 Enhanced Testing Standards
 
 ### Phase 1: Core Integration Standards

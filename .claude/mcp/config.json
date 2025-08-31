@@ -1,0 +1,78 @@
+{
+  "mcpServers": {
+    "semgrep": {
+      "name": "Semgrep Security Scanner",
+      "type": "http",
+      "url": "http://localhost:8081",
+      "transport": "streamable",
+      "config": {
+        "rules": {
+          "owasp": true,
+          "pci_dss": true,
+          "gdpr": true,
+          "security": true,
+          "performance": true
+        },
+        "languages": ["python", "javascript", "typescript", "java", "go"],
+        "severity_threshold": "warning",
+        "max_file_size": 1048576,
+        "timeout": 30000
+      },
+      "enabled": true
+    },
+    "ref": {
+      "name": "Documentation Reference",
+      "type": "http",
+      "url": "http://localhost:8082",
+      "transport": "http",
+      "config": {
+        "api_key": "${REF_MCP_API_KEY}",
+        "cache_ttl": 3600,
+        "max_tokens": 4000,
+        "sources": {
+          "react": "https://react.dev/reference",
+          "fastapi": "https://fastapi.tiangolo.com",
+          "django": "https://docs.djangoproject.com",
+          "typescript": "https://www.typescriptlang.org/docs",
+          "tailwind": "https://tailwindcss.com/docs",
+          "postgresql": "https://www.postgresql.org/docs",
+          "redis": "https://redis.io/docs",
+          "openai": "https://platform.openai.com/docs",
+          "anthropic": "https://docs.anthropic.com"
+        },
+        "chunk_size": 2000,
+        "overlap": 200
+      },
+      "enabled": true
+    },
+    "browser": {
+      "name": "Browser Automation",
+      "type": "http",
+      "url": "http://localhost:8083",
+      "transport": "websocket",
+      "config": {
+        "backend": "playwright",
+        "headless": true,
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "screenshot_dir": ".claude/mcp/screenshots",
+        "video_dir": ".claude/mcp/videos",
+        "timeout": 60000,
+        "wait_until": "networkidle",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
+      },
+      "enabled": true
+    }
+  },
+  "global": {
+    "retry_attempts": 3,
+    "retry_delay": 1000,
+    "health_check_interval": 30000,
+    "fallback_enabled": true,
+    "cost_tracking": true,
+    "log_level": "info",
+    "metrics_enabled": true
+  }
+}
