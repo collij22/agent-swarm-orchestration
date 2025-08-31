@@ -21,14 +21,14 @@ Review the core architecture and current implementation status:
 Understand the coding standards and agent execution framework:
 
 @CLAUDE.md
-@lib/agent_runtime.py
+@docs/AGENT_RUNTIME_SUMMARY.md
 
 ## 📊 Latest Updates & Testing Framework
 
-Check recent changes, model configuration, and comprehensive testing:
+Check recent changes, model configuration, and testing status:
 
 @docs/MODEL_UPDATE.md
-@test_enhancements.md
+@docs/TEST_STATUS.md
 
 ## 🔍 Current State Check
 
