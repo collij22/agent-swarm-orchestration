@@ -25,7 +25,8 @@
       "Bash(powershell:*)",
       "Bash(set MOCK_MODE=true)",
       "Bash(simple_test.bat)",
-      "Bash(cmd /c:*)"
+      "Bash(cmd /c:*)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []

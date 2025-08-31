@@ -246,6 +246,12 @@ class AnthropicAgentRunner:
         
         # Use simulation mode only if no client is available (neither real nor mock)
         if self.client is None:
+            # Check if we're supposed to be in API mode but missing key
+            import os
+            if os.environ.get('MOCK_MODE') != 'true' and not self.api_key:
+                error_msg = "API mode requested but no ANTHROPIC_API_KEY found. Set it with: set ANTHROPIC_API_KEY=your-key-here"
+                self.logger.log_error("agent_runtime", error_msg, "Missing API key")
+                return False, error_msg, context
             # Simulation mode
             return self._simulate_agent(agent_name, context)
         

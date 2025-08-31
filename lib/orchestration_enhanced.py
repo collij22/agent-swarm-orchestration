@@ -527,14 +527,30 @@ class AdaptiveWorkflowEngine:
                 
                 self._update_progress()
                 
-                # Execute agent
-                success, result, updated_context = await runtime.run_agent_async(
-                    agent_name,
-                    agent_config["prompt"],
-                    context,
-                    model=self._get_model(agent_config.get("model", "sonnet")),
-                    max_iterations=15
-                )
+                # Execute agent with timeout (60 seconds per agent in API mode)
+                try:
+                    # Check if we're in API mode (not mock mode)
+                    import os
+                    is_api_mode = os.environ.get('MOCK_MODE') != 'true'
+                    timeout_seconds = 60 if is_api_mode else 30  # Shorter timeout for mock mode
+                    
+                    success, result, updated_context = await asyncio.wait_for(
+                        runtime.run_agent_async(
+                            agent_name,
+                            agent_config["prompt"],
+                            context,
+                            model=self._get_model(agent_config.get("model", "sonnet")),
+                            max_iterations=15
+                        ),
+                        timeout=timeout_seconds
+                    )
+                except asyncio.TimeoutError:
+                    # Agent execution timed out
+                    error_msg = f"Agent {agent_name} timed out after {timeout_seconds} seconds"
+                    self.logger.log_error("orchestrator", error_msg)
+                    success = False
+                    result = error_msg
+                    updated_context = context
                 
                 if success:
                     # Success - update statuses

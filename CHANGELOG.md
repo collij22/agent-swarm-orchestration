@@ -2,6 +2,50 @@
 
 All notable changes to the Agent Swarm Orchestration System are documented here.
 
+## [August 31, 2025 - Session 11] - API Mode Timeout Fix
+
+### 🔧 Critical Bug Fix: Phase 5 Validation Test Timeouts
+
+#### Issue
+- **Problem**: Tests hanging indefinitely when running with `--api-mode` flag
+- **Impact**: Unable to run validation tests with actual Claude API
+- **Root Causes**:
+  1. No timeout on Anthropic API calls in `run_agent_async`
+  2. Silent fallback to simulation mode when API key missing
+  3. Insufficient error messaging for API configuration issues
+
+#### Solutions Implemented
+
+##### 1. Timeout Wrapper for Agent Execution (`lib/orchestration_enhanced.py`)
+- Added `asyncio.wait_for` wrapper with configurable timeout
+- 60-second timeout for API mode, 30 seconds for mock mode
+- Graceful handling of `asyncio.TimeoutError`
+- Clear error logging when timeout occurs
+
+##### 2. API Key Validation (`lib/agent_runtime.py`)
+- Explicit check for API key in API mode
+- Clear error message: "API mode requested but no ANTHROPIC_API_KEY found"
+- Helpful instructions for setting API key
+- Prevents confusing silent fallback to simulation
+
+##### 3. Test Verification (`test_api_fix.py`)
+- Created comprehensive test script
+- Verifies API mode fails gracefully without key
+- Confirms mock mode continues working
+- Validates timeout handling integration
+
+#### Files Modified
+- `lib/orchestration_enhanced.py` (lines 530-553)
+- `lib/agent_runtime.py` (lines 247-256)
+- `test_api_fix.py` (new file)
+- `docs/API_MODE_TIMEOUT_FIX.md` (new documentation)
+
+#### Impact
+- **Before**: Tests would hang indefinitely, requiring manual termination
+- **After**: Tests fail fast with clear error messages
+- **User Experience**: Better debugging with helpful error messages
+- **Reliability**: Prevents resource waste from hanging processes
+
 ## [August 30, 2025 - Session 10] - DevPortfolio Improvements & Agent Validation
 
 ### 🔧 DevPortfolio Execution Analysis & Fixes

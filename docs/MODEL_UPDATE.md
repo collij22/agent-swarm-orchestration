@@ -189,6 +189,15 @@ None - the update maintains full backward compatibility.
    - Use mock mode for development
    - Implement caching for repeated queries
 
+4. **API Mode Test Timeouts** (Fixed: August 31, 2025)
+   - **Symptom**: Tests hang indefinitely when using `--api-mode`
+   - **Cause**: No timeout on API calls, missing API key validation
+   - **Solution**: 
+     - Timeout wrapper added (60s for API, 30s for mock)
+     - Clear error when API key missing
+     - See `docs/API_MODE_TIMEOUT_FIX.md` for details
+   - **Usage**: Always set `ANTHROPIC_API_KEY` when using `--api-mode`
+
 ### Debug Commands
 
 ```bash
