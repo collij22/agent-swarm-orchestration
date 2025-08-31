@@ -1,0 +1,145 @@
+{
+  "metadata": {
+    "generated": "2025-08-31T00:52:09.399472",
+    "results_file": "C:\\AI projects\\1test\\tests\\phase5_validation\\results\\test_results_20250831_005209.json",
+    "timestamp": "20250831_005209"
+  },
+  "analysis": {
+    "overall": {
+      "total_tests": 5,
+      "successful_tests": 5,
+      "success_rate": 100.0,
+      "average_quality_score": 40.0,
+      "min_quality_score": 40.0,
+      "max_quality_score": 40.0,
+      "total_execution_time": 2.8890135288238525,
+      "average_execution_time": 0.5778027057647706,
+      "test_date": "2025-08-31T00:52:06.423161"
+    },
+    "per_test": [
+      {
+        "test_key": "ecommerce",
+        "name": "E-Commerce Platform MVP",
+        "success": true,
+        "quality_score": 40.0,
+        "execution_time": 0.5887255668640137,
+        "agents_executed": 0,
+        "files_created": 0,
+        "requirements_completed": 0,
+        "total_requirements": 0,
+        "completion_rate": 0,
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "test_key": "analytics",
+        "name": "Real-Time Analytics Dashboard",
+        "success": true,
+        "quality_score": 40.0,
+        "execution_time": 0.5844495296478271,
+        "agents_executed": 0,
+        "files_created": 0,
+        "requirements_completed": 0,
+        "total_requirements": 0,
+        "completion_rate": 0,
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "test_key": "microservices",
+        "name": "Microservices Migration",
+        "success": true,
+        "quality_score": 40.0,
+        "execution_time": 0.5727097988128662,
+        "agents_executed": 0,
+        "files_created": 0,
+        "requirements_completed": 0,
+        "total_requirements": 0,
+        "completion_rate": 0,
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "test_key": "mobile",
+        "name": "Mobile-First Social App",
+        "success": true,
+        "quality_score": 40.0,
+        "execution_time": 0.5609943866729736,
+        "agents_executed": 0,
+        "files_created": 0,
+        "requirements_completed": 0,
+        "total_requirements": 0,
+        "completion_rate": 0,
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "test_key": "ai_cms",
+        "name": "AI-Powered Content Management",
+        "success": true,
+        "quality_score": 40.0,
+        "execution_time": 0.5821342468261719,
+        "agents_executed": 0,
+        "files_created": 0,
+        "requirements_completed": 0,
+        "total_requirements": 0,
+        "completion_rate": 0,
+        "errors": 0,
+        "warnings": 0
+      }
+    ],
+    "agent_performance": {
+      "agent_utilization": [],
+      "total_unique_agents": 0,
+      "most_used_agent": null,
+      "least_used_agent": null
+    },
+    "requirement_coverage": {
+      "total_requirements": 0,
+      "completed_requirements": 0,
+      "overall_coverage": 0.0,
+      "coverage_by_test": {},
+      "average_coverage": 0
+    },
+    "error_patterns": {
+      "tests_with_errors": [],
+      "error_count": 0,
+      "error_types": {},
+      "error_rate": 0.0
+    },
+    "performance": {
+      "execution_time": {
+        "min": 0.5609943866729736,
+        "max": 0.5887255668640137,
+        "mean": 0.5778027057647706,
+        "median": 0.5821342468261719,
+        "stdev": 0.01107597289411585
+      },
+      "quality_scores": {
+        "min": 40.0,
+        "max": 40.0,
+        "mean": 40.0,
+        "median": 40.0,
+        "stdev": 0.0
+      },
+      "file_generation": {
+        "total_files": 0,
+        "average_per_test": 0,
+        "max_files": 0,
+        "min_files": 0
+      }
+    },
+    "phase_validation": {
+      "phases_validated": {
+        "phase1_core_integration": false,
+        "phase2_production_infrastructure": true,
+        "phase3_quality_assurance": false,
+        "phase4_advanced_features": false,
+        "phase5_production_readiness": true
+      },
+      "phases_passed": 2,
+      "total_phases": 5,
+      "validation_rate": 40.0
+    }
+  }
+}

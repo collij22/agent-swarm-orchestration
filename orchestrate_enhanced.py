@@ -401,6 +401,9 @@ class EnhancedOrchestrator:
             # Display results
             self._display_workflow_results(success, summary)
             
+            # Print test-compatible metrics summary
+            self._print_test_metrics(summary, context)
+            
             return success
         
         finally:
@@ -482,6 +485,14 @@ class EnhancedOrchestrator:
                     context.completed_tasks.extend(updated_context.completed_tasks)
                     context.artifacts.update(updated_context.artifacts)
                     context.decisions.extend(updated_context.decisions)
+                    
+                    # Print output for test runner compatibility
+                    print(f"Agent completed: {agent_name}")
+                    
+                    # Track and print files created
+                    if hasattr(updated_context, 'created_files') and updated_context.created_files:
+                        total_files = sum(len(files) for files in updated_context.created_files.values())
+                        print(f"Files created: {total_files}")
                 else:
                     failed_agents.add(agent_name)
             
@@ -573,6 +584,22 @@ class EnhancedOrchestrator:
                     errors.append(f"Feature {idx+1} has invalid format")
         
         return errors
+    
+    def _print_test_metrics(self, summary: Dict, context: AgentContext):
+        """Print metrics in format expected by test runner"""
+        # Print requirement completion
+        progress = summary.get("progress", {})
+        completed_reqs = progress.get("completed_requirements", 0)
+        total_reqs = progress.get("total_requirements", 0)
+        print(f"Requirements completed: {completed_reqs}/{total_reqs}")
+        
+        # Print total files created if we have file tracking
+        if hasattr(context, 'created_files') and context.created_files:
+            total_files = sum(len(files) for files in context.created_files.values())
+            print(f"Files created: {total_files}")
+        elif hasattr(self, 'mock_file_count'):
+            # For mock mode, track files differently
+            print(f"Files created: {self.mock_file_count}")
     
     def _display_workflow_results(self, success: bool, summary: Dict):
         """Display comprehensive workflow results"""
