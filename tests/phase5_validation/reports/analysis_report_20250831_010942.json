@@ -1,0 +1,200 @@
+{
+  "metadata": {
+    "generated": "2025-08-31T01:09:42.791926",
+    "results_file": "C:\\AI projects\\1test\\tests\\phase5_validation\\results\\test_results_20250831_010942.json",
+    "timestamp": "20250831_010942"
+  },
+  "analysis": {
+    "overall": {
+      "total_tests": 5,
+      "successful_tests": 5,
+      "success_rate": 100.0,
+      "average_quality_score": 90.42857142857143,
+      "min_quality_score": 85.71428571428572,
+      "max_quality_score": 95.0,
+      "total_execution_time": 2.7389631271362305,
+      "average_execution_time": 0.547792625427246,
+      "test_date": "2025-08-31T01:09:39.969616"
+    },
+    "per_test": [
+      {
+        "test_key": "ecommerce",
+        "name": "E-Commerce Platform MVP",
+        "success": true,
+        "quality_score": 95.0,
+        "execution_time": 0.5489847660064697,
+        "agents_executed": 6,
+        "files_created": 23,
+        "requirements_completed": 10,
+        "total_requirements": 10,
+        "completion_rate": 100.0,
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "test_key": "microservices",
+        "name": "Microservices Migration",
+        "success": true,
+        "quality_score": 92.5,
+        "execution_time": 0.5612273216247559,
+        "agents_executed": 5,
+        "files_created": 20,
+        "requirements_completed": 9,
+        "total_requirements": 9,
+        "completion_rate": 100.0,
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "test_key": "analytics",
+        "name": "Real-Time Analytics Dashboard",
+        "success": true,
+        "quality_score": 91.42857142857143,
+        "execution_time": 0.548703670501709,
+        "agents_executed": 4,
+        "files_created": 18,
+        "requirements_completed": 9,
+        "total_requirements": 9,
+        "completion_rate": 100.0,
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "test_key": "ai_cms",
+        "name": "AI-Powered Content Management",
+        "success": true,
+        "quality_score": 87.5,
+        "execution_time": 0.5442447662353516,
+        "agents_executed": 3,
+        "files_created": 13,
+        "requirements_completed": 9,
+        "total_requirements": 9,
+        "completion_rate": 100.0,
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "test_key": "mobile",
+        "name": "Mobile-First Social App",
+        "success": true,
+        "quality_score": 85.71428571428572,
+        "execution_time": 0.5358026027679443,
+        "agents_executed": 2,
+        "files_created": 10,
+        "requirements_completed": 9,
+        "total_requirements": 9,
+        "completion_rate": 100.0,
+        "errors": 0,
+        "warnings": 0
+      }
+    ],
+    "agent_performance": {
+      "agent_utilization": [
+        {
+          "agent": "rapid-builder",
+          "executions": 4,
+          "tests_count": 4,
+          "utilization_rate": 80.0
+        },
+        {
+          "agent": "devops-engineer",
+          "executions": 4,
+          "tests_count": 4,
+          "utilization_rate": 80.0
+        },
+        {
+          "agent": "ai-specialist",
+          "executions": 3,
+          "tests_count": 3,
+          "utilization_rate": 60.0
+        },
+        {
+          "agent": "frontend-specialist",
+          "executions": 3,
+          "tests_count": 3,
+          "utilization_rate": 60.0
+        },
+        {
+          "agent": "api-integrator",
+          "executions": 2,
+          "tests_count": 2,
+          "utilization_rate": 40.0
+        },
+        {
+          "agent": "quality-guardian",
+          "executions": 2,
+          "tests_count": 2,
+          "utilization_rate": 40.0
+        },
+        {
+          "agent": "database-expert",
+          "executions": 1,
+          "tests_count": 1,
+          "utilization_rate": 20.0
+        },
+        {
+          "agent": "performance-optimizer",
+          "executions": 1,
+          "tests_count": 1,
+          "utilization_rate": 20.0
+        }
+      ],
+      "total_unique_agents": 8,
+      "most_used_agent": "rapid-builder",
+      "least_used_agent": "performance-optimizer"
+    },
+    "requirement_coverage": {
+      "total_requirements": 46,
+      "completed_requirements": 46,
+      "overall_coverage": 100.0,
+      "coverage_by_test": {
+        "ecommerce": 100.0,
+        "analytics": 100.0,
+        "microservices": 100.0,
+        "mobile": 100.0,
+        "ai_cms": 100.0
+      },
+      "average_coverage": 100.0
+    },
+    "error_patterns": {
+      "tests_with_errors": [],
+      "error_count": 0,
+      "error_types": {},
+      "error_rate": 0.0
+    },
+    "performance": {
+      "execution_time": {
+        "min": 0.5358026027679443,
+        "max": 0.5612273216247559,
+        "mean": 0.547792625427246,
+        "median": 0.548703670501709,
+        "stdev": 0.009207201154854256
+      },
+      "quality_scores": {
+        "min": 85.71428571428572,
+        "max": 95.0,
+        "mean": 90.42857142857143,
+        "median": 91.42857142857143,
+        "stdev": 3.7745793116043833
+      },
+      "file_generation": {
+        "total_files": 84,
+        "average_per_test": 16.8,
+        "max_files": 23,
+        "min_files": 10
+      }
+    },
+    "phase_validation": {
+      "phases_validated": {
+        "phase1_core_integration": true,
+        "phase2_production_infrastructure": true,
+        "phase3_quality_assurance": true,
+        "phase4_advanced_features": false,
+        "phase5_production_readiness": true
+      },
+      "phases_passed": 4,
+      "total_phases": 5,
+      "validation_rate": 80.0
+    }
+  }
+}
