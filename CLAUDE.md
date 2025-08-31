@@ -416,6 +416,25 @@ Files Created: 12 files (main.py, database.py, config.json, ...)
 - NEVER proactively create documentation files (*.md) or README files unless explicitly requested
 - All agents must adhere to these standards unless project requirements specify otherwise
 
+## 🚨 Critical Implementation Standards
+
+### IMPORTANT: Actual File Creation Requirements
+- **ALWAYS create actual source files** with working code, not just scaffolding
+- **NEVER leave placeholder imports** (e.g., main.tsx must exist if imported)
+- **ALWAYS include entry point files** (index.tsx, main.tsx, App.tsx for React)
+- **ALWAYS create package-lock.json** after npm install for reproducible builds
+
+### IMPORTANT: Data Seeding Requirements  
+- **ALWAYS create at least 3 dummy entries** for each resource type
+- **Products**: Include name, description, price, stock, and image URLs
+- **Users**: Create test user with credentials (email: test@example.com, password: password123)
+- **Orders**: Include at least 1 completed order for testing
+
+### IMPORTANT: Field Consistency Standards
+- **ALWAYS match field names** between frontend and backend exactly
+- **Use consistent date fields**: created_at, updated_at (not order_date, etc.)
+- **Verify serialization**: Test all API endpoints return proper JSON
+
 ## 🧪 Enhanced Testing Standards
 
 ### Phase 1: Core Integration Standards
@@ -476,3 +495,26 @@ python lib/mock_anthropic_enhanced.py
 - **Requirement Tracking**: Precise completion percentages (0-100%)
 - **Controlled Failures**: Test error handling with configurable failure rates
 - **Comprehensive Metrics**: API calls, costs, files created, progress tracking
+
+## 🔍 Mandatory Testing Protocol
+
+### Before Marking Any Task Complete:
+1. **Build Test**: Frontend and backend must build without errors
+2. **Start Test**: All services must start successfully
+3. **API Test**: All endpoints must return valid responses
+4. **Auth Test**: User can register, login, and see protected content
+5. **Data Test**: At least one full CRUD cycle must work
+6. **Docker Test**: docker-compose up must bring up all services
+
+### Minimum Viable Deliverable:
+- User can access the application
+- At least one dummy entry is visible
+- Basic navigation works
+- No blank pages or console errors
+- Docker containers stay running for 5+ minutes
+
+### IMPORTANT: Mock Mode Must Still Create Real Files
+- Even in mock mode, create actual source files
+- Validate file structure matches production requirements
+- Test Docker builds even in mock mode
+- Ensure seed data is created regardless of mode
