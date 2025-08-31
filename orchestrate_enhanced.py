@@ -58,6 +58,7 @@ from lib.progress_streamer import (
     ProgressStreamer, ProgressEventType, create_orchestration_progress_callback
 )
 from lib.mcp_conditional_loader import MCPConditionalLoader
+from lib.workflow_loader import WorkflowLoader
 
 try:
     from rich.console import Console
@@ -98,6 +99,7 @@ class EnhancedOrchestrator:
         self.workflow_engine = AdaptiveWorkflowEngine(self.logger)
         self.progress_streamer = ProgressStreamer(self.logger) if enable_dashboard else None
         self.mcp_loader = MCPConditionalLoader()  # Initialize conditional MCP loader
+        self.workflow_loader = WorkflowLoader()  # Initialize workflow pattern loader
         
         # Register progress callback
         if self.progress_streamer:
@@ -366,6 +368,34 @@ class EnhancedOrchestrator:
             # Parse requirements with intelligent ID mapping
             self.workflow_engine.parse_requirements_with_ids(requirements)
             
+            # Select MCP-enhanced workflow pattern if applicable
+            selected_workflow = self.workflow_loader.select_workflow(requirements, project_type)
+            if selected_workflow:
+                self.logger.log_reasoning(
+                    "orchestrator",
+                    f"Selected MCP-enhanced workflow: {selected_workflow.name}",
+                    f"Description: {selected_workflow.description}"
+                )
+                
+                # Store selected workflow for agent MCP configuration
+                self.selected_workflow = selected_workflow
+                
+                # Log workflow phases
+                for phase in selected_workflow.phases:
+                    agents_in_phase = [a.get('agent', '') for a in phase.agents]
+                    self.logger.log_reasoning(
+                        "orchestrator",
+                        f"Workflow phase '{phase.name}' ({phase.execution_type})",
+                        f"Agents: {', '.join(agents_in_phase)}"
+                    )
+            else:
+                self.selected_workflow = None
+                self.logger.log_reasoning(
+                    "orchestrator",
+                    "No specific MCP-enhanced workflow matched",
+                    "Using standard adaptive execution plan"
+                )
+            
             # Create adaptive execution plan
             available_agents = list(self.agents.keys())
             self.workflow_engine.create_adaptive_execution_plan(available_agents)
@@ -531,11 +561,28 @@ class EnhancedOrchestrator:
         
         # Determine which conditional MCPs to load for this agent
         project_type = getattr(self, 'current_project_type', None)
-        active_mcps = self.mcp_loader.should_load_mcp(
-            agent_name,
-            context.project_requirements,
-            project_type
-        )
+        selected_workflow = getattr(self, 'selected_workflow', None)
+        
+        # First check if there's a selected workflow with MCPs for this agent
+        if selected_workflow:
+            # Get MCPs from the workflow pattern
+            active_mcps = self.workflow_loader.get_agent_mcps(
+                agent_name, 
+                selected_workflow.name
+            )
+            if active_mcps:
+                self.logger.log_reasoning(
+                    "orchestrator",
+                    f"Using MCPs from workflow '{selected_workflow.name}' for {agent_name}",
+                    f"MCPs: {', '.join(active_mcps)}"
+                )
+        else:
+            # Fall back to conditional loader logic
+            active_mcps = self.mcp_loader.should_load_mcp(
+                agent_name,
+                context.project_requirements,
+                project_type
+            )
         
         # Log conditional MCP activation
         if active_mcps:

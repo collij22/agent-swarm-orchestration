@@ -50,7 +50,8 @@
       "Bash(move CHANGELOG_NEW.md CHANGELOG.md)",
       "Bash(ren:*)",
       "Bash(git rm:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(sed:*)"
     ],
     "deny": [],
     "ask": []

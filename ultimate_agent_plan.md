@@ -411,12 +411,12 @@ python debug_orchestrator.py  # Debug orchestrator in mock mode
 - **🧪 Test Coverage**: Complete test suite with perfect pass rate
 - **🚀 Production Ready**: Zero critical bugs remaining
 
-## 🔌 MCP (Model Context Protocol) Integration - December 31, 2024
+## 🔌 MCP (Model Context Protocol) Integration - December 31, 2024 - January 1, 2025
 
 ### Overview
-Revolutionary enhancement that delivers **60% token reduction** and significant cost savings through intelligent integration with specialized MCP servers.
+Revolutionary enhancement that delivers **60% token reduction** and significant cost savings through intelligent integration with specialized MCP servers. Extended with conditional MCPs and workflow-driven activation patterns.
 
-### MCP-Enhanced Agents (7 Total)
+### Phase 1: Core MCP Integration (Dec 31, 2024)
 - **security-auditor** (Additional agent): Semgrep MCP for automated vulnerability scanning
 - **rapid-builder**: Ref MCP for documentation fetching (60% token savings)
 - **quality-guardian**: Browser MCP for visual testing and validation
@@ -425,14 +425,42 @@ Revolutionary enhancement that delivers **60% token reduction** and significant 
 - **documentation-writer**: Ref MCP for documentation standards
 - **devops-engineer**: Ref MCP + Browser MCP for deployment validation
 
+### Phase 2: Conditional MCPs (Jan 1, 2025)
+7 additional MCPs with conditional loading:
+- **quick-data MCP**: Data processing, CSV/JSON operations
+- **firecrawl MCP**: Web scraping, competitor analysis
+- **stripe MCP**: Payment processing integration
+- **vercel MCP**: Deployment automation
+- **brave_search MCP**: Technical research and troubleshooting
+- **sqlite MCP**: Local database prototyping
+- **fetch MCP**: API testing and webhook validation
+
+### Phase 3: Workflow Integration (Jan 1, 2025)
+6 MCP-enhanced workflow patterns:
+- **payment_enabled_webapp**: Stripe + Fetch MCPs for e-commerce
+- **research_heavy_project**: Firecrawl + Brave Search for analysis
+- **rapid_prototype**: SQLite + Fetch for quick MVPs
+- **vercel_deployment**: Vercel MCP for Next.js projects
+- **data_processing_pipeline**: quick-data for analytics
+- **api_testing_focused**: Fetch MCP for integration testing
+
 ### MCP Servers Integrated
-1. **Semgrep MCP** (Port 3101): Security scanning for OWASP, PCI DSS, GDPR compliance
-2. **Ref MCP** (Port 3102): Intelligent documentation fetching with 60% token reduction
-3. **Browser MCP** (Port 3103): Visual testing, screenshots, and regression testing
+1. **Semgrep MCP** (Port 3101): Security scanning
+2. **Ref MCP** (Port 3102): Documentation fetching
+3. **Browser MCP** (Port 3103): Visual testing
+4. **quick-data MCP** (Port 3104): Data operations
+5. **firecrawl MCP** (Port 3105): Web scraping
+6. **stripe MCP** (Port 3106): Payment processing
+7. **vercel MCP** (Port 3107): Deployment
+8. **brave_search MCP** (Port 3108): Research
+9. **sqlite MCP** (Port 3109): Local database
+10. **fetch MCP** (Port 3110): API testing
 
 ### Benefits
 - **60% token reduction** through selective documentation fetching
 - **~$0.09 cost savings** per agent execution step
+- **Conditional loading** - MCPs only activate when beneficial
+- **Workflow-driven** - Automatic MCP selection based on project type
 - **Reduced hallucinations** with accurate, current documentation
 - **Automated security scanning** catches vulnerabilities early
 - **Visual validation** ensures UI correctness

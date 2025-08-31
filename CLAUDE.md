@@ -442,15 +442,51 @@ Files Created: 12 files (main.py, database.py, config.json, ...)
 - **Documentation First**: Use mcp_ref_search before implementing new features
 - **Security Scanning**: Run mcp_semgrep_scan on all code before deployment
 - **Visual Validation**: Use mcp_browser_screenshot for UI verification
+- **Conditional Loading**: MCPs activate only when beneficial for the task
+
+### MCP Workflow Integration (Phase 3)
+- **Workflow-Driven**: MCPs automatically selected based on workflow patterns
+- **6 Specialized Workflows**: Payment, research, prototype, Vercel, data, API testing
+- **Dynamic Activation**: Agents receive MCPs based on workflow phase requirements
+- **Intelligent Selection**: Project type and requirements determine workflow choice
+
+### Available Workflow Patterns
+```yaml
+payment_enabled_webapp:
+  triggers: [payment, subscription, billing, e-commerce]
+  mcps: [stripe, fetch, sqlite, vercel]
+  
+research_heavy_project:
+  triggers: [research, analysis, competitor]
+  mcps: [firecrawl, brave_search, quick_data]
+  
+rapid_prototype:
+  triggers: [mvp, prototype, poc, demo]
+  mcps: [sqlite, fetch, vercel]
+  
+vercel_deployment:
+  triggers: [vercel, nextjs, serverless]
+  mcps: [vercel, fetch]
+  
+data_processing_pipeline:
+  triggers: [data, analytics, csv, etl]
+  mcps: [quick_data, sqlite]
+  
+api_testing_focused:
+  triggers: [api, webhook, integration]
+  mcps: [fetch, brave_search]
+```
 
 ### MCP Cost Optimization
 - **Token Savings**: Ref MCP saves ~60% tokens per documentation fetch
 - **Cost Per Step**: Average savings of $0.09 per implementation step
 - **Batch Operations**: Group related MCP calls for efficiency
 - **Cache Utilization**: MCP includes 15-minute cache for repeated queries
+- **Conditional Usage**: MCPs only load when workflow requires them
 
 ### MCP Integration Points
 ```yaml
+# Phase 1: Core MCPs (Always Available)
 security_scanning:
   tool: mcp_semgrep_scan
   rules: [security, owasp, pci_dss, gdpr]
@@ -464,6 +500,19 @@ documentation_fetching:
 visual_testing:
   tool: mcp_browser_screenshot
   use_cases: ["UI validation", "Deployment verification", "Visual regression"]
+
+# Phase 2-3: Conditional MCPs (Workflow-Based)
+payment_processing:
+  tool: mcp_stripe
+  activation: "When payment features required"
+  
+data_operations:
+  tool: mcp_quick_data
+  activation: "For CSV/JSON processing, analytics"
+  
+web_scraping:
+  tool: mcp_firecrawl
+  activation: "For research and competitor analysis"
 ```
 
 ### MCP Performance Standards
@@ -471,12 +520,14 @@ visual_testing:
 - **Fallback Strategy**: Use general knowledge if MCP unavailable
 - **Error Handling**: Log MCP failures but continue with alternatives
 - **Metrics Tracking**: Monitor token savings and cost reduction
+- **Workflow Efficiency**: Track MCP utilization per workflow pattern
 
 ### MCP Agent Enhancement Summary
+- **All 15 Agents**: Support conditional MCP loading based on workflow
 - **Security Agents**: Enhanced with Semgrep MCP for automated vulnerability scanning
 - **Development Agents**: Enhanced with Ref MCP for accurate documentation (60% token savings)
 - **Quality Agents**: Enhanced with Browser MCP for visual testing and validation
-- **All Agents**: Show MCP savings metrics when tools are used
+- **Specialized MCPs**: 7 additional MCPs activate conditionally based on project needs
 
 ## 🧪 Enhanced Testing Standards
 
