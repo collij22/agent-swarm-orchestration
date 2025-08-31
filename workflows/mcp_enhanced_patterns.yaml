@@ -1,0 +1,242 @@
+# MCP Enhanced Workflow Patterns
+# Workflows that leverage conditional MCPs for optimal performance
+# MCPs are indicated with (+mcp_name) notation
+
+payment_enabled_webapp:
+  description: "Web application with payment processing capabilities"
+  triggers:
+    - "payment"
+    - "subscription"
+    - "billing"
+    - "e-commerce"
+    - "saas"
+  phases:
+    - name: "Analysis & Research"
+      sequential:
+        - agent: requirements-analyst
+          mcps: [brave_search, firecrawl, quick_data]
+          description: "Research payment solutions and competitor analysis"
+        - agent: project-architect
+          mcps: [quick_data]
+          description: "Design architecture with payment integration"
+    
+    - name: "Core Development"
+      parallel:
+        - agent: rapid-builder
+          mcps: [sqlite]
+          description: "Build core application with local data"
+        - agent: api-integrator
+          mcps: [stripe, fetch]
+          description: "Integrate Stripe payment processing"
+        - agent: frontend-specialist
+          mcps: []
+          description: "Build payment UI components"
+    
+    - name: "Quality & Deployment"
+      sequential:
+        - agent: quality-guardian
+          mcps: [fetch]
+          description: "Test payment flows and API integrations"
+        - agent: devops-engineer
+          mcps: [vercel]
+          description: "Deploy to Vercel with serverless functions"
+
+research_heavy_project:
+  description: "Project requiring extensive market research and analysis"
+  triggers:
+    - "research"
+    - "analysis"
+    - "competitor"
+    - "market"
+  phases:
+    - name: "Deep Research Phase"
+      sequential:
+        - agent: requirements-analyst
+          mcps: [firecrawl, brave_search, quick_data]
+          description: "Comprehensive market and competitor research"
+    
+    - name: "Architecture Planning"
+      parallel:
+        - agent: project-architect
+          mcps: [brave_search]
+          description: "Research best practices and patterns"
+        - agent: documentation-writer
+          mcps: [firecrawl]
+          description: "Gather reference documentation"
+    
+    - name: "Standard Development"
+      workflow_ref: standard_development
+
+rapid_prototype:
+  description: "Quick MVP or proof-of-concept development"
+  triggers:
+    - "mvp"
+    - "prototype"
+    - "poc"
+    - "demo"
+    - "quick"
+  phases:
+    - name: "Quick Start"
+      sequential:
+        - agent: requirements-analyst
+          mcps: []
+          description: "Minimal requirement analysis for MVP"
+        - agent: rapid-builder
+          mcps: [sqlite, fetch]
+          description: "Build prototype with local database"
+    
+    - name: "Frontend & Testing"
+      parallel:
+        - agent: frontend-specialist
+          mcps: [vercel]
+          description: "Quick frontend with Vercel preview"
+        - agent: api-integrator
+          mcps: [fetch]
+          description: "Basic API integration testing"
+
+vercel_deployment:
+  description: "Projects specifically targeting Vercel platform"
+  triggers:
+    - "vercel"
+    - "nextjs"
+    - "next.js"
+    - "serverless"
+    - "edge"
+  phases:
+    - name: "Vercel-Optimized Development"
+      sequential:
+        - agent: project-architect
+          mcps: []
+          description: "Design for serverless architecture"
+        - agent: rapid-builder
+          mcps: []
+          description: "Build Next.js application"
+    
+    - name: "Deployment"
+      parallel:
+        - agent: frontend-specialist
+          mcps: [vercel]
+          description: "Optimize for Vercel edge network"
+        - agent: devops-engineer
+          mcps: [vercel, fetch]
+          description: "Configure Vercel deployment and monitoring"
+
+data_processing_pipeline:
+  description: "Applications focused on data transformation and analytics"
+  triggers:
+    - "data"
+    - "analytics"
+    - "etl"
+    - "csv"
+    - "reporting"
+  phases:
+    - name: "Data Analysis"
+      sequential:
+        - agent: requirements-analyst
+          mcps: [quick_data]
+          description: "Analyze data requirements and formats"
+        - agent: ai-specialist
+          mcps: [quick_data]
+          description: "Design data processing pipeline"
+    
+    - name: "Implementation"
+      parallel:
+        - agent: database-expert
+          mcps: [sqlite]
+          description: "Set up data storage and queries"
+        - agent: performance-optimizer
+          mcps: [quick_data]
+          description: "Optimize data processing performance"
+
+api_testing_focused:
+  description: "Projects with heavy API integration and testing needs"
+  triggers:
+    - "api"
+    - "integration"
+    - "webhook"
+    - "third-party"
+  phases:
+    - name: "API Planning"
+      sequential:
+        - agent: requirements-analyst
+          mcps: [brave_search]
+          description: "Research API documentation and limits"
+        - agent: api-integrator
+          mcps: [fetch]
+          description: "Design integration architecture"
+    
+    - name: "Testing & Validation"
+      parallel:
+        - agent: quality-guardian
+          mcps: [fetch]
+          description: "Comprehensive API testing"
+        - agent: debug-specialist
+          mcps: [brave_search, fetch]
+          description: "Debug integration issues"
+
+# Workflow selection rules
+selection_rules:
+  - condition: "requirements contains payment or subscription"
+    workflow: payment_enabled_webapp
+    priority: 10
+  
+  - condition: "requirements contains research or analysis"
+    workflow: research_heavy_project
+    priority: 8
+  
+  - condition: "requirements contains mvp or prototype"
+    workflow: rapid_prototype
+    priority: 9
+  
+  - condition: "requirements contains vercel or nextjs"
+    workflow: vercel_deployment
+    priority: 7
+  
+  - condition: "requirements contains data or csv or analytics"
+    workflow: data_processing_pipeline
+    priority: 6
+  
+  - condition: "requirements contains api or webhook"
+    workflow: api_testing_focused
+    priority: 5
+  
+  - condition: "default"
+    workflow: standard_development
+    priority: 1
+
+# MCP activation summary
+mcp_usage_guidelines:
+  stripe:
+    agents: [api-integrator, rapid-builder]
+    use_when: "Payment processing required"
+    avoid_when: "No payment features"
+  
+  vercel:
+    agents: [devops-engineer, frontend-specialist]
+    use_when: "Deploying to Vercel or using Next.js"
+    avoid_when: "Using AWS, Docker, or traditional hosting"
+  
+  sqlite:
+    agents: [database-expert, rapid-builder]
+    use_when: "Building prototypes or local development"
+    avoid_when: "Production systems requiring PostgreSQL"
+  
+  brave_search:
+    agents: [requirements-analyst, project-architect, debug-specialist]
+    use_when: "Need current information or troubleshooting"
+    avoid_when: "Information is already known"
+  
+  firecrawl:
+    agents: [requirements-analyst, documentation-writer]
+    use_when: "Competitor analysis or web data extraction"
+    avoid_when: "Simple web content reading"
+  
+  quick_data:
+    agents: [requirements-analyst, ai-specialist, performance-optimizer]
+    use_when: "Processing CSV/JSON data or generating metrics"
+    avoid_when: "Simple text processing"
+  
+  fetch:
+    agents: [api-integrator, quality-guardian, debug-specialist]
+    use_when: "Complex API testing or webhook validation"
+    avoid_when: "Simple HTTP requests (use WebFetch instead)"

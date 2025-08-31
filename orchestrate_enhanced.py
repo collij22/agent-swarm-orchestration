@@ -57,6 +57,7 @@ from lib.orchestration_enhanced import (
 from lib.progress_streamer import (
     ProgressStreamer, ProgressEventType, create_orchestration_progress_callback
 )
+from lib.mcp_conditional_loader import MCPConditionalLoader
 
 try:
     from rich.console import Console
@@ -96,6 +97,7 @@ class EnhancedOrchestrator:
         # Enhanced orchestration components
         self.workflow_engine = AdaptiveWorkflowEngine(self.logger)
         self.progress_streamer = ProgressStreamer(self.logger) if enable_dashboard else None
+        self.mcp_loader = MCPConditionalLoader()  # Initialize conditional MCP loader
         
         # Register progress callback
         if self.progress_streamer:
@@ -342,6 +344,9 @@ class EnhancedOrchestrator:
                 border_style="green"
             ))
         
+        # Store project type for conditional MCP loading
+        self.current_project_type = project_type
+        
         self.workflow_engine.max_parallel_agents = max_parallel
         
         # Load checkpoint if provided
@@ -523,6 +528,39 @@ class EnhancedOrchestrator:
             return False, "Agent not found", context
         
         agent_config = self.agents[agent_name]
+        
+        # Determine which conditional MCPs to load for this agent
+        project_type = getattr(self, 'current_project_type', None)
+        active_mcps = self.mcp_loader.should_load_mcp(
+            agent_name,
+            context.project_requirements,
+            project_type
+        )
+        
+        # Log conditional MCP activation
+        if active_mcps:
+            self.logger.log_reasoning(
+                "orchestrator",
+                f"Loading conditional MCPs for {agent_name}: {', '.join(active_mcps)}",
+                f"Based on project requirements and type: {project_type}"
+            )
+            
+            # Register MCP tools with the runtime
+            try:
+                from lib.mcp_tools import get_conditional_mcp_tools
+                mcp_tools = get_conditional_mcp_tools(active_mcps)
+                for tool in mcp_tools:
+                    self.runtime.register_tool(tool)
+                    self.logger.log_reasoning(
+                        "orchestrator",
+                        f"Registered MCP tool: {tool.name} for {agent_name}"
+                    )
+            except ImportError:
+                self.logger.log_error(
+                    "orchestrator",
+                    f"Could not load MCP tools for {active_mcps}",
+                    "MCP tools not available"
+                )
         
         # Update progress streamer
         if self.progress_streamer:

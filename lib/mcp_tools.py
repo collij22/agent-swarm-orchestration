@@ -403,6 +403,137 @@ def create_mcp_tools() -> List[Tool]:
     
     return tools
 
+def get_conditional_mcp_tools(mcp_names: List[str]) -> List[Tool]:
+    """
+    Get tools for specific conditional MCPs
+    
+    Args:
+        mcp_names: List of MCP names to get tools for
+    
+    Returns:
+        List of Tool objects for the requested MCPs
+    """
+    tools = []
+    
+    for mcp_name in mcp_names:
+        if mcp_name == "stripe":
+            # Stripe payment processing tools
+            tools.append(Tool(
+                name="mcp_stripe_create_payment",
+                description="Create payment intent using Stripe MCP",
+                parameters={
+                    "amount": {"type": "integer", "description": "Amount in cents", "required": True},
+                    "currency": {"type": "string", "description": "Currency code (usd, eur, etc)", "required": False},
+                    "description": {"type": "string", "description": "Payment description", "required": False}
+                },
+                function=create_placeholder_mcp_function("stripe", "create_payment"),
+                requires_reasoning=True
+            ))
+            tools.append(Tool(
+                name="mcp_stripe_manage_subscription",
+                description="Manage subscription using Stripe MCP",
+                parameters={
+                    "customer_id": {"type": "string", "description": "Customer ID", "required": True},
+                    "plan_id": {"type": "string", "description": "Subscription plan ID", "required": True},
+                    "action": {"type": "string", "description": "Action (create/update/cancel)", "required": True}
+                },
+                function=create_placeholder_mcp_function("stripe", "manage_subscription"),
+                requires_reasoning=True
+            ))
+            
+        elif mcp_name == "vercel":
+            # Vercel deployment tools
+            tools.append(Tool(
+                name="mcp_vercel_deploy",
+                description="Deploy project to Vercel",
+                parameters={
+                    "project_path": {"type": "string", "description": "Path to project", "required": True},
+                    "production": {"type": "boolean", "description": "Deploy to production", "required": False}
+                },
+                function=create_placeholder_mcp_function("vercel", "deploy"),
+                requires_reasoning=True
+            ))
+            
+        elif mcp_name == "sqlite":
+            # SQLite database tools
+            tools.append(Tool(
+                name="mcp_sqlite_execute",
+                description="Execute SQL query on SQLite database",
+                parameters={
+                    "database": {"type": "string", "description": "Database file path", "required": True},
+                    "query": {"type": "string", "description": "SQL query", "required": True}
+                },
+                function=create_placeholder_mcp_function("sqlite", "execute"),
+                requires_reasoning=True
+            ))
+            
+        elif mcp_name == "brave_search":
+            # Brave search tools
+            tools.append(Tool(
+                name="mcp_brave_search",
+                description="Search the web using Brave Search MCP",
+                parameters={
+                    "query": {"type": "string", "description": "Search query", "required": True},
+                    "count": {"type": "integer", "description": "Number of results", "required": False}
+                },
+                function=create_placeholder_mcp_function("brave_search", "search"),
+                requires_reasoning=True
+            ))
+            
+        elif mcp_name == "firecrawl":
+            # Firecrawl web scraping tools
+            tools.append(Tool(
+                name="mcp_firecrawl_scrape",
+                description="Scrape web content using Firecrawl MCP",
+                parameters={
+                    "url": {"type": "string", "description": "URL to scrape", "required": True},
+                    "selector": {"type": "string", "description": "CSS selector", "required": False}
+                },
+                function=create_placeholder_mcp_function("firecrawl", "scrape"),
+                requires_reasoning=True
+            ))
+            
+        elif mcp_name == "quick_data":
+            # Quick data processing tools
+            tools.append(Tool(
+                name="mcp_quick_data_process",
+                description="Process CSV/JSON data using quick-data MCP",
+                parameters={
+                    "data": {"type": "string", "description": "Data to process", "required": True},
+                    "operation": {"type": "string", "description": "Operation to perform", "required": True}
+                },
+                function=create_placeholder_mcp_function("quick_data", "process"),
+                requires_reasoning=True
+            ))
+            
+        elif mcp_name == "fetch":
+            # Fetch HTTP tools
+            tools.append(Tool(
+                name="mcp_fetch_request",
+                description="Make HTTP request using Fetch MCP",
+                parameters={
+                    "url": {"type": "string", "description": "URL to fetch", "required": True},
+                    "method": {"type": "string", "description": "HTTP method", "required": False},
+                    "headers": {"type": "object", "description": "Request headers", "required": False},
+                    "body": {"type": "string", "description": "Request body", "required": False}
+                },
+                function=create_placeholder_mcp_function("fetch", "request"),
+                requires_reasoning=True
+            ))
+    
+    return tools
+
+def create_placeholder_mcp_function(mcp_name: str, operation: str):
+    """Create a placeholder function for conditional MCP tools"""
+    async def placeholder_function(**kwargs):
+        reasoning = kwargs.get('reasoning', 'No reasoning provided')
+        # Log the attempt to use this MCP
+        return f"[Conditional MCP: {mcp_name}] Operation '{operation}' called with reasoning: {reasoning}\n" \
+               f"Note: This MCP tool is conditionally loaded but the server implementation is pending.\n" \
+               f"Parameters: {kwargs}"
+    
+    return placeholder_function
+
 # Example usage
 if __name__ == "__main__":
     async def demo():
