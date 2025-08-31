@@ -3,6 +3,21 @@
 Phase 5 Validation Test Suite
 Comprehensive testing of the upgraded agent swarm system
 Tests all 5 phases of improvements with medium complexity scenarios
+
+Usage:
+    # Mock Mode (default - no API costs, simulated responses):
+    python run_tests.py --test ecommerce
+    python run_tests.py --all
+    
+    # API Mode (real Claude API - requires ANTHROPIC_API_KEY):
+    set ANTHROPIC_API_KEY=your-key-here  # Windows
+    export ANTHROPIC_API_KEY=your-key-here  # Linux/Mac
+    python run_tests.py --test ecommerce --api-mode
+    python run_tests.py --all --api-mode
+    
+Mock Mode vs API Mode:
+    - Mock Mode: Fast (0.5-1s), no costs, simulated agent responses, good for testing
+    - API Mode: Slower (30-300s), uses API credits, real Claude intelligence, production validation
 """
 
 import os
@@ -84,9 +99,10 @@ TEST_SCENARIOS = {
 class TestRunner:
     """Manages test execution and result collection"""
     
-    def __init__(self, verbose: bool = False, parallel: bool = False):
+    def __init__(self, verbose: bool = False, parallel: bool = False, api_mode: bool = False):
         self.verbose = verbose
         self.parallel = parallel
+        self.api_mode = api_mode  # If True, use real API instead of mock
         self.results = {}
         self.start_time = None
         self.end_time = None
@@ -101,10 +117,22 @@ class TestRunner:
         print(f"Running Test: {test_config['name']}")
         print(f"Project Type: {test_config['project_type']}")
         print(f"Complexity: {test_config['complexity']}")
+        print(f"Mode: {'API (Real Claude)' if self.api_mode else 'Mock (Simulated)'}")
         print(f"{'='*60}")
         
-        # Set mock mode environment variable for testing
-        os.environ['MOCK_MODE'] = 'true'
+        # Set mock mode environment variable based on api_mode flag
+        if not self.api_mode:
+            os.environ['MOCK_MODE'] = 'true'
+        else:
+            # Ensure mock mode is disabled for API mode
+            if 'MOCK_MODE' in os.environ:
+                del os.environ['MOCK_MODE']
+            
+            # Check for API key in API mode
+            if not os.environ.get('ANTHROPIC_API_KEY'):
+                print("WARNING: No ANTHROPIC_API_KEY found. API mode requires a valid API key.")
+                print("Set it with: set ANTHROPIC_API_KEY=your-key-here (Windows)")
+                print("           or: export ANTHROPIC_API_KEY=your-key-here (Linux/Mac)")
         
         # Prepare command
         requirements_file = REQUIREMENTS_DIR / test_config["requirements"]
@@ -307,7 +335,9 @@ class TestRunner:
         print(f"\n{'-'*60}")
         print(f"Phase 5 Validation Test Suite")
         print(f"Running {len(test_keys)} tests in {'parallel' if self.parallel else 'sequential'} mode")
-        print(f"Mock Mode: Enabled (via MOCK_MODE env var)")
+        print(f"Execution Mode: {'API (Real Claude)' if self.api_mode else 'Mock (Simulated)'}")
+        if self.api_mode:
+            print(f"API Key: {'Found' if os.environ.get('ANTHROPIC_API_KEY') else 'NOT FOUND - Tests will fail!'}")
         print(f"Human Logs: Enabled (detailed)")
         print(f"{'-'*60}")
         
@@ -405,12 +435,27 @@ class TestRunner:
 
 def main():
     """Main entry point"""
-    parser = argparse.ArgumentParser(description="Phase 5 Validation Test Suite")
+    parser = argparse.ArgumentParser(
+        description="Phase 5 Validation Test Suite",
+        epilog="""
+Examples:
+  # Run in mock mode (default, no API costs):
+  python run_tests.py --test ecommerce
+  
+  # Run in API mode (uses real Claude API, requires ANTHROPIC_API_KEY):
+  python run_tests.py --test ecommerce --api-mode
+  
+  # Run all tests in API mode:
+  python run_tests.py --all --api-mode
+        """
+    )
     parser.add_argument("--all", action="store_true", help="Run all tests")
     parser.add_argument("--test", nargs="+", choices=list(TEST_SCENARIOS.keys()),
                        help="Run specific tests")
     parser.add_argument("--parallel", action="store_true", help="Run tests in parallel")
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
+    parser.add_argument("--api-mode", action="store_true", 
+                       help="Use real Claude API instead of mock (requires ANTHROPIC_API_KEY)")
     parser.add_argument("--list", action="store_true", help="List available tests")
     
     args = parser.parse_args()
@@ -432,8 +477,16 @@ def main():
         print("Use --list to see available tests")
         return
     
+    # Check for API key if in API mode
+    if args.api_mode and not os.environ.get('ANTHROPIC_API_KEY'):
+        print("\nERROR: API mode requires ANTHROPIC_API_KEY environment variable")
+        print("Please set your API key:")
+        print("  Windows:   set ANTHROPIC_API_KEY=your-key-here")
+        print("  Linux/Mac: export ANTHROPIC_API_KEY=your-key-here")
+        return
+    
     # Run tests
-    runner = TestRunner(verbose=args.verbose, parallel=args.parallel)
+    runner = TestRunner(verbose=args.verbose, parallel=args.parallel, api_mode=args.api_mode)
     runner.run_all_tests(test_keys)
 
 if __name__ == "__main__":
