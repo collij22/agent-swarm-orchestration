@@ -51,7 +51,8 @@
       "Bash(ren:*)",
       "Bash(git rm:*)",
       "Bash(git reset:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []

@@ -3,6 +3,7 @@
 ## 🚀 Overview
 A production-ready 15-agent orchestration system with multi-LLM support for automated technical development and business projects.
 
+**📝 AUGUST 2025 UPDATE** - Requirement Enhancement System for optimal agent orchestration  
 **🎯 DECEMBER 2024 MAJOR UPDATE** - Enhanced with multi-provider LLM support, advanced caching, and cost tracking  
 **🎉 PHASE 5 VALIDATION FIXES COMPLETE** - Quality scores improved from 40% to 90.4%  
 **✅ 100% System Completion** - All phases complete with production-ready reliability  
@@ -17,6 +18,15 @@ A production-ready 15-agent orchestration system with multi-LLM support for auto
 **🔧 Self-Healing** - Automatic error recovery and configuration tuning
 
 ### Key Features
+
+#### 🆕 August 2025: Requirement Enhancement System
+- **Intelligent Requirement Transformation**: Convert basic project descriptions into detailed specifications
+- **Prompt-Based Enhancement**: Works with any LLM (Claude, GPT-4, Gemini, etc.)
+- **Trigger Word Optimization**: Keywords automatically activate specific agents and MCPs
+- **Workflow Pattern Detection**: Project type determines optimal execution strategy
+- **Validation Tool**: Check requirement format and suggest optimizations
+- **Complexity Calibration**: Scale specifications to match project scope (simple/moderate/complex)
+- **See `/prompts` directory** for the complete requirement enhancement toolkit
 
 #### 🆕 December 2024 Enhancements
 - **MCP (Model Context Protocol) Integration**: Revolutionary integration for 60% token reduction
@@ -169,11 +179,31 @@ python web/start_with_cost_tracking.py
 ```
 
 ### 6. Run Your First Project
-```bash
-# Use the project wizard for interactive setup
-python project_wizard.py
 
-# Or create a requirements file manually
+#### Option A: Use Requirement Enhancement (RECOMMENDED)
+```bash
+# Step 1: Create a basic requirement description
+echo "I need a task management app with AI that helps prioritize tasks" > basic_requirement.txt
+
+# Step 2: Use the enhancement prompt with any LLM to generate detailed specs
+# Copy prompts/requirement_enhancer_prompt.md and your requirement to an LLM
+
+# Step 3: Validate the generated requirements
+python prompts/validate_requirement.py requirements.yaml
+
+# Step 4: Run enhanced orchestration
+python orchestrate_enhanced.py --requirements requirements.yaml --dashboard
+```
+
+#### Option B: Use Project Wizard
+```bash
+# Interactive setup with templates
+python project_wizard.py
+```
+
+#### Option C: Manual Requirements
+```bash
+# Create a requirements file manually
 echo "project:
   name: MyApp
   type: web_app
@@ -184,7 +214,7 @@ features:
   - CRUD operations
   - AI integration" > my_requirements.yaml
 
-# Run enhanced orchestration (RECOMMENDED - Section 8)
+# Run enhanced orchestration
 python orchestrate_enhanced.py --project-type=web_app --requirements=my_requirements.yaml --dashboard
 
 # Or run legacy orchestration
