@@ -403,6 +403,43 @@ class ReasoningLogger:
                 # Fallback to simple print if Rich has issues
                 print(f"[ERROR] {agent_name}: {error}")
     
+    def log_warning(self, agent_name: str, warning: str, reasoning: Optional[str] = None):
+        """Log a warning with optional reasoning"""
+        entry = LogEntry(
+            timestamp=datetime.now().isoformat(),
+            session_id=self.session_id,
+            agent_name=agent_name or self.current_agent,
+            event_type=EventType.ERROR,  # Using ERROR event type but WARNING level
+            level=LogLevel.WARNING,
+            message=f"Warning in {agent_name}",
+            reasoning=reasoning,
+            data={"warning": warning}
+        )
+        
+        self._add_entry(entry)
+        
+        # Log warning to human logger if it has the method
+        if self.human_logger and hasattr(self.human_logger, 'log_warning'):
+            self.human_logger.log_warning(agent_name or self.current_agent, warning)
+        
+        if self.console:
+            content = (
+                f"[bold yellow][WARN] Warning in {agent_name}[/bold yellow]\n"
+                f"[yellow]{clean_unicode_for_windows(warning)}[/yellow]\n"
+                + (f"[dim]Reasoning: {clean_unicode_for_windows(reasoning)}[/dim]" if reasoning else "")
+            )
+            try:
+                self.console.print(Panel(
+                    content,
+                    border_style="yellow"
+                ))
+                # Force flush to ensure output is written
+                import sys
+                sys.stdout.flush()
+            except Exception as e:
+                # Fallback to simple print if Rich has issues
+                print(f"[WARNING] {agent_name}: {warning}")
+    
     def log_phase(self, phase_name: str, agents: List[str], is_start: bool = True):
         """Log workflow phase start or completion"""
         entry = LogEntry(

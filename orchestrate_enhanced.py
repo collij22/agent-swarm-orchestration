@@ -956,7 +956,8 @@ class EnhancedOrchestrator:
             project_requirements=context.project_requirements,
             completed_tasks=context.completed_tasks.copy(),
             artifacts=context.artifacts.copy(),
-            decisions=context.decisions.copy()
+            decisions=context.decisions.copy(),
+            current_phase=context.current_phase if hasattr(context, 'current_phase') else "debugging"
         )
         debug_context.artifacts["error_report"] = str(error_report_path)
         debug_context.artifacts["build_errors"] = error_report

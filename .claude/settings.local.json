@@ -61,7 +61,12 @@
       "Bash(if [ -z \"$ANTHROPIC_API_KEY\" ])",
       "Bash(then echo \"API key not set\")",
       "Bash(else echo \"API key is configured\")",
-      "Bash(fi)"
+      "Bash(fi)",
+      "Bash(taskkill:*)",
+      "Bash(if [ -f \"CHANGELOG.md\" ])",
+      "Bash(then echo \"File exists\")",
+      "Bash(else echo \"File does not exist\")",
+      "Bash(npx:*)"
     ],
     "deny": [],
     "ask": []

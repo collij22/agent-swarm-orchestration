@@ -436,6 +436,21 @@ class MCPManager:
         if 'ref' not in self.clients:
             return MCPToolResult(False, None, "Ref MCP not configured")
         
+        # Check if server is healthy before attempting connection
+        if not self.health_status.get('ref', False):
+            # Try a quick health check first
+            try:
+                health_response = await self.clients['ref'].get('/health', timeout=1.0)
+                self.health_status['ref'] = health_response.status_code == 200
+            except:
+                self.health_status['ref'] = False
+                logger.debug("Ref MCP server not available, using fallback mode")
+                return MCPToolResult(
+                    False, 
+                    None, 
+                    "Ref MCP server not running. Please run: python start_mcp_servers.py"
+                )
+        
         try:
             payload = {
                 'query': query,
@@ -453,7 +468,8 @@ class MCPManager:
             
             response = await self.clients['ref'].post('/search', 
                                                      json=payload,
-                                                     headers=headers)
+                                                     headers=headers,
+                                                     timeout=5.0)
             response.raise_for_status()
             
             result = response.json()
@@ -477,6 +493,21 @@ class MCPManager:
                 execution_time=time.time() - start_time
             )
             
+        except httpx.ConnectError as e:
+            # Connection refused - server not running
+            self.health_status['ref'] = False
+            self.metrics['errors']['ref'] += 1
+            logger.debug(f"Ref MCP connection failed: {e}")
+            return MCPToolResult(
+                False, 
+                None, 
+                "Ref MCP server not running. Please run: python start_mcp_servers.py"
+            )
+        except httpx.TimeoutException as e:
+            # Timeout - server might be overloaded
+            self.metrics['errors']['ref'] += 1
+            logger.warning(f"Ref search timeout: {e}")
+            return MCPToolResult(False, None, "Ref MCP server timeout")
         except Exception as e:
             self.metrics['errors']['ref'] += 1
             logger.error(f"Ref search failed: {e}")

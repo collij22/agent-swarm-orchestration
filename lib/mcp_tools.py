@@ -137,7 +137,9 @@ async def mcp_ref_search_tool(
     )
     
     if not result.success:
-        # Fallback to general knowledge
+        # Fallback to general knowledge - this is expected when MCP servers aren't running
+        if "not running" in result.error:
+            return f"[MCP Info] Ref server not running - using general knowledge instead"
         return f"Documentation search unavailable, using general knowledge. Error: {result.error}"
     
     # Format output with cost savings info

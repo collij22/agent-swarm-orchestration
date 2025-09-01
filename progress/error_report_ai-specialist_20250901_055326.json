@@ -1,0 +1,11 @@
+{
+  "agent_name": "ai-specialist",
+  "errors": [
+    "Build exception: [WinError 2] The system cannot find the file specified"
+  ],
+  "warnings": [],
+  "suggested_fixes": [
+    "Check Node.js installation"
+  ],
+  "output": "[WinError 2] The system cannot find the file specified"
+}

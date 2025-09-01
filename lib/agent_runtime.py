@@ -881,11 +881,15 @@ export default function {file_name.replace('-', '_')}() {{
         else:
             # For truly unknown file types, create with a comment if possible
             content = f'# Auto-generated file: {file_name}\n# Content was missing - please add actual content\n# File type: {file_ext}'
-            self.logger.log_warning(
-                agent_name or "unknown",
-                f"Unknown file type {file_ext} - creating with generic placeholder content",
-                f"File: {file_path}"
-            )
+            # Log warning if logger is available
+            from .agent_logger import get_logger
+            logger = get_logger()
+            if logger:
+                logger.log_warning(
+                    agent_name or "unknown",
+                    f"Unknown file type {file_ext} - creating with generic placeholder content",
+                    f"File: {file_path}"
+                )
         
         # Mark this as needing verification
         if context:

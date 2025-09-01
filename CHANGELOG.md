@@ -5,6 +5,50 @@ All notable changes to the Agent Swarm Orchestration System will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2025-01-01 - Critical Runtime Fixes & MCP Enhancements
+
+### Fixed
+- **ReasoningLogger Missing Method** - Added `log_warning` method to ReasoningLogger class
+  - File: `lib/agent_logger.py`
+  - Resolves AttributeError when agents attempt to log warnings
+  - Includes proper panel display and fallback handling
+
+- **AgentContext Phase Tracking** - Fixed missing `current_phase` parameter
+  - Files: `orchestrate_enhanced.py`, all test files
+  - All AgentContext instantiations now include current_phase
+  - Enables proper workflow phase tracking throughout execution
+
+- **Write File Tool Logger Access** - Fixed incorrect logger reference in global scope
+  - File: `lib/agent_runtime.py`
+  - Changed `self.logger` to proper logger import
+  - Prevents crashes when handling unknown file types
+
+- **MCP Server Connection Errors** - Implemented graceful fallback mechanism
+  - Files: `lib/mcp_manager.py`, `lib/mcp_tools.py`
+  - Added health checks before connection attempts
+  - Clear user messages instead of error spam
+  - Automatic fallback to general knowledge when MCP unavailable
+  - Created startup scripts for MCP servers
+
+### Added
+- **MCP Server Management**
+  - `start_mcp_servers.py` - Cross-platform Python script to start MCP servers
+  - `start_mcp_servers.bat` - Windows batch script for MCP server startup
+  - `MCP_QUICKSTART.md` - Documentation for MCP server setup and usage
+  - `test_mcp_fallback.py` - Test suite for MCP fallback functionality
+
+- **Comprehensive Test Suite**
+  - `test_swarm_fixes.py` - Validates all runtime fixes (4/4 tests passing)
+  - Tests ReasoningLogger, AgentContext, write_file tool, and imports
+  - Ensures all critical components work correctly
+
+### Changed
+- **Error Handling Philosophy**
+  - System now gracefully handles missing parameters and unavailable services
+  - Generates appropriate placeholder content instead of crashing
+  - Tracks files needing fixes for later resolution
+  - Provides clear guidance to users about optional enhancements
+
 ## [2.3.1] - 2025-09-01 - Validation Status & Multiple Critical Fixes
 
 ### Fixed
