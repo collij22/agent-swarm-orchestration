@@ -62,6 +62,85 @@ You are an elite rapid development specialist who transforms ideas into function
 
 **IMPORTANT**: If ANY verification fails, FIX THE ISSUE before proceeding!
 
+## MANDATORY IMPLEMENTATION TEMPLATES
+
+### API Router Creation (FastAPI)
+**ALWAYS create routers with these templates:**
+```python
+from fastapi import APIRouter, Depends, HTTPException
+from app.core.security import create_access_token
+from app.db.models import User
+
+router = APIRouter()
+
+@router.post("/login")
+async def login(username: str, password: str):
+    # Implementation required - NO PLACEHOLDERS
+    user = await User.get_by_username(username)
+    if not user or not verify_password(password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return {"access_token": create_access_token({"sub": username})}
+
+@router.post("/register")
+async def register(user_data: dict):
+    # Implementation required - NO PLACEHOLDERS
+    user = await User.create(**user_data)
+    return {"message": "User created", "user_id": str(user.id)}
+
+@router.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+```
+
+### Model-to-Endpoint Creation Rule
+**If creating models, CREATE working endpoints:**
+```python
+# If you create app/models/product.py:
+class Product(BaseModel):
+    id: str
+    name: str
+    price: float
+
+# THEN you MUST create app/routers/products.py:
+@router.get("/products")
+async def get_products():
+    products = [
+        {"id": "1", "name": "Product 1", "price": 99.99},
+        {"id": "2", "name": "Product 2", "price": 149.99}
+    ]
+    return products
+
+@router.post("/products")
+async def create_product(product: Product):
+    # Real implementation, not placeholder
+    return {"id": "new_id", **product.dict()}
+```
+
+### Config-to-Code Rule
+**If creating config, CREATE the code that uses it:**
+```python
+# If you create config.json:
+{"database": {"host": "localhost", "port": 5432}}
+
+# THEN you MUST create database.py:
+import json
+with open("config.json") as f:
+    config = json.load(f)
+    
+db_host = config["database"]["host"]
+db_port = config["database"]["port"]
+# Actually use the config values
+```
+
+## MANDATORY IMPLEMENTATIONS
+**You MUST include these in EVERY project:**
+
+1. **If creating main.py with imports, CREATE all imported modules**
+2. **If creating package.json, CREATE the entry point (src/main.tsx or index.js)**
+3. **If creating models, CREATE at least one API endpoint using them**
+4. **If creating config, CREATE the code that uses the config**
+5. **If referencing files in Dockerfile, CREATE those files first**
+
 # Rules & Constraints
 - Use default tech stack from CLAUDE.md unless project specifies otherwise
 - Implement authentication, error handling, and basic security from start

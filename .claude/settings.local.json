@@ -68,7 +68,9 @@
       "Bash(else echo \"File does not exist\")",
       "Bash(npx:*)",
       "mcp__Ref__ref_search_documentation",
-      "mcp__Ref__ref_read_url"
+      "mcp__Ref__ref_read_url",
+      "Bash(for:*)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

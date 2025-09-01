@@ -82,6 +82,21 @@ from lib.requirement_tracker import RequirementTracker
 from lib.agent_validator import AgentValidator
 from lib.error_pattern_detector import ErrorPatternDetector
 
+# Import Phase 2 components for enhanced coordination
+try:
+    from lib.file_coordinator import get_file_coordinator
+    from lib.agent_verification import AgentVerification
+    from lib.agent_runtime import clean_reasoning
+    from lib.phase2_integration import Phase2Integration
+    HAS_PHASE2 = True
+except ImportError as e:
+    print(f"Warning: Phase 2 components not fully available: {e}")
+    HAS_PHASE2 = False
+    get_file_coordinator = None
+    AgentVerification = None
+    clean_reasoning = None
+    Phase2Integration = None
+
 try:
     from rich.console import Console
     from rich.panel import Panel
@@ -133,6 +148,23 @@ class EnhancedOrchestrator:
         self.error_detector = ErrorPatternDetector(logger=self.logger)
         self.enable_validation = True  # Flag to enable/disable validation
         self.auto_debug = True  # Flag to enable automatic debugging on failures
+        
+        # Initialize Phase 2 components for enhanced coordination
+        if HAS_PHASE2:
+            self.phase2_integration = Phase2Integration(
+                project_name=session_id or "default"
+            )
+            self.file_coordinator = get_file_coordinator()
+            self.agent_verification = AgentVerification()
+            self.logger.log_reasoning(
+                "orchestrator",
+                "Phase 2 components initialized",
+                "File locking, verification, and inter-agent communication enabled"
+            )
+        else:
+            self.phase2_integration = None
+            self.file_coordinator = None
+            self.agent_verification = None
         
         # Register progress callback
         if self.progress_streamer:
@@ -507,13 +539,28 @@ class EnhancedOrchestrator:
                 len(self.workflow_engine.agent_plans)
             )
         
-        # Initialize context with project directory
+        # Initialize context with project directory (Phase 3.4: Project Path Standardization)
         context = AgentContext(
             project_requirements=requirements,
             completed_tasks=[],
-            artifacts={"project_directory": str(self.project_dir)},
+            artifacts={
+                "project_directory": str(self.project_dir),
+                "project_root": str(self.project_dir),  # Phase 3.4: Standardized project root
+                "project_name": project_name,
+                "project_type": project_type_actual
+            },
             decisions=[],
             current_phase="enhanced_orchestration"
+        )
+        
+        # Phase 3.4: Set project root for all file operations
+        context.project_root = str(self.project_dir)
+        
+        # Log project path standardization
+        self.logger.log_reasoning(
+            "orchestrator",
+            f"Phase 3.4: Project path standardized to {self.project_dir}",
+            "All agents will use this as the root for file operations"
         )
         
         try:
@@ -657,6 +704,23 @@ class EnhancedOrchestrator:
         
         agent_config = self.agents[agent_name]
         
+        # Phase 3.4: Ensure project path standardization for this agent
+        if hasattr(self, 'project_dir') and self.project_dir:
+            # Ensure project_root is set in context for all agents
+            if not hasattr(context, 'project_root'):
+                context.project_root = str(self.project_dir)
+            
+            # Also ensure it's in artifacts for backward compatibility
+            if "project_root" not in context.artifacts:
+                context.artifacts["project_root"] = str(self.project_dir)
+            
+            # Log path usage for this agent
+            self.logger.log_reasoning(
+                agent_name,
+                f"Using standardized project path: {context.project_root}",
+                "Phase 3.4: All file operations will be relative to this path"
+            )
+        
         # Determine which conditional MCPs to load for this agent
         project_type = getattr(self, 'current_project_type', None)
         selected_workflow = getattr(self, 'selected_workflow', None)
@@ -711,6 +775,24 @@ class EnhancedOrchestrator:
         if self.progress_streamer:
             plan = self.workflow_engine.agent_plans[agent_name]
             await self.progress_streamer.update_agent_status(agent_name, plan)
+        
+        # Phase 2: Pre-execution file locking
+        if self.phase2_integration:
+            # Estimate files that might be modified (can be enhanced with better prediction)
+            files_to_modify = context.artifacts.get(f"{agent_name}_target_files", [])
+            if not self.phase2_integration.before_agent_execution(agent_name, files_to_modify):
+                self.logger.log_error(
+                    "phase2",
+                    f"Cannot acquire file locks for {agent_name}",
+                    "Files are locked by another agent"
+                )
+                # Optionally wait or fail
+                if interactive and console:
+                    console.print(Panel(
+                        "[yellow]Files are locked by another agent. Waiting...[/yellow]",
+                        title=f"File Lock Conflict: {agent_name}",
+                        border_style="yellow"
+                    ))
         
         # Pre-execution validation if enabled
         if self.enable_validation:
@@ -972,6 +1054,39 @@ class EnhancedOrchestrator:
             
             if interactive and console:
                 console.print(f"[green]✅ Validation report saved to: {report_path}[/green]")
+        
+        # Phase 2: Post-execution verification and cleanup
+        if self.phase2_integration:
+            # Extract created/modified files from context
+            created_files = updated_context.artifacts.get(f"{agent_name}_created_files", [])
+            modified_files = updated_context.artifacts.get(f"{agent_name}_modified_files", [])
+            
+            # Run verification and release locks
+            verification_results = self.phase2_integration.after_agent_execution(
+                agent_name,
+                created_files=created_files,
+                modified_files=modified_files
+            )
+            
+            if not verification_results["verification_passed"]:
+                self.logger.log_error(
+                    "phase2",
+                    f"Post-execution verification failed for {agent_name}",
+                    f"Errors: {verification_results['errors']}"
+                )
+                # Optionally mark as needing fixes
+                updated_context.artifacts["files_needing_fix"] = verification_results["errors"]
+            
+            # Clean reasoning output if available
+            if isinstance(result, str) and clean_reasoning:
+                cleaned_result = self.phase2_integration.clean_agent_reasoning(agent_name, result)
+                if cleaned_result != result:
+                    self.logger.log_reasoning(
+                        "phase2",
+                        f"Cleaned reasoning output for {agent_name}",
+                        f"Reduced from {len(result)} to {len(cleaned_result)} chars"
+                    )
+                    result = cleaned_result
         
         return success, result, updated_context
     

@@ -1,0 +1,27 @@
+{
+  "phase1": {
+    "automated_debugger": true,
+    "encoding_fix": true,
+    "pydantic": true,
+    "workflow_phases": "manual_check_needed",
+    "max_parallel": true
+  },
+  "phase2": {
+    "file_coordinator": true,
+    "agent_verification": false,
+    "clean_reasoning": true,
+    "share_artifact": true
+  },
+  "orchestration_integration": {
+    "file_coordinator": false,
+    "agent_verification": false,
+    "clean_reasoning": false,
+    "phase1_enforcement": false
+  },
+  "missing_integrations": [
+    "FileCoordinator not used in orchestrate_enhanced.py",
+    "AgentVerification not used in orchestrate_enhanced.py",
+    "clean_reasoning not used in orchestrate_enhanced.py",
+    "Phase 1 agents not explicitly prioritized"
+  ]
+}
