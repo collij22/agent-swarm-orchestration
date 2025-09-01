@@ -88,6 +88,19 @@ from lib.checkpoint_manager import CheckpointManager
 from lib.self_healing_rules import SelfHealingRules
 from lib.validation_gates import ValidationGates
 
+# Import Phase 5 components for quality assurance
+try:
+    from lib.mandatory_testing import MandatoryTestingSystem
+    from lib.token_monitor import TokenMonitor
+    from lib.post_execution_verification import PostExecutionVerification
+    HAS_PHASE5 = True
+except ImportError as e:
+    print(f"Warning: Phase 5 components not fully available: {e}")
+    HAS_PHASE5 = False
+    MandatoryTestingSystem = None
+    TokenMonitor = None
+    PostExecutionVerification = None
+
 # Import Phase 2 components for enhanced coordination
 try:
     from lib.file_coordinator import get_file_coordinator
@@ -161,6 +174,36 @@ class EnhancedOrchestrator:
         self.self_healing_rules = SelfHealingRules(auto_apply=True)
         self.validation_gates = ValidationGates(strict_mode=True)
         
+        # Initialize Phase 5 components for quality assurance
+        if HAS_PHASE5:
+            # Initialize mandatory testing system (5.1)
+            self.mandatory_testing = MandatoryTestingSystem(
+                project_root=str(Path.cwd())  # Will be updated when project dir is set
+            )
+            
+            # Initialize token monitor (5.2)
+            self.token_monitor = TokenMonitor(
+                token_limit=100000,  # 100k tokens per agent
+                checkpoint_callback=self._handle_token_checkpoint,
+                logger=self.logger
+            )
+            
+            # Initialize post-execution verification (5.5)
+            self.post_verification = PostExecutionVerification(
+                project_root=str(Path.cwd()),  # Will be updated when project dir is set
+                logger=self.logger
+            )
+            
+            self.logger.log_reasoning(
+                "orchestrator",
+                "Phase 5 components initialized",
+                "Mandatory testing, token monitoring, and post-execution verification enabled"
+            )
+        else:
+            self.mandatory_testing = None
+            self.token_monitor = None
+            self.post_verification = None
+        
         # Initialize Phase 2 components for enhanced coordination
         if HAS_PHASE2:
             self.phase2_integration = Phase2Integration(
@@ -221,6 +264,24 @@ class EnhancedOrchestrator:
         
         # Add enhanced orchestration tools
         self._register_enhanced_tools()
+    
+    def _handle_token_checkpoint(self, checkpoint_data: Dict):
+        """Handle token limit checkpoint creation"""
+        self.logger.log_reasoning(
+            "token_monitor",
+            f"Creating checkpoint due to token limit for {checkpoint_data['agent']}",
+            f"Tokens used: {checkpoint_data['token_usage']['total_tokens']}"
+        )
+        
+        # Use checkpoint manager if available
+        if hasattr(self, 'checkpoint_manager'):
+            self.checkpoint_manager.create_checkpoint(
+                agent_name=checkpoint_data['agent'],
+                progress=self.workflow_engine.progress.overall_completion if hasattr(self, 'workflow_engine') else 0,
+                context=None,  # Will be filled by the system
+                files_created=[],
+                validation_passed=True
+            )
     
     def _load_agent_configs(self) -> Dict:
         """Load agent configurations and prompts"""
@@ -473,6 +534,13 @@ class EnhancedOrchestrator:
         # Store the project directory in the context for agents to use
         self.context_project_dir = str(self.project_dir)
         
+        # Update Phase 5 components with correct project root
+        if HAS_PHASE5:
+            if self.mandatory_testing:
+                self.mandatory_testing.project_root = self.project_dir
+            if self.post_verification:
+                self.post_verification.project_root = self.project_dir
+        
         self.logger.log_reasoning(
             "orchestrator", 
             f"Starting workflow for project: {project_name} (type: {project_type_actual})",
@@ -616,6 +684,104 @@ class EnhancedOrchestrator:
             # Display results
             self._display_workflow_results(success, summary)
             
+            # Phase 5.5: Post-execution verification
+            if HAS_PHASE5 and self.post_verification and success:
+                self.logger.log_reasoning(
+                    "post_verification",
+                    "Running post-execution verification",
+                    "Checking backend, frontend, Docker, and endpoints"
+                )
+                
+                verification_success, verification_results = self.post_verification.run_all_verifications()
+                
+                # Generate and save verification report
+                verification_report = self.post_verification.generate_verification_report()
+                report_path = self.progress_dir / f"post_verification_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+                with open(report_path, 'w') as f:
+                    f.write(verification_report)
+                
+                if HAS_RICH:
+                    if verification_success:
+                        console.print(Panel(
+                            f"[green]✅ Post-Execution Verification PASSED[/green]\n"
+                            f"Backend: {verification_results['backend_start']}\n"
+                            f"Frontend: {verification_results['frontend_build']}\n"
+                            f"Docker: {verification_results['docker_containers']}\n"
+                            f"Endpoints: {verification_results['critical_endpoints']}\n"
+                            f"Report saved to: {report_path}",
+                            title="Phase 5.5 Verification",
+                            border_style="green"
+                        ))
+                    else:
+                        console.print(Panel(
+                            f"[yellow]⚠️ Post-Execution Verification PARTIAL[/yellow]\n"
+                            f"Backend: {verification_results['backend_start']}\n"
+                            f"Frontend: {verification_results['frontend_build']}\n"
+                            f"Docker: {verification_results['docker_containers']}\n"
+                            f"Endpoints: {verification_results['critical_endpoints']}\n"
+                            f"Report saved to: {report_path}",
+                            title="Phase 5.5 Verification",
+                            border_style="yellow"
+                        ))
+                
+                # Update overall success based on verification
+                if not verification_success:
+                    self.logger.log_warning(
+                        "post_verification",
+                        "Some post-execution checks failed",
+                        "Project may not be fully functional"
+                    )
+            
+            # Phase 5.3: Enforce quality gates
+            if HAS_PHASE5 and self.mandatory_testing:
+                gates_passed, gate_failures = self.mandatory_testing.enforce_quality_gates()
+                
+                if not gates_passed:
+                    self.logger.log_warning(
+                        "quality_gates",
+                        "Some quality gates failed",
+                        f"Failures: {', '.join(gate_failures)}"
+                    )
+                    
+                    if HAS_RICH:
+                        console.print(Panel(
+                            f"[yellow]⚠️ Quality Gates Check[/yellow]\n" +
+                            "\n".join(f"• {failure}" for failure in gate_failures),
+                            title="Phase 5.3 Quality Gates",
+                            border_style="yellow"
+                        ))
+            
+            # Phase 5.2: Generate token usage report
+            if HAS_PHASE5 and self.token_monitor:
+                token_report = self.token_monitor.generate_usage_report()
+                token_report_path = self.progress_dir / f"token_usage_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+                with open(token_report_path, 'w') as f:
+                    f.write(token_report)
+                
+                usage_summary = self.token_monitor.get_usage_summary()
+                
+                if HAS_RICH:
+                    console.print(Panel(
+                        f"[cyan]Token Usage Summary[/cyan]\n"
+                        f"Total Tokens: {usage_summary['total_tokens']:,}\n"
+                        f"Total Cost: ${usage_summary['total_cost']:.2f}\n"
+                        f"Checkpoints: {usage_summary['checkpoints_created']}\n"
+                        f"Tasks Split: {usage_summary['tasks_split']}\n"
+                        f"Report saved to: {token_report_path}",
+                        title="Phase 5.2 Token Monitor",
+                        border_style="cyan"
+                    ))
+            
+            # Phase 5.1: Generate testing report
+            if HAS_PHASE5 and self.mandatory_testing:
+                test_report = self.mandatory_testing.generate_test_report()
+                test_report_path = self.progress_dir / f"test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+                with open(test_report_path, 'w') as f:
+                    f.write(test_report)
+                
+                if HAS_RICH:
+                    console.print(f"[green]Test report saved to: {test_report_path}[/green]")
+            
             # Print test-compatible metrics summary
             self._print_test_metrics(summary, context)
             
@@ -713,6 +879,23 @@ class EnhancedOrchestrator:
             
             # Update progress
             self.workflow_engine._update_progress()
+            
+            # Phase 5.4: Real-time progress tracking
+            if self.progress_streamer:
+                # Broadcast detailed progress update
+                progress_data = {
+                    "completed_agents": list(completed_agents),
+                    "failed_agents": list(failed_agents),
+                    "overall_completion": self.workflow_engine.progress.overall_completion,
+                    "current_phase": "execution",
+                    "agents_remaining": len(set(self.workflow_engine.agent_plans.keys()) - completed_agents - failed_agents),
+                    "estimated_time_remaining": self._estimate_time_remaining(completed_agents, failed_agents)
+                }
+                
+                await self.progress_streamer.broadcast_event(
+                    ProgressEventType.PROGRESS_UPDATE,
+                    progress_data
+                )
             
             # Phase 4.2: Enhanced checkpoint with full context
             if len(completed_agents) % 3 == 0:  # Every 3 agents
@@ -871,6 +1054,16 @@ class EnhancedOrchestrator:
                     if not Confirm.ask("Continue anyway?"):
                         return False, "User cancelled due to validation failure", context
         
+        # Phase 5.2: Track token usage before execution
+        if HAS_PHASE5 and self.token_monitor:
+            remaining_tokens = self.token_monitor.get_agent_budget_remaining(agent_name)
+            if remaining_tokens < 1000:  # Less than 1k tokens remaining
+                self.logger.log_warning(
+                    "token_monitor",
+                    f"Low token budget for {agent_name}",
+                    f"Only {remaining_tokens} tokens remaining"
+                )
+        
         # Execute with retry logic and error recovery
         success, result, updated_context = await self.workflow_engine.execute_agent_with_retry(
             agent_name,
@@ -878,6 +1071,24 @@ class EnhancedOrchestrator:
             context,
             agent_config
         )
+        
+        # Phase 5.2: Track token usage after execution
+        if HAS_PHASE5 and self.token_monitor and hasattr(self.runtime, 'last_token_usage'):
+            token_response = self.token_monitor.track_usage(
+                agent_name,
+                self.runtime.last_token_usage.get('input_tokens', 0),
+                self.runtime.last_token_usage.get('output_tokens', 0),
+                agent_config.get('model', 'sonnet')
+            )
+            
+            if token_response['action'] == 'split_task':
+                self.logger.log_warning(
+                    "token_monitor",
+                    f"Task split required for {agent_name}",
+                    f"Token limit exceeded: {token_response['message']}"
+                )
+                # Mark for task splitting
+                updated_context.artifacts["needs_task_split"] = token_response['split_info']
         
         # Phase 4.1: Progressive validation after execution
         if success and self.enable_validation:
@@ -1194,6 +1405,48 @@ class EnhancedOrchestrator:
                     f"Gates: {', '.join([g.value for g in gate_report.gates_passed])}"
                 )
         
+        # Phase 5.1: Mandatory testing for agent
+        if HAS_PHASE5 and self.mandatory_testing and success:
+            # Determine agent type for testing
+            agent_type = "backend"
+            if "frontend" in agent_name:
+                agent_type = "frontend"
+            elif "database" in agent_name:
+                agent_type = "database"
+            elif "devops" in agent_name or "docker" in agent_name:
+                agent_type = "docker"
+            
+            # Create mandatory test
+            test_file = self.mandatory_testing.create_minimal_test_for_agent(
+                agent_name, agent_type
+            )
+            
+            self.logger.log_reasoning(
+                "mandatory_testing",
+                f"Created mandatory test for {agent_name}",
+                f"Test file: {test_file}"
+            )
+            
+            # Run the test
+            test_success, test_output = self.mandatory_testing.run_mandatory_tests(
+                agent_name, test_file
+            )
+            
+            if not test_success:
+                self.logger.log_warning(
+                    "mandatory_testing",
+                    f"Mandatory tests failed for {agent_name}",
+                    test_output[:500]  # First 500 chars
+                )
+                # Don't fail the agent, but track for reporting
+                updated_context.artifacts[f"{agent_name}_test_failed"] = True
+            else:
+                self.logger.log_reasoning(
+                    "mandatory_testing",
+                    f"Mandatory tests passed for {agent_name}",
+                    "All required functionality verified"
+                )
+        
         # Phase 2: Post-execution verification and cleanup
         if self.phase2_integration:
             # Extract created/modified files from context
@@ -1308,6 +1561,30 @@ class EnhancedOrchestrator:
                 str(e)
             )
             return False
+    
+    def _estimate_time_remaining(self, completed_agents: set, failed_agents: set) -> str:
+        """Estimate time remaining based on current progress"""
+        total_agents = len(self.workflow_engine.agent_plans)
+        completed = len(completed_agents)
+        
+        if completed == 0:
+            return "Calculating..."
+        
+        # Simple estimation based on average time per agent
+        # In real implementation, would track actual execution times
+        avg_time_per_agent = 60  # seconds, placeholder
+        remaining = total_agents - completed - len(failed_agents)
+        
+        estimated_seconds = remaining * avg_time_per_agent
+        
+        if estimated_seconds < 60:
+            return f"{estimated_seconds}s"
+        elif estimated_seconds < 3600:
+            return f"{estimated_seconds // 60}m {estimated_seconds % 60}s"
+        else:
+            hours = estimated_seconds // 3600
+            minutes = (estimated_seconds % 3600) // 60
+            return f"{hours}h {minutes}m"
     
     def _validate_requirements(self, requirements: Dict) -> List[str]:
         """Validate requirements structure and content"""

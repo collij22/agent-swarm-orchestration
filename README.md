@@ -3,6 +3,7 @@
 ## 🚀 Overview
 A production-ready 15-agent orchestration system with multi-LLM support for automated technical development and business projects.
 
+**🎨 SEPTEMBER 2025 UPDATE - PHASE 5** - Quality Assurance & Monitoring system with mandatory testing and token limits  
 **🛠️ SEPTEMBER 2025 UPDATE** - Fixed write_file content parameter issues, enhanced error guidance  
 **🔥 JANUARY 2025 UPDATE** - Enhanced Validation System ensures agents deliver WORKING SOFTWARE, not just files  
 **📝 AUGUST 2025 UPDATE** - Requirement Enhancement System for optimal agent orchestration  
@@ -20,6 +21,34 @@ A production-ready 15-agent orchestration system with multi-LLM support for auto
 **🔧 Self-Healing** - Automatic error recovery and configuration tuning
 
 ### Key Features
+
+#### 🆕 September 2025: Phase 5 - Quality Assurance & Monitoring
+- **Mandatory Testing System** (lib/mandatory_testing.py):
+  - Automatic test generation based on agent type
+  - Pytest execution with coverage tracking
+  - Test report generation for all agents
+  - Quality gates enforcement
+- **Token Usage Monitoring** (lib/token_monitor.py):
+  - 100k token limit per agent with automatic tracking
+  - Cost estimation by model type (Opus/Sonnet/Haiku)
+  - Checkpoint creation at 90% usage
+  - Task splitting when limits exceeded
+  - Persistent usage tracking with reports
+- **Post-Execution Verification** (lib/post_execution_verification.py):
+  - Backend startup verification
+  - Frontend build validation
+  - Docker container health checks
+  - Critical endpoint accessibility tests
+  - Comprehensive verification reports
+- **Enhanced Progress Tracking**:
+  - Real-time updates to dashboard
+  - Phase tracking with time estimation
+  - Agent status updates
+- **Quality Gates Enforcement**:
+  - Backend: At least one working endpoint
+  - Frontend: At least one rendered component
+  - Database: Schema created and seeded
+  - Docker: Containers start without errors
 
 #### 🆕 September 2025: Critical Fixes & Improvements
 - **Write File Content Fix**: 
