@@ -183,9 +183,9 @@ async def mcp_get_docs_tool(
     
     return output
 
-# ==================== Browser Automation Tools ====================
+# ==================== Playwright Automation Tools ====================
 
-async def mcp_browser_screenshot_tool(
+async def mcp_playwright_screenshot_tool(
     url: str,
     selector: str = None,
     full_page: bool = False,
@@ -209,7 +209,7 @@ async def mcp_browser_screenshot_tool(
     """
     manager = get_mcp_manager()
     
-    result = await manager.browser_screenshot(
+    result = await manager.playwright_screenshot(
         url=url,
         selector=selector,
         full_page=full_page,
@@ -227,14 +227,14 @@ async def mcp_browser_screenshot_tool(
     
     return f"Screenshot saved to: {screenshot_path}"
 
-async def mcp_browser_test_tool(
+async def mcp_playwright_test_tool(
     url: str,
     test_script: str,
     reasoning: str = None,
     context: Any = None
 ) -> str:
     """
-    Run browser-based test on a webpage
+    Run playwright-based test on a webpage
     
     Args:
         url: URL to test
@@ -246,19 +246,19 @@ async def mcp_browser_test_tool(
     """
     manager = get_mcp_manager()
     
-    result = await manager.browser_test(
+    result = await manager.playwright_test(
         url=url,
         test_script=test_script,
         reasoning=reasoning
     )
     
     if not result.success:
-        return f"Browser test failed: {result.error}"
+        return f"Playwright test failed: {result.error}"
     
     test_results = result.data
     
     # Format results
-    output = "Browser test results:\n"
+    output = "Playwright test results:\n"
     for key, value in test_results.items():
         output += f"  {key}: {value}\n"
     
@@ -286,7 +286,7 @@ async def mcp_visual_regression_tool(
     manager = get_mcp_manager()
     
     # First, take current screenshot
-    screenshot_result = await manager.browser_screenshot(
+    screenshot_result = await manager.playwright_screenshot(
         url=current_url,
         full_page=True,
         reasoning=f"Visual regression test: {reasoning}"
@@ -298,7 +298,7 @@ async def mcp_visual_regression_tool(
     current_path = screenshot_result.data
     
     # Compare screenshots
-    compare_result = await manager.browser_compare_screenshots(
+    compare_result = await manager.playwright_compare_screenshots(
         baseline=baseline_path,
         current=current_path,
         threshold=threshold
@@ -367,27 +367,27 @@ def create_mcp_tools() -> List[Tool]:
         requires_reasoning=True
     ))
     
-    # Browser automation tools
+    # Playwright automation tools
     tools.append(Tool(
-        name="mcp_browser_screenshot",
+        name="mcp_playwright_screenshot",
         description="Take screenshot of webpage for visual validation",
         parameters={
             "url": {"type": "string", "description": "URL to screenshot", "required": True},
             "selector": {"type": "string", "description": "CSS selector for element", "required": False},
             "full_page": {"type": "boolean", "description": "Capture full page", "required": False}
         },
-        function=mcp_browser_screenshot_tool,
+        function=mcp_playwright_screenshot_tool,
         requires_reasoning=True
     ))
     
     tools.append(Tool(
-        name="mcp_browser_test",
-        description="Run browser-based test on webpage",
+        name="mcp_playwright_test",
+        description="Run playwright-based test on webpage",
         parameters={
             "url": {"type": "string", "description": "URL to test", "required": True},
             "test_script": {"type": "string", "description": "JavaScript test script", "required": True}
         },
-        function=mcp_browser_test_tool,
+        function=mcp_playwright_test_tool,
         requires_reasoning=True
     ))
     
@@ -456,19 +456,6 @@ def get_conditional_mcp_tools(mcp_names: List[str]) -> List[Tool]:
                 requires_reasoning=True
             ))
             
-        elif mcp_name == "sqlite":
-            # SQLite database tools
-            tools.append(Tool(
-                name="mcp_sqlite_execute",
-                description="Execute SQL query on SQLite database",
-                parameters={
-                    "database": {"type": "string", "description": "Database file path", "required": True},
-                    "query": {"type": "string", "description": "SQL query", "required": True}
-                },
-                function=create_placeholder_mcp_function("sqlite", "execute"),
-                requires_reasoning=True
-            ))
-            
         elif mcp_name == "brave_search":
             # Brave search tools
             tools.append(Tool(
@@ -492,19 +479,6 @@ def get_conditional_mcp_tools(mcp_names: List[str]) -> List[Tool]:
                     "selector": {"type": "string", "description": "CSS selector", "required": False}
                 },
                 function=create_placeholder_mcp_function("firecrawl", "scrape"),
-                requires_reasoning=True
-            ))
-            
-        elif mcp_name == "quick_data":
-            # Quick data processing tools
-            tools.append(Tool(
-                name="mcp_quick_data_process",
-                description="Process CSV/JSON data using quick-data MCP",
-                parameters={
-                    "data": {"type": "string", "description": "Data to process", "required": True},
-                    "operation": {"type": "string", "description": "Operation to perform", "required": True}
-                },
-                function=create_placeholder_mcp_function("quick_data", "process"),
                 requires_reasoning=True
             ))
             

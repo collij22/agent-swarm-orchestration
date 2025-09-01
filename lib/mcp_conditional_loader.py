@@ -77,23 +77,6 @@ class MCPConditionalLoader:
                 priority=6
             ),
             
-            # SQLite MCP Rules
-            MCPActivationRule(
-                mcp_name="sqlite",
-                trigger_type=MCPTriggerType.KEYWORD,
-                conditions=["sqlite", "local", "prototype", "mvp", "poc", "demo", "lightweight"],
-                agents=["database-expert", "rapid-builder"],
-                priority=7,
-                description="Lightweight database for prototyping"
-            ),
-            MCPActivationRule(
-                mcp_name="sqlite",
-                trigger_type=MCPTriggerType.PROJECT_TYPE,
-                conditions=["prototype", "mvp", "demo"],
-                agents=["rapid-builder", "database-expert"],
-                priority=8
-            ),
-            
             # Brave Search MCP Rules
             MCPActivationRule(
                 mcp_name="brave_search",
@@ -126,23 +109,6 @@ class MCPConditionalLoader:
                 conditions=["competitor_analysis", "market_research"],
                 agents=["requirements-analyst"],
                 priority=8
-            ),
-            
-            # Quick-data MCP Rules
-            MCPActivationRule(
-                mcp_name="quick_data",
-                trigger_type=MCPTriggerType.KEYWORD,
-                conditions=["data", "csv", "json", "transform", "analyze", "statistics", "metrics", "process"],
-                agents=["requirements-analyst", "project-architect", "ai-specialist", "performance-optimizer"],
-                priority=6,
-                description="Data manipulation and analysis"
-            ),
-            MCPActivationRule(
-                mcp_name="quick_data",
-                trigger_type=MCPTriggerType.FEATURE,
-                conditions=["data_processing", "analytics", "reporting"],
-                agents=["requirements-analyst", "ai-specialist"],
-                priority=7
             ),
             
             # Fetch MCP Rules

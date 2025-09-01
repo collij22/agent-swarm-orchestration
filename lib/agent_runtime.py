@@ -1084,10 +1084,10 @@ def create_standard_tools() -> List[Tool]:
     
     tools.append(Tool(
         name="write_file",
-        description="Write content to a file",
+        description="Write content to a file. CRITICAL: You MUST provide BOTH file_path AND content in the SAME call. Never call write_file without the actual file content. Include the complete code/text content, not placeholders.",
         parameters={
             "file_path": {"type": "string", "description": "Path to file", "required": True},
-            "content": {"type": "string", "description": "Content to write", "required": True}
+            "content": {"type": "string", "description": "ACTUAL content to write - the complete file contents, not a placeholder or description", "required": True}
         },
         function=write_file_tool
     ))

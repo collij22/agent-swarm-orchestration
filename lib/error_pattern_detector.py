@@ -47,10 +47,11 @@ class ErrorPattern:
 class ErrorPatternDetector:
     """Detects and manages error patterns across agent executions"""
     
-    def __init__(self, logger=None):
+    def __init__(self, logger=None, max_retries=5):
         self.logger = logger
         self.patterns: Dict[str, ErrorPattern] = {}
         self.agent_error_counts: Dict[str, int] = defaultdict(int)
+        self.max_retries = max_retries
         self.recovery_strategies = {
             1: "retry_same",
             2: "retry_with_context", 
@@ -58,6 +59,8 @@ class ErrorPatternDetector:
             4: "use_alternative_agent",
             5: "manual_intervention"
         }
+        # Track which strategies have been tried
+        self.strategy_attempts: Dict[str, List[str]] = defaultdict(list)
         
     def _generate_pattern_key(self, agent_name: str, error_message: str) -> str:
         """Generate a unique key for an error pattern"""
@@ -69,19 +72,21 @@ class ErrorPatternDetector:
         
     def _normalize_error(self, error_message: str) -> str:
         """Normalize error messages to group similar errors"""
-        normalized = error_message.lower().strip()
+        # Keep original for checking specific parameters
+        original = error_message.lower().strip()
+        normalized = original
         
         # Remove specific file paths but keep the type
         import re
         normalized = re.sub(r'["\'].*?["\']', '<path>', normalized)
         
-        # Group common parameter errors
-        if "missing required" in normalized or "called without" in normalized:
-            if "content" in normalized:
+        # Group common parameter errors - check in original message
+        if "missing required" in original or "called without" in original or ("missing" in original and "argument" in original):
+            if "content" in original:
                 return "missing_content_parameter"
-            elif "file_path" in normalized:
+            elif "file_path" in original:
                 return "missing_filepath_parameter"
-            elif "command" in normalized:
+            elif "command" in original:
                 return "missing_command_parameter"
             else:
                 return "missing_required_parameter"

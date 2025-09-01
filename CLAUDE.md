@@ -503,15 +503,15 @@ When agents encounter errors, the system follows a 5-stage escalation:
 ```yaml
 payment_enabled_webapp:
   triggers: [payment, subscription, billing, e-commerce]
-  mcps: [stripe, fetch, sqlite, vercel]
+  mcps: [stripe, fetch, vercel]
   
 research_heavy_project:
   triggers: [research, analysis, competitor]
-  mcps: [firecrawl, brave_search, quick_data]
+  mcps: [firecrawl, brave_search]
   
 rapid_prototype:
   triggers: [mvp, prototype, poc, demo]
-  mcps: [sqlite, fetch, vercel]
+  mcps: [fetch, vercel]
   
 vercel_deployment:
   triggers: [vercel, nextjs, serverless]
@@ -519,7 +519,7 @@ vercel_deployment:
   
 data_processing_pipeline:
   triggers: [data, analytics, csv, etl]
-  mcps: [quick_data, sqlite]
+  mcps: []
   
 api_testing_focused:
   triggers: [api, webhook, integration]
@@ -547,17 +547,13 @@ documentation_fetching:
   technologies: [react, fastapi, django, postgresql]
 
 visual_testing:
-  tool: mcp_browser_screenshot
+  tool: mcp_playwright_screenshot
   use_cases: ["UI validation", "Deployment verification", "Visual regression"]
 
 # Phase 2-3: Conditional MCPs (Workflow-Based)
 payment_processing:
   tool: mcp_stripe
   activation: "When payment features required"
-  
-data_operations:
-  tool: mcp_quick_data
-  activation: "For CSV/JSON processing, analytics"
   
 web_scraping:
   tool: mcp_firecrawl
@@ -646,7 +642,7 @@ python lib/mock_anthropic_enhanced.py
 #### Frontend Agents (frontend-specialist, rapid-builder for UI):
 - ✅ **Compilation Check**: `npm run build` or `yarn build` must succeed
 - ✅ **Dependency Resolution**: All imports must resolve correctly
-- ✅ **Browser Verification**: Use mcp_browser_screenshot to verify UI renders
+- ✅ **Playwright Verification**: Use mcp_playwright_screenshot to verify UI renders
 - ✅ **Navigation Test**: Verify all routes are accessible
 - ✅ **Component Rendering**: No console errors or blank pages
 - ✅ **User Interaction**: At least one interactive element must work
@@ -719,7 +715,7 @@ completion_stages:
 4. **Auth Test**: User can register, login, and see protected content
 5. **Data Test**: At least one full CRUD cycle must work
 6. **Docker Test**: docker-compose up must bring up all services
-7. **MCP Verification**: Use browser/fetch/semgrep MCPs for validation
+7. **MCP Verification**: Use playwright/fetch/semgrep MCPs for validation
 8. **Error Recovery**: Fix any compilation or runtime errors before proceeding
 
 ### Minimum Viable Deliverable:
@@ -738,3 +734,37 @@ completion_stages:
 - Test Docker builds even in mock mode
 - Ensure seed data is created regardless of mode
 - Run compilation checks in mock mode
+
+## 🛡️ Error Recovery Standards (September 2025 Updates)
+
+### Progressive Error Recovery
+When agents encounter errors, the system follows a 5-stage escalation:
+1. **Retry Same** - Simple retry (might be transient)
+2. **Retry with Context** - Add error information to help agent
+3. **Trigger Debugger** - Automated-debugger agent intervenes
+4. **Alternative Agent** - Try different agent (e.g., rapid-builder)
+5. **Manual Intervention** - Request human help with full context
+
+### Character Encoding Standards
+- **UTF-8 Everywhere**: System automatically configures UTF-8 encoding
+- **Windows Compatibility**: All Unicode characters converted to ASCII equivalents  
+- **Safe File Operations**: Automatic encoding detection and fallback
+- **No More Charset Errors**: Complete elimination of charmap codec errors
+
+### Build Validation Standards
+- **Detailed Error Parsing**: TypeScript, Python, Docker errors parsed and explained
+- **Actionable Fix Suggestions**: Each error comes with specific remediation steps
+- **Multi-Language Support**: npm, yarn, python, docker, make build systems
+- **Error Reports**: JSON and markdown reports with file/line information
+
+### Tool Parameter Validation
+- **Smart Placeholder Generation**: Auto-generates appropriate content for missing parameters
+- **File Type Detection**: 15+ file types with customized placeholders
+- **Error Guidance**: Clear instructions when parameters are missing
+- **Recovery Tracking**: Files needing fixes tracked in context.artifacts
+
+### Error Pattern Detection
+- **Track Repeated Failures**: Monitor error patterns per agent
+- **Agent Health Monitoring**: healthy → warning → critical → failed states
+- **Automatic Recovery**: Progressive strategies based on failure count
+- **Alternative Selection**: Smart fallback to alternative agents

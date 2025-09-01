@@ -70,7 +70,7 @@ def test_conditional_loading():
     )
     print(f"   Agent: requirements-analyst")
     print(f"   Loaded MCPs: {mcps}")
-    assert "brave_search" in mcps or "firecrawl" in mcps or "quick_data" in mcps, \
+    assert "brave_search" in mcps or "firecrawl" in mcps, \
            "Research MCPs should be loaded for research projects"
     print("   ✓ Research MCPs correctly loaded")
     
@@ -92,7 +92,7 @@ def test_conditional_loading():
     
     # Test 5: Verify MCP tools are created
     print("\n5. Testing MCP tool creation:")
-    test_mcps = ["stripe", "vercel", "sqlite"]
+    test_mcps = ["stripe", "vercel", "fetch"]
     tools = get_conditional_mcp_tools(test_mcps)
     print(f"   Requested MCPs: {test_mcps}")
     print(f"   Created tools: {[tool.name for tool in tools]}")

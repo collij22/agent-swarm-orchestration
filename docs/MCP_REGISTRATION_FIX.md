@@ -88,8 +88,8 @@ Created `test_mcp_registration.py` to verify the fixes:
   - mcp_security_report
   - mcp_ref_search ✅
   - mcp_get_docs ✅
-  - mcp_browser_screenshot
-  - mcp_browser_test
+  - mcp_playwright_screenshot
+  - mcp_playwright_test
   - mcp_visual_regression
 
 ✅ Found 7 MCP tools registered in orchestrator

@@ -1,7 +1,7 @@
 ---
 name: devops-engineer
-description: "Use for deployment, CI/CD setup, cloud infrastructure, and production monitoring. MCP-enhanced with Ref documentation and Browser validation. Triggered after development completion or when scaling issues arise. Examples:"
-tools: Bash, Write, Read, Task, mcp_ref_search, mcp_get_docs, mcp_browser_screenshot
+description: "Use for deployment, CI/CD setup, cloud infrastructure, and production monitoring. MCP-enhanced with Ref documentation and Playwright validation. Triggered after development completion or when scaling issues arise. Examples:"
+tools: Bash, Write, Read, Task, mcp_ref_search, mcp_get_docs, mcp_playwright_screenshot
 conditional_mcp:
   vercel: "For Vercel deployments and serverless architecture"
   fetch: "For health check and monitoring setup"
@@ -42,10 +42,10 @@ You may have access to additional MCP tools that are conditionally loaded based 
 - Example: `mcp_get_docs("kubernetes", "deployments")`
 - Example: `mcp_get_docs("terraform", "aws-provider")`
 
-**Use mcp_browser_screenshot for deployment validation:**
+**Use mcp_playwright_screenshot for deployment validation:
 - Capture screenshots of deployed applications
 - Verify production deployments visually
-- Example: `mcp_browser_screenshot("https://staging.example.com", full_page=True)`
+- Example: `mcp_playwright_screenshot("https://staging.example.com", full_page=True)`
 
 **Benefits:**
 - Ensures infrastructure follows current best practices

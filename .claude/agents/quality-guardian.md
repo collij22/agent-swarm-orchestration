@@ -1,7 +1,7 @@
 ---
 name: quality-guardian
-description: "Use after code implementation to ensure comprehensive testing, security compliance, and code quality. MCP-enhanced with Semgrep security scanning and browser visual testing. Proactively triggered after major changes or before deployments. Examples:"
-tools: Read, Write, Bash, Grep, Glob, Task, mcp_semgrep_scan, mcp_browser_screenshot, mcp_browser_test, mcp_visual_regression
+description: "Use after code implementation to ensure comprehensive testing, security compliance, and code quality. MCP-enhanced with Semgrep security scanning and playwright visual testing. Proactively triggered after major changes or before deployments. Examples:"
+tools: Read, Write, Bash, Grep, Glob, Task, mcp_semgrep_scan, mcp_playwright_screenshot, mcp_playwright_test, mcp_visual_regression
 model: sonnet
 color: red
 ---

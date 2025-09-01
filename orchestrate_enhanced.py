@@ -27,6 +27,14 @@ from typing import Dict, List, Optional, Tuple
 import yaml
 from datetime import datetime
 
+# Fix encoding issues for Windows immediately
+try:
+    from lib.encoding_fix import setup_utf8_encoding, clean_unicode_content
+    setup_utf8_encoding()
+except ImportError:
+    # If encoding_fix doesn't exist yet, continue without it
+    pass
+
 # Load environment variables from .env file if it exists
 env_file = Path(".env")
 if env_file.exists():
@@ -46,6 +54,11 @@ from lib.agent_runtime import (
     AnthropicAgentRunner, AgentContext, ModelType, Tool, 
     create_standard_tools, create_quality_tools, create_mcp_enhanced_tools
 )
+try:
+    from lib.build_validator import BuildValidator, BuildError
+except ImportError:
+    BuildValidator = None
+    BuildError = None
 
 # Import mock handler for testing
 if os.environ.get('MOCK_MODE') == 'true':
@@ -217,11 +230,54 @@ class EnhancedOrchestrator:
                         "description": frontmatter.get("description", "")
                     }
         
+        # Log loaded agents for debugging
+        loaded_agent_names = list(agents.keys())
         self.logger.log_reasoning(
             "orchestrator",
-            f"Loaded {len(agents)} agent configurations",
+            f"Loaded {len(agents)} agent configurations: {', '.join(loaded_agent_names)}",
             "Agent configs parsed from .claude/agents/*.md"
         )
+        
+        # Explicitly check for critical agents
+        critical_agents = ["automated-debugger", "quality-guardian-enhanced"]
+        missing_agents = [agent for agent in critical_agents if agent not in agents]
+        
+        if missing_agents:
+            self.logger.log_warning(
+                "orchestrator",
+                f"Critical agents not loaded: {', '.join(missing_agents)}",
+                "Some critical agents are missing from configuration"
+            )
+            
+            # Try to load automated-debugger explicitly if missing
+            if "automated-debugger" not in agents:
+                debugger_path = agent_dir / "automated-debugger.md"
+                if debugger_path.exists():
+                    self.logger.log_reasoning(
+                        "orchestrator",
+                        "Loading automated-debugger explicitly",
+                        "Critical agent was not loaded in initial scan"
+                    )
+                    content = debugger_path.read_text(encoding='utf-8')
+                    if content.startswith("---"):
+                        parts = content.split("---", 2)
+                        if len(parts) >= 3:
+                            import yaml
+                            frontmatter = yaml.safe_load(parts[1])
+                            prompt = parts[2].strip()
+                            
+                            agents["automated-debugger"] = {
+                                "name": "automated-debugger",
+                                "model": frontmatter.get("model", "opus"),
+                                "tools": frontmatter.get("tools", []),
+                                "prompt": prompt,
+                                "description": frontmatter.get("description", "")
+                            }
+                            self.logger.log_reasoning(
+                                "orchestrator",
+                                "Successfully loaded automated-debugger",
+                                "Critical agent now available for error recovery"
+                            )
         
         return agents
     

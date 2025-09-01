@@ -36,8 +36,8 @@ Successfully enhanced 7 agents with MCP capabilities:
   - Benefits: Accurate integration patterns, current API specs
 
 #### Quality Agents
-- **quality-guardian.md**: Added Browser MCP for visual testing
-  - Tools: `mcp_browser_screenshot`, `mcp_browser_test`, `mcp_visual_regression`
+- **quality-guardian.md**: Added Playwright MCP for visual testing
+  - Tools: `mcp_playwright_screenshot`, `mcp_playwright_test`, `mcp_visual_regression`
   - Benefits: Visual validation, regression testing
 
 #### Support Agents
@@ -45,8 +45,8 @@ Successfully enhanced 7 agents with MCP capabilities:
   - Tools: `mcp_ref_search`, `mcp_get_docs`
   - Benefits: Industry-standard documentation patterns
   
-- **devops-engineer.md**: Added Ref MCP and Browser MCP
-  - Tools: `mcp_ref_search`, `mcp_get_docs`, `mcp_browser_screenshot`
+- **devops-engineer.md**: Added Ref MCP and Playwright MCP
+  - Tools: `mcp_ref_search`, `mcp_get_docs`, `mcp_playwright_screenshot`
   - Benefits: Current DevOps practices, deployment validation
 
 ### 3. **Core System Updates** ✓
@@ -96,7 +96,7 @@ Successfully enhanced 7 agents with MCP capabilities:
 }
 ```
 
-### 3. Browser MCP
+### 3. Playwright MCP
 ```json
 {
   "port": 3103,
@@ -138,11 +138,11 @@ Successfully enhanced 7 agents with MCP capabilities:
 - `CLAUDE.md` - Added MCP standards section
 - `.claude/agents/security-auditor.md` - Added Semgrep MCP
 - `.claude/agents/rapid-builder.md` - Added Ref MCP
-- `.claude/agents/quality-guardian.md` - Added Browser MCP
+- `.claude/agents/quality-guardian.md` - Added Playwright MCP
 - `.claude/agents/frontend-specialist.md` - Added Ref MCP
 - `.claude/agents/api-integrator.md` - Added Ref MCP
 - `.claude/agents/documentation-writer.md` - Added Ref MCP
-- `.claude/agents/devops-engineer.md` - Added Ref MCP and Browser MCP
+- `.claude/agents/devops-engineer.md` - Added Ref MCP and Playwright MCP
 
 ## 🚀 Usage Examples
 
@@ -170,7 +170,7 @@ await mcp_ref_search(
 ### Visual Testing
 ```python
 # Agent captures deployment screenshot
-await mcp_browser_screenshot(
+await mcp_playwright_screenshot(
     url="https://staging.example.com",
     full_page=True,
     reasoning="Deployment verification"
@@ -216,7 +216,7 @@ The MCP enhancement implementation is **COMPLETE** and **SUCCESSFUL**. The 15-ag
 
 - **Automated security scanning** with Semgrep MCP
 - **60% token reduction** with Ref MCP documentation
-- **Visual testing capabilities** with Browser MCP
+- **Visual testing capabilities** with Playwright MCP
 - **Comprehensive integration** across 7 key agents
 - **Full test coverage** and validation
 

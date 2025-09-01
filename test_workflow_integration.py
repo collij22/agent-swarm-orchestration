@@ -123,7 +123,7 @@ def test_workflow_loader():
     print("Test: MCP Usage Guidelines")
     print("=" * 60)
     
-    for mcp_name in ['stripe', 'vercel', 'sqlite']:
+    for mcp_name in ['stripe', 'vercel', 'fetch']:
         guidelines = loader.get_mcp_guidelines(mcp_name)
         if guidelines:
             print(f"\n  {mcp_name.upper()} MCP:")

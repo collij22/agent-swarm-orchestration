@@ -26,14 +26,12 @@ class MCPServerType(Enum):
     """Types of MCP servers supported"""
     SEMGREP = "semgrep"
     REF = "ref"
-    BROWSER = "browser"
+    PLAYWRIGHT = "playwright"
     # Conditional MCPs (only loaded when beneficial)
-    QUICK_DATA = "quick_data"
     FIRECRAWL = "firecrawl"
     STRIPE = "stripe"
     VERCEL = "vercel"
     BRAVE_SEARCH = "brave_search"
-    SQLITE = "sqlite"
     FETCH = "fetch"
 
 @dataclass
@@ -144,19 +142,6 @@ class MCPManager:
     def _add_conditional_mcp_configs(self):
         """Add default configurations for conditional MCPs"""
         conditional_configs = {
-            'quick_data': MCPServerConfig(
-                name='Quick Data MCP',
-                type='quick_data',
-                url='http://localhost:3104',
-                transport='http',
-                config={
-                    'command': 'npx',
-                    'args': ['-y', '@quick-data/mcp-server'],
-                    'conditional': True,
-                    'triggers': ['data_analysis', 'csv_processing', 'metrics']
-                },
-                enabled=False  # Disabled by default, enabled conditionally
-            ),
             'firecrawl': MCPServerConfig(
                 name='Firecrawl MCP',
                 type='firecrawl',
@@ -206,19 +191,6 @@ class MCPManager:
                     'args': ['-y', '@brave/mcp-search-server'],
                     'conditional': True,
                     'triggers': ['research', 'troubleshooting', 'best_practices']
-                },
-                enabled=False
-            ),
-            'sqlite': MCPServerConfig(
-                name='SQLite MCP',
-                type='sqlite',
-                url='http://localhost:3109',
-                transport='http',
-                config={
-                    'command': 'npx',
-                    'args': ['-y', '@sqlite/mcp-server'],
-                    'conditional': True,
-                    'triggers': ['prototype', 'local_db', 'testing']
                 },
                 enabled=False
             ),
@@ -551,18 +523,18 @@ class MCPManager:
             logger.error(f"Context fetch failed: {e}")
             return MCPToolResult(False, None, str(e))
     
-    # ==================== Browser MCP Tools ====================
+    # ==================== Playwright MCP Tools ====================
     
-    async def browser_screenshot(self,
+    async def playwright_screenshot(self,
                                 url: str,
                                 selector: str = None,
                                 full_page: bool = False,
                                 reasoning: str = None) -> MCPToolResult:
-        """Take screenshot using Browser MCP"""
+        """Take screenshot using Playwright MCP"""
         start_time = time.time()
         
-        if 'browser' not in self.clients:
-            return MCPToolResult(False, None, "Browser MCP not configured")
+        if 'playwright' not in self.clients:
+            return MCPToolResult(False, None, "Playwright MCP not configured")
         
         try:
             payload = {
@@ -572,13 +544,13 @@ class MCPManager:
                 'reasoning': reasoning
             }
             
-            response = await self.clients['browser'].post('/screenshot', json=payload)
+            response = await self.clients['playwright'].post('/screenshot', json=payload)
             response.raise_for_status()
             
             result = response.json()
             
             # Track metrics
-            self.metrics['calls']['browser'] += 1
+            self.metrics['calls']['playwright'] += 1
             
             return MCPToolResult(
                 success=True,
@@ -587,17 +559,17 @@ class MCPManager:
             )
             
         except Exception as e:
-            self.metrics['errors']['browser'] += 1
+            self.metrics['errors']['playwright'] += 1
             logger.error(f"Screenshot failed: {e}")
             return MCPToolResult(False, None, str(e))
     
-    async def browser_test(self,
+    async def playwright_test(self,
                           url: str,
                           test_script: str,
                           reasoning: str = None) -> MCPToolResult:
-        """Run browser test using Browser MCP"""
-        if 'browser' not in self.clients:
-            return MCPToolResult(False, None, "Browser MCP not configured")
+        """Run browser test using Playwright MCP"""
+        if 'playwright' not in self.clients:
+            return MCPToolResult(False, None, "Playwright MCP not configured")
         
         try:
             payload = {
@@ -606,7 +578,7 @@ class MCPManager:
                 'reasoning': reasoning
             }
             
-            response = await self.clients['browser'].post('/test', json=payload)
+            response = await self.clients['playwright'].post('/test', json=payload)
             response.raise_for_status()
             
             result = response.json()
@@ -618,16 +590,16 @@ class MCPManager:
             )
             
         except Exception as e:
-            logger.error(f"Browser test failed: {e}")
+            logger.error(f"Playwright test failed: {e}")
             return MCPToolResult(False, None, str(e))
     
-    async def browser_compare_screenshots(self,
+    async def playwright_compare_screenshots(self,
                                          baseline: str,
                                          current: str,
                                          threshold: float = 0.95) -> MCPToolResult:
         """Compare screenshots for visual regression testing"""
-        if 'browser' not in self.clients:
-            return MCPToolResult(False, None, "Browser MCP not configured")
+        if 'playwright' not in self.clients:
+            return MCPToolResult(False, None, "Playwright MCP not configured")
         
         try:
             payload = {
@@ -636,7 +608,7 @@ class MCPManager:
                 'threshold': threshold
             }
             
-            response = await self.clients['browser'].post('/compare', json=payload)
+            response = await self.clients['playwright'].post('/compare', json=payload)
             response.raise_for_status()
             
             result = response.json()
@@ -655,42 +627,6 @@ class MCPManager:
             return MCPToolResult(False, None, str(e))
     
     # ==================== Conditional MCP Tools ====================
-    
-    async def quick_data_process(self,
-                                data: Any,
-                                operation: str,
-                                format: str = 'json',
-                                reasoning: str = None) -> MCPToolResult:
-        """Process data using Quick Data MCP"""
-        if 'quick_data' not in self.clients:
-            return MCPToolResult(False, None, "Quick Data MCP not configured or not activated")
-        
-        try:
-            payload = {
-                'data': data,
-                'operation': operation,
-                'format': format,
-                'reasoning': reasoning
-            }
-            
-            response = await self.clients['quick_data'].post('/process', json=payload)
-            response.raise_for_status()
-            
-            result = response.json()
-            
-            # Track metrics
-            self.metrics['calls']['quick_data'] += 1
-            
-            return MCPToolResult(
-                success=True,
-                data=result.get('processed_data', {}),
-                execution_time=result.get('execution_time', 0.0)
-            )
-            
-        except Exception as e:
-            self.metrics['errors']['quick_data'] += 1
-            logger.error(f"Quick Data processing failed: {e}")
-            return MCPToolResult(False, None, str(e))
     
     async def firecrawl_scrape(self,
                               url: str,
@@ -858,42 +794,6 @@ class MCPManager:
         except Exception as e:
             self.metrics['errors']['brave_search'] += 1
             logger.error(f"Brave search failed: {e}")
-            return MCPToolResult(False, None, str(e))
-    
-    async def sqlite_query(self,
-                         database: str,
-                         query: str,
-                         parameters: List = None,
-                         reasoning: str = None) -> MCPToolResult:
-        """Execute SQLite query using SQLite MCP"""
-        if 'sqlite' not in self.clients:
-            return MCPToolResult(False, None, "SQLite MCP not configured or not activated")
-        
-        try:
-            payload = {
-                'database': database,
-                'query': query,
-                'parameters': parameters or [],
-                'reasoning': reasoning
-            }
-            
-            response = await self.clients['sqlite'].post('/query', json=payload)
-            response.raise_for_status()
-            
-            result = response.json()
-            
-            # Track metrics
-            self.metrics['calls']['sqlite'] += 1
-            
-            return MCPToolResult(
-                success=True,
-                data=result.get('rows', []),
-                execution_time=result.get('execution_time', 0.0)
-            )
-            
-        except Exception as e:
-            self.metrics['errors']['sqlite'] += 1
-            logger.error(f"SQLite query failed: {e}")
             return MCPToolResult(False, None, str(e))
     
     async def fetch_request(self,

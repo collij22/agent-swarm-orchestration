@@ -66,7 +66,9 @@
       "Bash(if [ -f \"CHANGELOG.md\" ])",
       "Bash(then echo \"File exists\")",
       "Bash(else echo \"File does not exist\")",
-      "Bash(npx:*)"
+      "Bash(npx:*)",
+      "mcp__Ref__ref_search_documentation",
+      "mcp__Ref__ref_read_url"
     ],
     "deny": [],
     "ask": []

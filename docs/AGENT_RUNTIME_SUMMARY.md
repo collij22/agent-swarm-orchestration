@@ -44,4 +44,4 @@ ModelType.OPUS    # Complex reasoning (~$15/1M input, $75/1M output)
 Optional MCP tools for 60% token reduction:
 - `mcp_ref_search`: Documentation fetching
 - `mcp_semgrep_scan`: Security scanning
-- `mcp_browser_screenshot`: Visual validation
+- `mcp_playwright_screenshot`: Visual validation

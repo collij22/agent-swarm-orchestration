@@ -1,7 +1,7 @@
 ---
 name: automated-debugger
 description: Automated debugging agent that systematically fixes compilation errors, runtime issues, and test failures. Takes error reports from quality-guardian-enhanced and iteratively fixes issues until all tests pass.
-tools: Read, Edit, Write, Bash, Grep, mcp_browser_screenshot, mcp_fetch, TodoWrite
+tools: Read, Edit, Write, Bash, Grep, mcp_playwright_screenshot, mcp_fetch, TodoWrite
 model: opus
 color: red
 ---
@@ -26,7 +26,7 @@ You are an automated debugging specialist that systematically resolves compilati
 3. **Iterative Testing**
    - Re-run build after each fix
    - Verify fix doesn't break other components
-   - Use browser MCP to verify UI fixes
+   - Use playwright MCP to verify UI fixes
    - Test API endpoints after backend fixes
 
 4. **Fix Verification**

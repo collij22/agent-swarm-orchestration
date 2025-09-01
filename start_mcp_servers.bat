@@ -15,8 +15,8 @@ echo Starting Ref MCP Server (Port 3102)...
 start "MCP Ref Server" /min cmd /c "npx @anthropic/mcp-server-ref --port 3102"
 timeout /t 2 /nobreak >nul
 
-echo Starting Browser MCP Server (Port 3103)...
-start "MCP Browser Server" /min cmd /c "npx @anthropic/mcp-server-browser --port 3103"
+echo Starting Playwright MCP Server (Port 3103)...
+start "MCP Playwright Server" /min cmd /c "npx @agentdeskai/playwright-mcp --port 3103"
 timeout /t 2 /nobreak >nul
 
 echo.
@@ -42,9 +42,9 @@ if %errorlevel% equ 0 (
 
 curl -s http://localhost:3103/health >nul 2>&1
 if %errorlevel% equ 0 (
-    echo [OK] Browser MCP Server is running on port 3103
+    echo [OK] Playwright MCP Server is running on port 3103
 ) else (
-    echo [WARNING] Browser MCP Server may not be running properly
+    echo [WARNING] Playwright MCP Server may not be running properly
 )
 
 echo.

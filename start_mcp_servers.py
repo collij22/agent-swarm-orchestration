@@ -80,8 +80,8 @@ def main():
             "port": 3102
         },
         {
-            "name": "Browser MCP Server",
-            "command": "npx @anthropic/mcp-server-browser --port 3103",
+            "name": "Playwright MCP Server",
+            "command": "npx @agentdeskai/playwright-mcp --port 3103",
             "port": 3103
         }
     ]

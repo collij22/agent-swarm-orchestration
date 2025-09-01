@@ -30,19 +30,17 @@ Created a sophisticated conditional loading system that intelligently determines
 Updated the MCP manager with:
 
 #### New MCP Server Configurations:
-1. **quick_data** (Port 3104): Data processing and transformation
-2. **firecrawl** (Port 3105): Web scraping and content extraction
-3. **stripe** (Port 3106): Payment processing integration
-4. **vercel** (Port 3107): Deployment automation
-5. **brave_search** (Port 3108): Web search for research
-6. **sqlite** (Port 3109): Lightweight database for prototyping
-7. **fetch** (Port 3110): Enhanced HTTP operations
+1. **firecrawl** (Port 3105): Web scraping and content extraction
+2. **stripe** (Port 3106): Payment processing integration
+3. **vercel** (Port 3107): Deployment automation
+4. **brave_search** (Port 3108): Web search for research
+5. **fetch** (Port 3110): Enhanced HTTP operations
 
 #### New Methods:
 - `activate_conditional_mcps()`: Dynamically activates MCPs based on context
 - `get_active_mcps()`: Returns currently active MCPs
 - `get_mcp_recommendations()`: Provides MCP suggestions for agents
-- Tool methods for each new MCP (quick_data_process, firecrawl_scrape, etc.)
+- Tool methods for each new MCP (firecrawl_scrape, stripe_payment, etc.)
 
 ### 3. Orchestration Integration (`lib/orchestration_enhanced.py`)
 
@@ -57,27 +55,27 @@ Integrated conditional MCP activation into the orchestration workflow:
 ### By Agent Role
 
 #### Tier 1: Builder Agents
-- **rapid-builder**: sqlite, stripe, quick_data
+- **rapid-builder**: stripe, fetch
 - **api-integrator**: stripe, fetch, firecrawl
 - **frontend-specialist**: vercel, firecrawl
-- **database-expert**: sqlite, quick_data
+- **database-expert**: fetch
 
 #### Tier 2: Specialist Agents
-- **ai-specialist**: quick_data, fetch
+- **ai-specialist**: fetch
 - **devops-engineer**: vercel, fetch
-- **performance-optimizer**: quick_data, fetch
+- **performance-optimizer**: fetch
 - **documentation-writer**: firecrawl, brave_search
 
 #### Tier 3: Orchestration Agents
-- **requirements-analyst**: firecrawl, brave_search, quick_data
-- **project-architect**: quick_data, brave_search
+- **requirements-analyst**: firecrawl, brave_search
+- **project-architect**: brave_search
 - **debug-specialist**: brave_search, fetch
 
 ### By Project Type
 
-- **E-commerce/SaaS**: stripe, vercel, sqlite
+- **E-commerce/SaaS**: stripe, vercel, fetch
 - **Web Applications**: vercel, firecrawl, fetch
-- **Prototypes/MVPs**: sqlite, quick_data
+- **Prototypes/MVPs**: fetch, vercel
 - **Research Projects**: brave_search, firecrawl
 
 ## Token & Cost Optimization
@@ -138,12 +136,10 @@ export BRAVE_API_KEY="..."
 ### MCP Server Installation (When Ready for Production)
 ```bash
 # Install MCP servers via npm
-npx -y @quick-data/mcp-server
 npx -y @firecrawl/mcp-server
 npx -y @stripe/mcp-server
 npx -y @vercel/mcp-server
 npx -y @brave/mcp-search-server
-npx -y @sqlite/mcp-server
 npx -y @smithery/mcp-fetch
 ```
 

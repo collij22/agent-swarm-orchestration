@@ -34,8 +34,8 @@ def test_mcp_tools_creation():
         "mcp_security_report", 
         "mcp_ref_search",
         "mcp_get_docs",
-        "mcp_browser_screenshot",
-        "mcp_browser_test",
+        "mcp_playwright_screenshot",
+        "mcp_playwright_test",
         "mcp_visual_regression"
     ]
     
@@ -84,8 +84,8 @@ async def test_mcp_manager():
     health = await manager.health_check("ref")
     print(f"✓ Ref health check: {health.get('ref', 'unavailable')}")
     
-    health = await manager.health_check("browser")
-    print(f"✓ Browser health check: {health.get('browser', 'unavailable')}")
+    health = await manager.health_check("playwright")
+    print(f"✓ Playwright health check: {health.get('playwright', 'unavailable')}")
     
     return True
 
@@ -100,11 +100,11 @@ def test_agent_configs():
     mcp_agents = {
         "security-auditor.md": ["mcp_semgrep_scan", "mcp_security_report"],
         "rapid-builder.md": ["mcp_ref_search", "mcp_get_docs"],
-        "quality-guardian.md": ["mcp_browser_screenshot", "mcp_browser_test"],
+        "quality-guardian.md": ["mcp_playwright_screenshot", "mcp_playwright_test"],
         "frontend-specialist.md": ["mcp_ref_search", "mcp_get_docs"],
         "api-integrator.md": ["mcp_ref_search", "mcp_get_docs"],
         "documentation-writer.md": ["mcp_ref_search", "mcp_get_docs"],
-        "devops-engineer.md": ["mcp_ref_search", "mcp_get_docs", "mcp_browser_screenshot"]
+        "devops-engineer.md": ["mcp_ref_search", "mcp_get_docs", "mcp_playwright_screenshot"]
     }
     
     for agent_file, expected_tools in mcp_agents.items():
@@ -142,7 +142,7 @@ def test_claude_md_update():
         key_concepts = [
             "mcp_ref_search",
             "mcp_semgrep_scan", 
-            "mcp_browser_screenshot",
+            "mcp_playwright_screenshot",
             "60% token",
             "MCP Cost Optimization"
         ]
@@ -195,7 +195,7 @@ async def main():
         print("  - Expected benefits:")
         print("    • 60% token reduction with Ref MCP")
         print("    • Automated security scanning with Semgrep")
-        print("    • Visual testing with Browser MCP")
+        print("    • Visual testing with Playwright MCP")
         print("    • ~$0.09 cost savings per step")
         
     except Exception as e:

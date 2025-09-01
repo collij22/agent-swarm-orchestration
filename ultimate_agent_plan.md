@@ -46,7 +46,7 @@ Essential agents that handle 80% of development tasks, now with validation and d
    - Testing suite creation and execution
    - Security audit and compliance
    - Code review and standards enforcement
-   - **MCP Tools**: mcp_browser_screenshot, mcp_browser_test, mcp_visual_regression
+   - **MCP Tools**: mcp_playwright_screenshot, mcp_playwright_test, mcp_visual_regression
    - Runs: Continuously during development
    - **Uses: claude-sonnet-4-20250514**
 
@@ -57,7 +57,7 @@ Essential agents that handle 80% of development tasks, now with validation and d
    - Testing infrastructure generation (pytest, fixtures, API tests)
    - Cloud deployment and scaling strategies
    - Monitoring and logging configuration
-   - **MCP Tools**: mcp_ref_search, mcp_get_docs, mcp_browser_screenshot
+   - **MCP Tools**: mcp_ref_search, mcp_get_docs, mcp_playwright_screenshot
    - Runs: Final phase, parallel with documentation
    - **Uses: claude-sonnet-4-20250514**
    - **Enhanced Version: sfa_devops_engineer_enhanced.py**
@@ -455,42 +455,38 @@ Revolutionary enhancement that delivers **60% token reduction** and significant 
 ### Phase 1: Core MCP Integration (Dec 31, 2024)
 - **security-auditor** (Additional agent): Semgrep MCP for automated vulnerability scanning
 - **rapid-builder**: Ref MCP for documentation fetching (60% token savings)
-- **quality-guardian**: Browser MCP for visual testing and validation
+- **quality-guardian**: Playwright MCP for visual testing and validation
 - **frontend-specialist**: Ref MCP for React/TypeScript documentation
 - **api-integrator**: Ref MCP for API integration patterns
 - **documentation-writer**: Ref MCP for documentation standards
-- **devops-engineer**: Ref MCP + Browser MCP for deployment validation
+- **devops-engineer**: Ref MCP + Playwright MCP for deployment validation
 
 ### Phase 2: Conditional MCPs (Jan 1, 2025)
-7 additional MCPs with conditional loading:
-- **quick-data MCP**: Data processing, CSV/JSON operations
+5 additional MCPs with conditional loading:
 - **firecrawl MCP**: Web scraping, competitor analysis
 - **stripe MCP**: Payment processing integration
 - **vercel MCP**: Deployment automation
 - **brave_search MCP**: Technical research and troubleshooting
-- **sqlite MCP**: Local database prototyping
 - **fetch MCP**: API testing and webhook validation
 
 ### Phase 3: Workflow Integration (Jan 1, 2025)
 6 MCP-enhanced workflow patterns:
 - **payment_enabled_webapp**: Stripe + Fetch MCPs for e-commerce
 - **research_heavy_project**: Firecrawl + Brave Search for analysis
-- **rapid_prototype**: SQLite + Fetch for quick MVPs
+- **rapid_prototype**: Fetch + Vercel for quick MVPs
 - **vercel_deployment**: Vercel MCP for Next.js projects
-- **data_processing_pipeline**: quick-data for analytics
+- **data_processing_pipeline**: Custom analytics implementation
 - **api_testing_focused**: Fetch MCP for integration testing
 
 ### MCP Servers Integrated
 1. **Semgrep MCP** (Port 3101): Security scanning
 2. **Ref MCP** (Port 3102): Documentation fetching
-3. **Browser MCP** (Port 3103): Visual testing
-4. **quick-data MCP** (Port 3104): Data operations
-5. **firecrawl MCP** (Port 3105): Web scraping
-6. **stripe MCP** (Port 3106): Payment processing
-7. **vercel MCP** (Port 3107): Deployment
-8. **brave_search MCP** (Port 3108): Research
-9. **sqlite MCP** (Port 3109): Local database
-10. **fetch MCP** (Port 3110): API testing
+3. **Playwright MCP** (Port 3103): Visual testing
+4. **firecrawl MCP** (Port 3105): Web scraping
+5. **stripe MCP** (Port 3106): Payment processing
+6. **vercel MCP** (Port 3107): Deployment
+7. **brave_search MCP** (Port 3108): Research
+8. **fetch MCP** (Port 3110): API testing
 
 ### Benefits
 - **60% token reduction** through selective documentation fetching

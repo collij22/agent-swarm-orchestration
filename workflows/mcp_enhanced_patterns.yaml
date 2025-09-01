@@ -14,16 +14,16 @@ payment_enabled_webapp:
     - name: "Analysis & Research"
       sequential:
         - agent: requirements-analyst
-          mcps: [brave_search, firecrawl, quick_data]
+          mcps: [brave_search, firecrawl]
           description: "Research payment solutions and competitor analysis"
         - agent: project-architect
-          mcps: [quick_data]
+          mcps: []
           description: "Design architecture with payment integration"
     
     - name: "Core Development"
       parallel:
         - agent: rapid-builder
-          mcps: [sqlite]
+          mcps: []
           description: "Build core application with local data"
         - agent: api-integrator
           mcps: [stripe, fetch]
@@ -52,7 +52,7 @@ research_heavy_project:
     - name: "Deep Research Phase"
       sequential:
         - agent: requirements-analyst
-          mcps: [firecrawl, brave_search, quick_data]
+          mcps: [firecrawl, brave_search]
           description: "Comprehensive market and competitor research"
     
     - name: "Architecture Planning"
@@ -82,7 +82,7 @@ rapid_prototype:
           mcps: []
           description: "Minimal requirement analysis for MVP"
         - agent: rapid-builder
-          mcps: [sqlite, fetch]
+          mcps: [fetch]
           description: "Build prototype with local database"
     
     - name: "Frontend & Testing"
@@ -133,19 +133,19 @@ data_processing_pipeline:
     - name: "Data Analysis"
       sequential:
         - agent: requirements-analyst
-          mcps: [quick_data]
+          mcps: []
           description: "Analyze data requirements and formats"
         - agent: ai-specialist
-          mcps: [quick_data]
+          mcps: []
           description: "Design data processing pipeline"
     
     - name: "Implementation"
       parallel:
         - agent: database-expert
-          mcps: [sqlite]
+          mcps: []
           description: "Set up data storage and queries"
         - agent: performance-optimizer
-          mcps: [quick_data]
+          mcps: []
           description: "Optimize data processing performance"
 
 api_testing_focused:
@@ -216,11 +216,6 @@ mcp_usage_guidelines:
     use_when: "Deploying to Vercel or using Next.js"
     avoid_when: "Using AWS, Docker, or traditional hosting"
   
-  sqlite:
-    agents: [database-expert, rapid-builder]
-    use_when: "Building prototypes or local development"
-    avoid_when: "Production systems requiring PostgreSQL"
-  
   brave_search:
     agents: [requirements-analyst, project-architect, debug-specialist]
     use_when: "Need current information or troubleshooting"
@@ -230,11 +225,6 @@ mcp_usage_guidelines:
     agents: [requirements-analyst, documentation-writer]
     use_when: "Competitor analysis or web data extraction"
     avoid_when: "Simple web content reading"
-  
-  quick_data:
-    agents: [requirements-analyst, ai-specialist, performance-optimizer]
-    use_when: "Processing CSV/JSON data or generating metrics"
-    avoid_when: "Simple text processing"
   
   fetch:
     agents: [api-integrator, quality-guardian, debug-specialist]

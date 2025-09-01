@@ -18,7 +18,7 @@ Our system integrates with three MCP servers:
    - 60% token reduction through selective retrieval
    - Support for React, FastAPI, Django, PostgreSQL, Docker
 
-3. **Browser MCP** (Port 3103)
+3. **Playwright MCP** (Port 3103)
    - Visual testing and screenshot capture
    - Deployment validation
    - Visual regression testing
@@ -35,7 +35,7 @@ Our system integrates with three MCP servers:
 # Install globally via npm
 npm install -g @anthropic/mcp-server-semgrep
 npm install -g @anthropic/mcp-server-ref
-npm install -g @anthropic/mcp-server-browser
+npm install -g @agentdeskai/playwright-mcp
 
 # Or use local installation
 cd .claude/mcp
@@ -65,7 +65,7 @@ The MCP configuration is stored in `.claude/mcp/config.json`:
       "max_results": 5,
       "cache_ttl": 900
     },
-    "browser": {
+    "playwright": {
       "port": 3103,
       "headless": true,
       "timeout": 30000,
@@ -101,10 +101,10 @@ Agents automatically use MCP tools when available. The following agents are MCP-
   ```
 
 #### Quality Agents
-- **quality-guardian**: Uses Browser MCP for visual testing
+- **quality-guardian**: Uses Playwright MCP for visual testing
   ```python
   # Automatic usage in agent
-  await mcp_browser_screenshot("https://staging.example.com", full_page=True)
+  await mcp_playwright_screenshot("https://staging.example.com", full_page=True)
   ```
 
 ### Direct Usage
@@ -114,7 +114,7 @@ You can also use MCP tools directly:
 from lib.mcp_tools import (
     mcp_semgrep_scan_tool,
     mcp_ref_search_tool,
-    mcp_browser_screenshot_tool
+    mcp_playwright_screenshot_tool
 )
 
 # Security scanning
@@ -132,7 +132,7 @@ docs = await mcp_ref_search_tool(
 )
 
 # Visual testing
-screenshot = await mcp_browser_screenshot_tool(
+screenshot = await mcp_playwright_screenshot_tool(
     url="http://localhost:3000",
     full_page=True,
     reasoning="Capture deployment state"
@@ -214,12 +214,12 @@ python orchestrate_enhanced.py --requirements=test.yaml
 # Check if servers are running
 curl http://localhost:3101/health  # Semgrep
 curl http://localhost:3102/health  # Ref
-curl http://localhost:3103/health  # Browser
+curl http://localhost:3103/health  # Playwright
 
 # Start servers manually if needed
 npx mcp-server-semgrep --port 3101 &
 npx mcp-server-ref --port 3102 &
-npx mcp-server-browser --port 3103 &
+npx @agentdeskai/playwright-mcp --port 3103 &
 ```
 
 #### Connection Failures
