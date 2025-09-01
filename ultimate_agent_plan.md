@@ -12,8 +12,8 @@ A comprehensive blueprint for building an optimized 15-agent swarm for technical
 
 ## 🏗️ Agent Architecture
 
-### Tier 1: Core Development Agents (5)
-Essential agents that handle 80% of development tasks:
+### Tier 1: Core Development Agents (7)
+Essential agents that handle 80% of development tasks, now with validation and debugging:
 
 1. **project-architect** (Model: Opus for complex, Sonnet for standard)
    - System design and database architecture
@@ -61,6 +61,26 @@ Essential agents that handle 80% of development tasks:
    - Runs: Final phase, parallel with documentation
    - **Uses: claude-sonnet-4-20250514**
    - **Enhanced Version: sfa_devops_engineer_enhanced.py**
+
+6. **quality-guardian-enhanced** (Model: Sonnet) - **NEW: Validation Agent**
+   - Comprehensive validation after each major agent
+   - Build testing (npm/yarn/python compilation)
+   - Runtime verification (application startup)
+   - MCP tool testing (Browser/Fetch/Semgrep)
+   - Error report generation with fix suggestions
+   - Multi-stage completion tracking (0-100%)
+   - Runs: After each major agent completes
+   - **Uses: claude-sonnet-4-20250514**
+
+7. **automated-debugger** (Model: Opus) - **NEW: Auto-Fix Agent**
+   - Systematic error resolution
+   - Compilation error fixes
+   - Import/dependency resolution
+   - Runtime error handling
+   - Iterative testing and fixing
+   - Works with quality-guardian-enhanced
+   - Runs: Triggered when validation fails
+   - **Uses: claude-opus-4-20250514**
 
 ### Tier 2: Specialized Technical Agents (5)
 Domain experts for specific technical challenges:

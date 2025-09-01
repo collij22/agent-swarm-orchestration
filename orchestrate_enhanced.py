@@ -60,6 +60,14 @@ from lib.progress_streamer import (
 from lib.mcp_conditional_loader import MCPConditionalLoader
 from lib.workflow_loader import WorkflowLoader
 
+# Import enhanced validation components
+from lib.validation_orchestrator import (
+    ValidationOrchestrator, CompletionStage, ValidationLevel, 
+    BuildResult, RetryStrategy
+)
+from lib.requirement_tracker import RequirementTracker
+from lib.agent_validator import AgentValidator
+
 try:
     from rich.console import Console
     from rich.panel import Panel
@@ -100,6 +108,16 @@ class EnhancedOrchestrator:
         self.progress_streamer = ProgressStreamer(self.logger) if enable_dashboard else None
         self.mcp_loader = MCPConditionalLoader()  # Initialize conditional MCP loader
         self.workflow_loader = WorkflowLoader()  # Initialize workflow pattern loader
+        
+        # Initialize validation components
+        self.requirement_tracker = RequirementTracker()
+        self.agent_validator = AgentValidator()
+        self.validation_orchestrator = ValidationOrchestrator(
+            requirement_tracker=self.requirement_tracker,
+            agent_validator=self.agent_validator
+        )
+        self.enable_validation = True  # Flag to enable/disable validation
+        self.auto_debug = True  # Flag to enable automatic debugging on failures
         
         # Register progress callback
         if self.progress_streamer:
@@ -614,6 +632,32 @@ class EnhancedOrchestrator:
             plan = self.workflow_engine.agent_plans[agent_name]
             await self.progress_streamer.update_agent_status(agent_name, plan)
         
+        # Pre-execution validation if enabled
+        if self.enable_validation:
+            pre_valid, missing_deps, suggestions = self.validation_orchestrator.pre_execution_validation(
+                agent_name, context
+            )
+            
+            if not pre_valid:
+                self.logger.log_error(
+                    "validation",
+                    f"Pre-execution validation failed for {agent_name}",
+                    f"Missing dependencies: {', '.join(missing_deps)}"
+                )
+                
+                if interactive and console:
+                    console.print(Panel(
+                        f"[yellow]⚠️ Pre-execution validation failed:[/yellow]\n" +
+                        "\n".join(f"• {dep}" for dep in missing_deps) + "\n\n" +
+                        "[cyan]Suggestions:[/cyan]\n" +
+                        "\n".join(f"• {sug}" for sug in suggestions),
+                        title=f"Validation Failed: {agent_name}",
+                        border_style="yellow"
+                    ))
+                    
+                    if not Confirm.ask("Continue anyway?"):
+                        return False, "User cancelled due to validation failure", context
+        
         # Execute with retry logic and error recovery
         success, result, updated_context = await self.workflow_engine.execute_agent_with_retry(
             agent_name,
@@ -621,6 +665,83 @@ class EnhancedOrchestrator:
             context,
             agent_config
         )
+        
+        # Post-execution validation and automated debugging
+        if self.enable_validation and success:
+            # Run compilation validation
+            build_result = self.validation_orchestrator.validate_compilation(agent_name)
+            
+            if not build_result.success:
+                self.logger.log_error(
+                    "validation",
+                    f"Build validation failed for {agent_name}",
+                    f"Errors: {len(build_result.errors)}"
+                )
+                
+                if self.auto_debug:
+                    # Trigger automated debugger agent
+                    debug_success = await self._trigger_automated_debugger(
+                        agent_name,
+                        build_result,
+                        updated_context
+                    )
+                    
+                    if debug_success:
+                        # Re-validate after debugging
+                        build_result = self.validation_orchestrator.validate_compilation(agent_name)
+                        if build_result.success:
+                            self.logger.log_reasoning(
+                                "validation",
+                                f"Automated debugging resolved issues for {agent_name}"
+                            )
+                    else:
+                        self.logger.log_error(
+                            "validation",
+                            f"Automated debugging failed for {agent_name}",
+                            "Manual intervention required"
+                        )
+                else:
+                    if interactive and console:
+                        console.print(Panel(
+                            f"[red]❌ Build Validation Failed:[/red]\n\n" +
+                            f"[yellow]Errors ({len(build_result.errors)}):[/yellow]\n" +
+                            "\n".join(f"• {err}" for err in build_result.errors[:5]) + "\n\n" +
+                            f"[cyan]Suggested Fixes:[/cyan]\n" +
+                            "\n".join(f"• {fix}" for fix in build_result.suggested_fixes[:5]),
+                            title=f"Validation Failed: {agent_name}",
+                            border_style="red"
+                        ))
+            
+            # Run runtime validation if build succeeded
+            if build_result.success:
+                runtime_success, runtime_msg = self.validation_orchestrator.validate_runtime(agent_name)
+                
+                if runtime_success:
+                    self.logger.log_reasoning(
+                        "validation",
+                        f"Runtime validation passed for {agent_name}",
+                        runtime_msg
+                    )
+                else:
+                    self.logger.log_error(
+                        "validation",
+                        f"Runtime validation failed for {agent_name}",
+                        runtime_msg
+                    )
+            
+            # Run MCP validation if available
+            if self.mcp_loader:
+                mcp_results = self.validation_orchestrator.validate_with_mcp_tools(
+                    agent_name,
+                    test_urls=["http://localhost:3000", "http://localhost:8000"]
+                )
+                
+                if mcp_results:
+                    self.logger.log_reasoning(
+                        "validation",
+                        f"MCP validation results for {agent_name}",
+                        json.dumps(mcp_results, indent=2)
+                    )
         
         # Update progress streamer with final result
         if self.progress_streamer:
@@ -633,7 +754,96 @@ class EnhancedOrchestrator:
                     requirement = self.workflow_engine.requirements[req_id]
                     await self.progress_streamer.update_requirement_status(req_id, requirement)
         
+        # Generate validation report
+        if self.enable_validation:
+            report = self.validation_orchestrator.generate_validation_report(agent_name)
+            report_path = self.progress_dir / f"validation_{agent_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+            with open(report_path, 'w') as f:
+                f.write(report)
+            
+            if interactive and console:
+                console.print(f"[green]✅ Validation report saved to: {report_path}[/green]")
+        
         return success, result, updated_context
+    
+    async def _trigger_automated_debugger(
+        self,
+        agent_name: str,
+        build_result: BuildResult,
+        context: AgentContext
+    ) -> bool:
+        """
+        Trigger the automated debugger agent to fix compilation errors
+        Returns True if debugging was successful
+        """
+        if "automated-debugger" not in self.agents:
+            self.logger.log_error(
+                "validation",
+                "Automated debugger agent not found",
+                "Cannot perform automatic debugging"
+            )
+            return False
+        
+        # Create error report for debugger
+        error_report = {
+            "agent_name": agent_name,
+            "errors": build_result.errors,
+            "warnings": build_result.warnings,
+            "suggested_fixes": build_result.suggested_fixes,
+            "output": build_result.output[:2000]  # Limit output size
+        }
+        
+        # Save error report
+        error_report_path = self.progress_dir / f"error_report_{agent_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        with open(error_report_path, 'w') as f:
+            json.dump(error_report, f, indent=2)
+        
+        # Update context with error report
+        debug_context = AgentContext(
+            project_requirements=context.project_requirements,
+            completed_tasks=context.completed_tasks.copy(),
+            artifacts=context.artifacts.copy(),
+            decisions=context.decisions.copy()
+        )
+        debug_context.artifacts["error_report"] = str(error_report_path)
+        debug_context.artifacts["build_errors"] = error_report
+        
+        self.logger.log_reasoning(
+            "validation",
+            f"Triggering automated debugger for {agent_name}",
+            f"Error count: {len(build_result.errors)}"
+        )
+        
+        # Execute automated debugger
+        try:
+            debug_success, debug_result, debug_context = await self._execute_agent_with_enhanced_features(
+                "automated-debugger",
+                debug_context,
+                interactive=False
+            )
+            
+            if debug_success:
+                self.logger.log_reasoning(
+                    "validation",
+                    f"Automated debugging completed for {agent_name}",
+                    "Re-validating build..."
+                )
+                return True
+            else:
+                self.logger.log_error(
+                    "validation",
+                    f"Automated debugging failed for {agent_name}",
+                    debug_result
+                )
+                return False
+                
+        except Exception as e:
+            self.logger.log_error(
+                "validation",
+                f"Error during automated debugging for {agent_name}",
+                str(e)
+            )
+            return False
     
     def _validate_requirements(self, requirements: Dict) -> List[str]:
         """Validate requirements structure and content"""

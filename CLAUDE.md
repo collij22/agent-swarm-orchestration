@@ -592,6 +592,77 @@ python lib/mock_anthropic_enhanced.py
 
 ## 🔍 Mandatory Testing Protocol
 
+### Definition of Done - Agent Type Specific Requirements
+
+#### Frontend Agents (frontend-specialist, rapid-builder for UI):
+- ✅ **Compilation Check**: `npm run build` or `yarn build` must succeed
+- ✅ **Dependency Resolution**: All imports must resolve correctly
+- ✅ **Browser Verification**: Use mcp_browser_screenshot to verify UI renders
+- ✅ **Navigation Test**: Verify all routes are accessible
+- ✅ **Component Rendering**: No console errors or blank pages
+- ✅ **User Interaction**: At least one interactive element must work
+
+#### Backend Agents (rapid-builder for API, api-integrator):
+- ✅ **Syntax Validation**: Code must run without syntax errors
+- ✅ **API Startup**: Server must start on specified port
+- ✅ **Endpoint Testing**: Use mcp_fetch to verify all endpoints respond
+- ✅ **Data Flow**: Create → Read → Update → Delete cycle must work
+- ✅ **Error Handling**: API must return proper error codes
+- ✅ **Authentication**: Protected routes must require valid tokens
+
+#### Database Agents (database-expert):
+- ✅ **Schema Creation**: All tables/collections must be created
+- ✅ **Seed Data**: Minimum 3 records per entity type
+- ✅ **Relationships**: Foreign keys and references must work
+- ✅ **Query Performance**: Basic queries must return in <100ms
+- ✅ **Migration Success**: All migrations must apply cleanly
+
+#### Integration Agents (api-integrator, ai-specialist):
+- ✅ **End-to-End Flow**: Complete user journey must work
+- ✅ **External Services**: All integrations must connect successfully
+- ✅ **Error Recovery**: Graceful handling of service failures
+- ✅ **Data Consistency**: Data must sync across all services
+- ✅ **Security Validation**: Use mcp_semgrep_scan for vulnerabilities
+
+### Multi-Stage Completion Tracking
+
+Each requirement MUST progress through these stages:
+
+```yaml
+completion_stages:
+  25_percent:
+    - Files created with proper structure
+    - Dependencies listed in package.json/requirements.txt
+    - Basic folder organization complete
+    
+  50_percent:
+    - Code compiles/builds without errors
+    - All imports resolve correctly
+    - No syntax errors or type errors
+    
+  75_percent:
+    - Basic functionality works
+    - Server starts successfully
+    - UI renders without errors
+    - Database connects properly
+    
+  100_percent:
+    - All features verified with automated tests
+    - Browser/API tests pass
+    - User can complete primary workflows
+    - Performance metrics met
+    - Security scan passed
+```
+
+### Validation Gate Requirements
+
+**NO AGENT may mark a task complete without:**
+1. Running compilation/build check
+2. Starting the application successfully
+3. Performing functional testing (not just file creation)
+4. Using appropriate MCP tools for verification
+5. Generating proof of functionality (screenshots, API responses, test results)
+
 ### Before Marking Any Task Complete:
 1. **Build Test**: Frontend and backend must build without errors
 2. **Start Test**: All services must start successfully
@@ -599,6 +670,8 @@ python lib/mock_anthropic_enhanced.py
 4. **Auth Test**: User can register, login, and see protected content
 5. **Data Test**: At least one full CRUD cycle must work
 6. **Docker Test**: docker-compose up must bring up all services
+7. **MCP Verification**: Use browser/fetch/semgrep MCPs for validation
+8. **Error Recovery**: Fix any compilation or runtime errors before proceeding
 
 ### Minimum Viable Deliverable:
 - User can access the application
@@ -606,9 +679,13 @@ python lib/mock_anthropic_enhanced.py
 - Basic navigation works
 - No blank pages or console errors
 - Docker containers stay running for 5+ minutes
+- All compilation errors resolved
+- Dependencies properly installed
+- Namespace conflicts fixed
 
 ### IMPORTANT: Mock Mode Must Still Create Real Files
 - Even in mock mode, create actual source files
 - Validate file structure matches production requirements
 - Test Docker builds even in mock mode
 - Ensure seed data is created regardless of mode
+- Run compilation checks in mock mode

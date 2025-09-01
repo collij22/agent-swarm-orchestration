@@ -229,7 +229,22 @@ class AdaptiveWorkflowEngine:
         """Parse requirements and assign IDs with dependency analysis"""
         parsed_requirements = {}
         
-        features = requirements_dict.get("features", [])
+        features_raw = requirements_dict.get("features", [])
+        
+        # Flatten nested feature dictionaries into a list
+        features = []
+        if isinstance(features_raw, dict):
+            # Features are organized by category
+            for category, category_features in features_raw.items():
+                if isinstance(category_features, list):
+                    for feature in category_features:
+                        features.append(f"[{category}] {feature}")
+                else:
+                    features.append(f"[{category}] {category_features}")
+        elif isinstance(features_raw, list):
+            features = features_raw
+        else:
+            features = [str(features_raw)]
         
         for idx, feature in enumerate(features):
             # Handle both string features and dictionary features
