@@ -435,7 +435,7 @@ Files Created: 12 files (main.py, database.py, config.json, ...)
 - **Use consistent date fields**: created_at, updated_at (not order_date, etc.)
 - **Verify serialization**: Test all API endpoints return proper JSON
 
-## 🛡️ Error Recovery Standards (January 2025)
+## 🛡️ Error Recovery Standards (September 2025 Updates)
 
 ### Progressive Error Recovery
 When agents encounter errors, the system follows a 5-stage escalation:
@@ -444,6 +444,13 @@ When agents encounter errors, the system follows a 5-stage escalation:
 3. **Trigger Debugger** - Automated-debugger agent intervenes
 4. **Alternative Agent** - Try different agent (e.g., rapid-builder)
 5. **Manual Intervention** - Request human help with full context
+
+### Validation-Aware Status Reporting (September 2025)
+- **Accurate Metrics**: Workflow status now reflects validation results, not just execution
+- **Weighted Scoring**: 70% execution + 30% validation for true completion percentage
+- **Clear Failure Reporting**: Distinguishes between "executed" vs "validated" requirements
+- **No False Success**: Prevents showing 100% completion when validation fails
+- **Detailed Diagnostics**: Shows exactly which validations failed and why
 
 ### Tool Parameter Validation (Updated September 2025)
 - **Never accept empty content** for write_file operations

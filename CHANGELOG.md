@@ -5,9 +5,21 @@ All notable changes to the Agent Swarm Orchestration System will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.3.0] - 2025-09-01 - Write File Content Fix
+## [2.3.1] - 2025-09-01 - Validation Status & Multiple Critical Fixes
 
 ### Fixed
+- **Validation Status Reporting** - Fixed misleading "100% complete" when validation fails
+  - Separated execution metrics from validation metrics
+  - Implemented weighted scoring: 70% execution + 30% validation
+  - Clear distinction between "executed" and "validated" requirements
+  - Workflow status now accurately reflects validation failures
+  
+- **MCP Tool Registration** - Fixed MCP tools not being registered in orchestrator
+  - Added missing `create_mcp_enhanced_tools()` registration
+  - All agents now have access to mcp_ref_search and mcp_get_docs
+  - Enables 60% token reduction through documentation fetching
+  - ~$0.09 cost savings per agent execution step
+
 - **Critical Write File Content Issue** - Resolved ai-specialist agent calling write_file without content
   - Added clear error guidance with correct usage examples
   - Enhanced agent prompts to require content in write_file calls
@@ -16,18 +28,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Prevents agents from retry loops when creating files
 
 ### Changed
+- **orchestrate_enhanced.py** - Added MCP tool registration during initialization
+  - Lines 98-115: Register MCP enhanced tools with detailed logging
+  - Enhanced agent context with MCP tool availability information
+  
 - **agent_runtime.py** - Major improvements to write_file handling
   - Lines 471-479: Detailed error guidance with examples
   - Lines 757-758: Explicit write_file instructions in prompts
   - Lines 660-663: Warning-level logging for visibility
   - Lines 824-829: CRITICAL error messages for missing content
-- **CLAUDE.md** - Updated Tool Parameter Validation section
-  - Added new file type support (HTML, CSS, Shell, Config files)
-  - Documented enhanced error guidance system
-  - Added universal fallback for unknown file types
+  - Lines 746: Added MCP tools listing in agent context
+
+- **CLAUDE.md** - Multiple documentation updates
+  - Updated Error Recovery Standards with validation-aware reporting
+  - Enhanced Tool Parameter Validation section
+  - Added Validation-Aware Status Reporting section
 
 ### Added
-- **docs/WRITE_FILE_CONTENT_FIX_SEPT2025.md** - Complete fix documentation
+- **docs/VALIDATION_FAILURE_FIX_SEPT2025.md** - Analysis of validation vs execution metrics
+- **docs/MCP_REGISTRATION_FIX.md** - MCP tool registration documentation
+- **docs/WRITE_FILE_CONTENT_FIX_SEPT2025.md** - Complete write_file fix documentation
 - **docs/WRITE_FILE_ERROR_FIX_JAN2025.md** - Previous fix reference
 - Universal file type support in write_file tool
 

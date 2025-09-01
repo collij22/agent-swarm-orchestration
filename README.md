@@ -21,13 +21,21 @@ A production-ready 15-agent orchestration system with multi-LLM support for auto
 
 ### Key Features
 
-#### 🆕 September 2025: Write File Content Fix
-- **Resolved Missing Content Issues**: Fixed agents calling write_file without content parameter
-- **Enhanced Error Guidance**: Clear examples showing correct write_file usage
-- **Improved Agent Prompts**: Explicit instructions to include content in write_file calls
-- **Extended File Type Support**: Universal fallback for any file type
-- **Better Warning System**: Clear logging when placeholder content is generated
-- **Prevents Retry Loops**: Agents no longer get stuck attempting file creation
+#### 🆕 September 2025: Critical Fixes & Improvements
+- **Write File Content Fix**: 
+  - Resolved agents calling write_file without content parameter
+  - Enhanced error guidance with clear examples
+  - Extended file type support with universal fallback
+  - Prevents retry loops in file creation
+- **Validation Status Fix**:
+  - Fixed misleading "100% complete" when validation fails
+  - Separated execution metrics from validation metrics
+  - Weighted scoring: 70% execution + 30% validation
+  - Clear reporting of validation failures
+- **MCP Registration Fix**:
+  - Fixed MCP tools not being registered in orchestrator
+  - Enabled 60% token reduction through documentation fetching
+  - All agents now have access to mcp_ref_search and mcp_get_docs
 
 #### 🆕 January 2025: Enhanced Validation & Debugging System
 - **Multi-Stage Completion Tracking**: 0% → 25% (files) → 50% (compiles) → 75% (runs) → 100% (verified)
