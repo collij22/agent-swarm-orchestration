@@ -22,6 +22,10 @@ Tier 3 (Support): project-orchestrator(opus), requirements-analyst(sonnet), code
 - **File Coordinator**: `lib/file_coordinator.py` - File locking for parallel agents
 - **Agent Verification**: `lib/agent_verification.py` - Mandatory output validation
 - **Inter-Agent Comm**: `share_artifact` tool for agent coordination
+- **Progressive Validator**: `lib/progressive_validator.py` - Real-time validation during execution (Phase 4.1)
+- **Checkpoint Manager**: `lib/checkpoint_manager.py` - Full context save/restore (Phase 4.2)
+- **Self-Healing**: `lib/self_healing_rules.py` - Automatic error recovery (Phase 4.3)
+- **Validation Gates**: `lib/validation_gates.py` - Pre-completion checks (Phase 4.4)
 
 ## Commands
 ```bash
@@ -54,7 +58,7 @@ cd web && python start_dashboard.py  # http://localhost:5173
 - **Recovery**: Exponential backoff, checkpoint/resume, alternative agents
 - **Quality**: 90.4% average quality scores across test scenarios
 
-## Critical Fixes Applied (Phase 1-3 Enhancements)
+## Critical Fixes Applied (Phase 1-4 Enhancements)
 - ✅ Tool parameter handling (100% success)
 - ✅ Rate limiting with exponential backoff
 - ✅ Windows encoding compatibility (UTF-8 wrapper)
@@ -69,6 +73,10 @@ cd web && python start_dashboard.py  # http://localhost:5173
 - ✅ **Phase 3**: API router templates with functional endpoints
 - ✅ **Phase 3**: Frontend entry point templates with React 18
 - ✅ **Phase 3**: Project path standardization for consistent file ops
+- ✅ **Phase 4.1**: Progressive validation during execution (not just after)
+- ✅ **Phase 4.2**: Enhanced checkpoints with full context preservation
+- ✅ **Phase 4.3**: Self-healing rules for automatic error recovery
+- ✅ **Phase 4.4**: Validation gates before agent completion
 
 ## Tech Stack Defaults
 - **Frontend**: React + TypeScript, Tailwind CSS, Vite
@@ -94,7 +102,8 @@ workflows/             # MCP-enhanced patterns
 - **Test Coverage**: 90%+ across all scenarios
 
 ## Latest Updates
-- **Sep 2025 (Phase 1-3)**: File coordination, agent verification, inter-agent communication, implementation templates
+- **Sep 2, 2025 (Phase 4)**: Progressive validation, enhanced checkpoints, self-healing, validation gates
+- **Sep 1, 2025 (Phase 1-3)**: File coordination, agent verification, inter-agent communication, implementation templates
 - **Sep 1, 2025 (Phase 3)**: Mandatory implementation rules, API/Frontend templates, path standardization
 - **Jan 2025**: Validation system ensuring working code delivery
 - **Dec 2024**: MCP integration, Phase 4-5 production features

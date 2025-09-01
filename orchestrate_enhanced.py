@@ -82,6 +82,12 @@ from lib.requirement_tracker import RequirementTracker
 from lib.agent_validator import AgentValidator
 from lib.error_pattern_detector import ErrorPatternDetector
 
+# Import Phase 4 components
+from lib.progressive_validator import ProgressiveValidator
+from lib.checkpoint_manager import CheckpointManager
+from lib.self_healing_rules import SelfHealingRules
+from lib.validation_gates import ValidationGates
+
 # Import Phase 2 components for enhanced coordination
 try:
     from lib.file_coordinator import get_file_coordinator
@@ -148,6 +154,12 @@ class EnhancedOrchestrator:
         self.error_detector = ErrorPatternDetector(logger=self.logger)
         self.enable_validation = True  # Flag to enable/disable validation
         self.auto_debug = True  # Flag to enable automatic debugging on failures
+        
+        # Initialize Phase 4 components
+        self.progressive_validator = ProgressiveValidator(auto_fix=True)
+        self.checkpoint_manager = CheckpointManager(checkpoint_dir="checkpoints")
+        self.self_healing_rules = SelfHealingRules(auto_apply=True)
+        self.validation_gates = ValidationGates(strict_mode=True)
         
         # Initialize Phase 2 components for enhanced coordination
         if HAS_PHASE2:
@@ -483,7 +495,30 @@ class EnhancedOrchestrator:
         
         # Load checkpoint if provided
         if checkpoint_file and Path(checkpoint_file).exists():
-            if self.workflow_engine.load_checkpoint(Path(checkpoint_file)):
+            # Try enhanced checkpoint first
+            if checkpoint_file.startswith("checkpoint_"):
+                # Phase 4.2: Resume from enhanced checkpoint
+                restoration = self.checkpoint_manager.resume_from_checkpoint(checkpoint_file)
+                if restoration:
+                    context.artifacts.update(restoration['artifacts'])
+                    context.decisions.extend(restoration['decisions'])
+                    
+                    if HAS_RICH:
+                        console.print(Panel(
+                            f"[green]Enhanced checkpoint loaded successfully[/green]\n"
+                            f"Agent: {restoration['agent_name']}\n"
+                            f"Progress: {restoration['progress']:.1f}%\n"
+                            f"Files restored: {len(restoration['files_restored'])}",
+                            title="Resuming from Enhanced Checkpoint",
+                            border_style="green"
+                        ))
+                    
+                    # Set workflow state from checkpoint
+                    self.workflow_engine.progress.overall_completion = restoration['progress']
+                else:
+                    console.print("[red]Failed to load enhanced checkpoint[/red]")
+                    return False
+            elif self.workflow_engine.load_checkpoint(Path(checkpoint_file)):
                 console.print(Panel(
                     f"[green]Checkpoint loaded successfully[/green]\n"
                     f"Workflow ID: {self.workflow_engine.workflow_id}\n"
@@ -679,8 +714,24 @@ class EnhancedOrchestrator:
             # Update progress
             self.workflow_engine._update_progress()
             
-            # Save periodic checkpoint
+            # Phase 4.2: Enhanced checkpoint with full context
             if len(completed_agents) % 3 == 0:  # Every 3 agents
+                # Use enhanced checkpoint manager
+                checkpoint_id = self.checkpoint_manager.create_checkpoint(
+                    agent_name="orchestrator",
+                    progress=self.workflow_engine.progress.overall_completion,
+                    context=context,
+                    files_created=list(context.created_files.values()) if hasattr(context, 'created_files') else [],
+                    validation_passed=len(failed_agents) == 0
+                )
+                
+                self.logger.log_reasoning(
+                    "checkpoint",
+                    f"Enhanced checkpoint created: {checkpoint_id}",
+                    f"Progress: {self.workflow_engine.progress.overall_completion:.1f}%"
+                )
+                
+                # Also save workflow checkpoint for compatibility
                 checkpoint_file = self.checkpoints_dir / f"auto_checkpoint_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
                 self.workflow_engine.save_checkpoint(checkpoint_file)
         
@@ -827,6 +878,46 @@ class EnhancedOrchestrator:
             context,
             agent_config
         )
+        
+        # Phase 4.1: Progressive validation after execution
+        if success and self.enable_validation:
+            # Get files created by this agent
+            files_created = updated_context.artifacts.get(f"{agent_name}_created_files", [])
+            if not files_created and hasattr(updated_context, 'created_files'):
+                files_created = updated_context.created_files.get(agent_name, [])
+            
+            # Run progressive validation on created files
+            for file_path in files_created:
+                validation_results = self.progressive_validator.validate_all(file_path)
+                
+                for val_type, val_result in validation_results.items():
+                    if not val_result.success:
+                        self.logger.log_error(
+                            "progressive_validation",
+                            f"Validation failed for {file_path} ({val_type})",
+                            f"Errors: {', '.join([e.error_message for e in val_result.errors])}"
+                        )
+                        
+                        # Phase 4.3: Apply self-healing rules
+                        if self.auto_debug and val_result.errors:
+                            for error in val_result.errors:
+                                healing_result = self.self_healing_rules.apply_healing(
+                                    error.error_message,
+                                    {"file": file_path, "agent": agent_name}
+                                )
+                                
+                                if healing_result.success:
+                                    self.logger.log_reasoning(
+                                        "self_healing",
+                                        f"Auto-fixed {error.error_type} in {file_path}",
+                                        healing_result.fix_applied
+                                    )
+                                else:
+                                    self.logger.log_warning(
+                                        "self_healing",
+                                        f"Could not auto-fix {error.error_type}",
+                                        healing_result.fix_applied
+                                    )
         
         # Check for agent execution failures that need debugging
         if not success and self.auto_debug:
@@ -1054,6 +1145,54 @@ class EnhancedOrchestrator:
             
             if interactive and console:
                 console.print(f"[green]✅ Validation report saved to: {report_path}[/green]")
+        
+        # Phase 4.4: Validation gates before completion
+        if success and self.enable_validation:
+            gate_report = self.validation_gates.run_all_gates(agent_name, updated_context)
+            
+            if not gate_report.can_complete:
+                self.logger.log_error(
+                    "validation_gates",
+                    f"Agent {agent_name} failed validation gates",
+                    f"Failed gates: {', '.join([g.value for g in gate_report.gates_failed])}"
+                )
+                
+                # Phase 4.3: Try self-healing for gate failures
+                if self.auto_debug:
+                    for gate in gate_report.gates_failed:
+                        gate_result = gate_report.gate_results[gate]
+                        for error in gate_result.errors:
+                            healing_result = self.self_healing_rules.apply_healing(
+                                error,
+                                {"agent": agent_name, "gate": gate.value}
+                            )
+                            
+                            if healing_result.success:
+                                self.logger.log_reasoning(
+                                    "self_healing",
+                                    f"Auto-fixed gate failure: {gate.value}",
+                                    healing_result.fix_applied
+                                )
+                    
+                    # Re-run gates after healing
+                    gate_report = self.validation_gates.run_all_gates(agent_name, updated_context)
+                    
+                    if gate_report.can_complete:
+                        self.logger.log_reasoning(
+                            "validation_gates",
+                            f"Validation gates passed after self-healing for {agent_name}",
+                            f"Passed gates: {', '.join([g.value for g in gate_report.gates_passed])}"
+                        )
+                    else:
+                        # Mark as needing manual intervention
+                        success = False
+                        result = f"Validation gates failed: {gate_report.retry_suggestions}"
+            else:
+                self.logger.log_reasoning(
+                    "validation_gates",
+                    f"All validation gates passed for {agent_name}",
+                    f"Gates: {', '.join([g.value for g in gate_report.gates_passed])}"
+                )
         
         # Phase 2: Post-execution verification and cleanup
         if self.phase2_integration:
