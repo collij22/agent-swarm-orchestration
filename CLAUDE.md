@@ -445,15 +445,24 @@ When agents encounter errors, the system follows a 5-stage escalation:
 4. **Alternative Agent** - Try different agent (e.g., rapid-builder)
 5. **Manual Intervention** - Request human help with full context
 
-### Tool Parameter Validation
+### Tool Parameter Validation (Updated September 2025)
 - **Never accept empty content** for write_file operations
 - **Auto-generate appropriate content** based on file type:
   - Python: Module with NotImplementedError
   - JavaScript/TypeScript: Module with error throw
   - JSON: Error object with TODO
   - Markdown: Documentation template
+  - YAML/YML: Configuration template
+  - HTML/CSS/SCSS: Basic templates
+  - Shell/Batch scripts: Script templates
+  - Config files (.env, .ini, .conf): Configuration templates
+  - **Universal fallback**: Generic placeholder for any unknown file type
 - **Track files needing fixes** in context.artifacts["files_needing_fix"]
-- **Raise errors** for unknown file types instead of creating empty files
+- **Clear error guidance** when content is missing:
+  - Provides example of correct write_file usage
+  - Instructs to include both parameters in same call
+  - Warns against splitting file creation into steps
+- **Enhanced agent prompts** explicitly require complete content in write_file calls
 
 ### Error Pattern Detection
 - **Track repeated failures** per agent

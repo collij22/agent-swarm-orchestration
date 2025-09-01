@@ -44,7 +44,7 @@ from lib.agent_logger import ReasoningLogger, create_new_session
 from lib.human_logger import SummaryLevel
 from lib.agent_runtime import (
     AnthropicAgentRunner, AgentContext, ModelType, Tool, 
-    create_standard_tools, create_quality_tools
+    create_standard_tools, create_quality_tools, create_mcp_enhanced_tools
 )
 
 # Import mock handler for testing
@@ -139,6 +139,28 @@ class EnhancedOrchestrator:
         # Register quality validation tools
         for tool in create_quality_tools():
             self.runtime.register_tool(tool)
+        
+        # Register MCP enhanced tools (includes mcp_ref_search, mcp_get_docs, etc.)
+        mcp_tools = create_mcp_enhanced_tools()
+        if mcp_tools:
+            self.logger.log_reasoning(
+                "orchestrator",
+                f"Registering {len(mcp_tools)} MCP enhanced tools",
+                "MCP tools provide 60% token reduction through efficient documentation fetching"
+            )
+            for tool in mcp_tools:
+                self.runtime.register_tool(tool)
+                self.logger.log_reasoning(
+                    "orchestrator",
+                    f"Registered MCP tool: {tool.name}",
+                    tool.description
+                )
+        else:
+            self.logger.log_reasoning(
+                "orchestrator",
+                "No MCP tools available - MCP servers may not be running",
+                "Agents will use general knowledge instead of MCP documentation"
+            )
         
         # Add enhanced orchestration tools
         self._register_enhanced_tools()

@@ -456,10 +456,49 @@ class AnthropicAgentRunner:
                                 })
                                 
                             except Exception as e:
-                                self.logger.log_error(agent_name, str(e), reasoning)
-                                success = False
-                                final_result = f"Tool execution failed: {str(e)}"
-                                break
+                                error_msg = str(e)
+                                self.logger.log_error(agent_name, error_msg, reasoning)
+                                
+                                # Special handling for write_file errors - don't immediately fail
+                                if tool_name == "write_file" and "without content" in error_msg:
+                                    # Log but continue - let error recovery handle it
+                                    self.logger.log_reasoning(
+                                        agent_name,
+                                        "write_file error detected - will be handled by error recovery",
+                                        error_msg
+                                    )
+                                    # Provide clear guidance to the agent
+                                    error_guidance = (
+                                        f"Error: {error_msg}\n\n"
+                                        "IMPORTANT: The write_file tool requires both 'file_path' and 'content' parameters.\n"
+                                        "Please call write_file again with BOTH parameters:\n"
+                                        "- file_path: The path where to save the file\n"
+                                        "- content: The actual content to write to the file\n\n"
+                                        "Example:\n"
+                                        "write_file(file_path='path/to/file.py', content='actual file content here')\n\n"
+                                        "Do NOT try to create content in a separate step. Include it directly in the write_file call."
+                                    )
+                                    # Return error message as tool result to continue execution
+                                    messages.append({
+                                        "role": "assistant",
+                                        "content": response.content
+                                    })
+                                    messages.append({
+                                        "role": "user",
+                                        "content": [
+                                            {
+                                                "type": "tool_result",
+                                                "tool_use_id": tool_id,
+                                                "content": error_guidance
+                                            }
+                                        ]
+                                    })
+                                    # Continue execution instead of breaking
+                                else:
+                                    # Other errors fail immediately
+                                    success = False
+                                    final_result = f"Tool execution failed: {error_msg}"
+                                    break
                         else:
                             self.logger.log_error(agent_name, f"Unknown tool: {tool_name}")
                             success = False
@@ -618,9 +657,10 @@ class AnthropicAgentRunner:
                     else:
                         args["content"] = ""
                     
-                    self.logger.log_reasoning(
+                    self.logger.log_warning(
                         agent_name or "unknown",
-                        f"Generated placeholder content for {file_path}"
+                        f"WARNING: Generated placeholder content for {file_path}",
+                        "Agent must provide actual content in write_file call - placeholders indicate missing content parameter"
                     )
             elif args["content"] is None:
                 self.logger.log_error(
@@ -665,6 +705,9 @@ class AnthropicAgentRunner:
     
     def _build_agent_prompt(self, agent_prompt: str, context: AgentContext) -> str:
         """Build the full prompt with enhanced context"""
+        # List available MCP tools
+        mcp_tools = [name for name in self.tools.keys() if name.startswith('mcp_')]
+        
         # Build file summary
         files_summary = ""
         if context.created_files:
@@ -703,6 +746,7 @@ class AnthropicAgentRunner:
 {incomplete_summary if incomplete_summary else '    No incomplete tasks'}
     </incomplete_tasks>
     <verification_required>{verification_summary if verification_summary else 'None'}</verification_required>
+    <mcp_tools_available>{', '.join(mcp_tools) if mcp_tools else 'No MCP tools available'}</mcp_tools_available>
 </context>
 
 {agent_prompt}
@@ -710,8 +754,12 @@ class AnthropicAgentRunner:
 Remember to:
 1. Provide reasoning for every decision and tool use
 2. Use dependency_check tool if you need artifacts from other agents
+3. IMPORTANT: When using write_file, ALWAYS include both 'file_path' AND 'content' parameters in the same call
+4. Never try to split file creation into multiple steps - provide the complete content immediately
 3. Use request_artifact tool to get specific files or data from previous agents
 4. Use verify_deliverables tool to ensure critical files exist
+5. PRIORITIZE mcp_ref_search and mcp_get_docs for documentation lookups (saves 60% tokens)
+6. Use mcp_ref_search BEFORE implementing features to get accurate, current patterns
 5. Track important files you create for other agents to use
 """
         return context_str
@@ -772,12 +820,18 @@ async def write_file_tool(file_path: str, content: str, reasoning: str = None,
     
     # Validate content parameter - NEVER accept empty content
     if content is None or (isinstance(content, str) and content.strip() == ""):
-        # Log the error
+        # Log the error with clear guidance
+        error_message = (
+            f"write_file called without valid content for {file_path}\n"
+            "CRITICAL: Content parameter is required and cannot be empty.\n"
+            "The agent MUST provide the actual file content in the write_file call.\n"
+            "Placeholder content will be generated but this indicates an error in the agent's behavior."
+        )
         if context and hasattr(context, 'logger'):
             context.logger.log_error(
                 agent_name or "unknown",
-                f"write_file called without valid content for {file_path}",
-                "Content parameter is required and cannot be empty"
+                error_message,
+                "Agent failed to provide content - generating placeholder"
             )
         
         # Generate appropriate content based on file type
@@ -812,9 +866,26 @@ export default function {file_name.replace('-', '_')}() {{
             content = '{\n    "error": "Content was missing - auto-generated",\n    "todo": "Replace with actual configuration"\n}'
         elif file_ext in ['.md', '.txt']:
             content = f'# {file_name}\n\nThis file was auto-generated because content was missing.\nTODO: Add actual content.'
+        elif file_ext in ['.yml', '.yaml']:
+            content = f'# {file_name} - Auto-generated configuration\n# TODO: Add actual configuration\n\nplaceholder: true'
+        elif file_ext == '.html':
+            content = f'<!DOCTYPE html>\n<html>\n<head><title>{file_name}</title></head>\n<body>\n<h1>TODO: Implement {file_name}</h1>\n</body>\n</html>'
+        elif file_ext in ['.css', '.scss']:
+            content = f'/* {file_name} - Auto-generated styles */\n/* TODO: Add actual styles */\n\n.placeholder {{\n    /* TODO */\n}}'
+        elif file_ext == '.sh':
+            content = f'#!/bin/bash\n# {file_name} - Auto-generated script\n# TODO: Add actual script\n\necho "TODO: Implement {file_name}"'
+        elif file_ext == '.bat':
+            content = f'@echo off\nREM {file_name} - Auto-generated script\nREM TODO: Add actual script\n\necho TODO: Implement {file_name}'
+        elif file_ext in ['.env', '.ini', '.conf', '.config']:
+            content = f'# {file_name} - Auto-generated configuration\n# TODO: Add actual configuration\n\nPLACEHOLDER_KEY=placeholder_value'
         else:
-            # For unknown file types, raise an error instead of creating empty file
-            raise ValueError(f"Cannot create {file_path} without content. Content parameter is required.")
+            # For truly unknown file types, create with a comment if possible
+            content = f'# Auto-generated file: {file_name}\n# Content was missing - please add actual content\n# File type: {file_ext}'
+            self.logger.log_warning(
+                agent_name or "unknown",
+                f"Unknown file type {file_ext} - creating with generic placeholder content",
+                f"File: {file_path}"
+            )
         
         # Mark this as needing verification
         if context:

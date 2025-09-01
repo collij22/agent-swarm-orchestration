@@ -5,6 +5,32 @@ All notable changes to the Agent Swarm Orchestration System will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2025-09-01 - Write File Content Fix
+
+### Fixed
+- **Critical Write File Content Issue** - Resolved ai-specialist agent calling write_file without content
+  - Added clear error guidance with correct usage examples
+  - Enhanced agent prompts to require content in write_file calls
+  - Extended file type support with universal fallback
+  - Improved warning system for placeholder generation
+  - Prevents agents from retry loops when creating files
+
+### Changed
+- **agent_runtime.py** - Major improvements to write_file handling
+  - Lines 471-479: Detailed error guidance with examples
+  - Lines 757-758: Explicit write_file instructions in prompts
+  - Lines 660-663: Warning-level logging for visibility
+  - Lines 824-829: CRITICAL error messages for missing content
+- **CLAUDE.md** - Updated Tool Parameter Validation section
+  - Added new file type support (HTML, CSS, Shell, Config files)
+  - Documented enhanced error guidance system
+  - Added universal fallback for unknown file types
+
+### Added
+- **docs/WRITE_FILE_CONTENT_FIX_SEPT2025.md** - Complete fix documentation
+- **docs/WRITE_FILE_ERROR_FIX_JAN2025.md** - Previous fix reference
+- Universal file type support in write_file tool
+
 ## [2.2.0] - 2025-08-31 - Requirement Enhancement System
 
 ### Added
