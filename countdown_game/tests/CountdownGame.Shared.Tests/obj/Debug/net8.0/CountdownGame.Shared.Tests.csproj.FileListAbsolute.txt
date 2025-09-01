@@ -1,0 +1,7 @@
+C:\AI projects\1test\countdown_game\tests\CountdownGame.Shared.Tests\bin\Debug\net8.0\CoverletSourceRootsMapping_CountdownGame.Shared.Tests
+C:\AI projects\1test\countdown_game\tests\CountdownGame.Shared.Tests\obj\Debug\net8.0\CountdownGame.Shared.Tests.csproj.AssemblyReference.cache
+C:\AI projects\1test\countdown_game\tests\CountdownGame.Shared.Tests\obj\Debug\net8.0\CountdownGame.Shared.Tests.GeneratedMSBuildEditorConfig.editorconfig
+C:\AI projects\1test\countdown_game\tests\CountdownGame.Shared.Tests\obj\Debug\net8.0\CountdownGame.Shared.Tests.AssemblyInfoInputs.cache
+C:\AI projects\1test\countdown_game\tests\CountdownGame.Shared.Tests\obj\Debug\net8.0\CountdownGame.Shared.Tests.AssemblyInfo.cs
+C:\AI projects\1test\countdown_game\tests\CountdownGame.Shared.Tests\obj\Debug\net8.0\CountdownGame.Shared.Tests.csproj.CoreCompileInputs.cache
+C:\AI projects\1test\countdown_game\tests\CountdownGame.Shared.Tests\obj\Debug\net8.0\CountdownGame.Shared.Tests.sourcelink.json

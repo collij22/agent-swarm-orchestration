@@ -770,9 +770,57 @@ async def write_file_tool(file_path: str, content: str, reasoning: str = None,
     
     path = Path(file_path)
     
-    # Ensure content is a string (handle None or other types)
-    if content is None:
-        content = ""
+    # Validate content parameter - NEVER accept empty content
+    if content is None or (isinstance(content, str) and content.strip() == ""):
+        # Log the error
+        if context and hasattr(context, 'logger'):
+            context.logger.log_error(
+                agent_name or "unknown",
+                f"write_file called without valid content for {file_path}",
+                "Content parameter is required and cannot be empty"
+            )
+        
+        # Generate appropriate content based on file type
+        file_ext = path.suffix.lower()
+        file_name = path.stem
+        
+        # Generate meaningful content based on file extension
+        if file_ext == '.py':
+            content = f'''"""
+{file_name} - Auto-generated module
+This file was created because content was missing.
+TODO: Implement actual functionality
+"""
+
+def main():
+    """Main function - TODO: Implement"""
+    raise NotImplementedError("This module needs implementation")
+
+if __name__ == "__main__":
+    main()
+'''
+        elif file_ext in ['.js', '.ts', '.tsx']:
+            content = f'''// {file_name} - Auto-generated module
+// This file was created because content was missing.
+// TODO: Implement actual functionality
+
+export default function {file_name.replace('-', '_')}() {{
+    throw new Error("This module needs implementation");
+}}
+'''
+        elif file_ext == '.json':
+            content = '{\n    "error": "Content was missing - auto-generated",\n    "todo": "Replace with actual configuration"\n}'
+        elif file_ext in ['.md', '.txt']:
+            content = f'# {file_name}\n\nThis file was auto-generated because content was missing.\nTODO: Add actual content.'
+        else:
+            # For unknown file types, raise an error instead of creating empty file
+            raise ValueError(f"Cannot create {file_path} without content. Content parameter is required.")
+        
+        # Mark this as needing verification
+        if context:
+            if "files_needing_fix" not in context.artifacts:
+                context.artifacts["files_needing_fix"] = []
+            context.artifacts["files_needing_fix"].append(str(path))
     elif not isinstance(content, str):
         content = str(content)
     

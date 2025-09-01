@@ -1,0 +1,13 @@
+C:\AI projects\1test\countdown_game\src\CountdownGame.Shared\bin\Debug\net8.0\CountdownGame.Shared.deps.json
+C:\AI projects\1test\countdown_game\src\CountdownGame.Shared\bin\Debug\net8.0\CountdownGame.Shared.dll
+C:\AI projects\1test\countdown_game\src\CountdownGame.Shared\bin\Debug\net8.0\CountdownGame.Shared.pdb
+C:\AI projects\1test\countdown_game\src\CountdownGame.Shared\obj\Debug\net8.0\CountdownGame.Shared.csproj.AssemblyReference.cache
+C:\AI projects\1test\countdown_game\src\CountdownGame.Shared\obj\Debug\net8.0\CountdownGame.Shared.GeneratedMSBuildEditorConfig.editorconfig
+C:\AI projects\1test\countdown_game\src\CountdownGame.Shared\obj\Debug\net8.0\CountdownGame.Shared.AssemblyInfoInputs.cache
+C:\AI projects\1test\countdown_game\src\CountdownGame.Shared\obj\Debug\net8.0\CountdownGame.Shared.AssemblyInfo.cs
+C:\AI projects\1test\countdown_game\src\CountdownGame.Shared\obj\Debug\net8.0\CountdownGame.Shared.csproj.CoreCompileInputs.cache
+C:\AI projects\1test\countdown_game\src\CountdownGame.Shared\obj\Debug\net8.0\CountdownGame.Shared.sourcelink.json
+C:\AI projects\1test\countdown_game\src\CountdownGame.Shared\obj\Debug\net8.0\CountdownGame.Shared.dll
+C:\AI projects\1test\countdown_game\src\CountdownGame.Shared\obj\Debug\net8.0\refint\CountdownGame.Shared.dll
+C:\AI projects\1test\countdown_game\src\CountdownGame.Shared\obj\Debug\net8.0\CountdownGame.Shared.pdb
+C:\AI projects\1test\countdown_game\src\CountdownGame.Shared\obj\Debug\net8.0\ref\CountdownGame.Shared.dll

@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "Se6NPaxjJCwSCPzdsduqmRMj0ePOPV1T1/Xv/0QNDnw=",
+  "Source": "CountdownGame.Server",
+  "BasePath": "_content/CountdownGame.Server",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

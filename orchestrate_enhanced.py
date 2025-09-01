@@ -67,6 +67,7 @@ from lib.validation_orchestrator import (
 )
 from lib.requirement_tracker import RequirementTracker
 from lib.agent_validator import AgentValidator
+from lib.error_pattern_detector import ErrorPatternDetector
 
 try:
     from rich.console import Console
@@ -116,6 +117,7 @@ class EnhancedOrchestrator:
             requirement_tracker=self.requirement_tracker,
             agent_validator=self.agent_validator
         )
+        self.error_detector = ErrorPatternDetector(logger=self.logger)
         self.enable_validation = True  # Flag to enable/disable validation
         self.auto_debug = True  # Flag to enable automatic debugging on failures
         
@@ -175,7 +177,7 @@ class EnhancedOrchestrator:
         # Load each agent's prompt from their .md files
         for agent_file in agent_dir.glob("*.md"):
             agent_name = agent_file.stem
-            content = agent_file.read_text()
+            content = agent_file.read_text(encoding='utf-8')
             
             # Parse YAML frontmatter
             if content.startswith("---"):
@@ -665,6 +667,135 @@ class EnhancedOrchestrator:
             context,
             agent_config
         )
+        
+        # Check for agent execution failures that need debugging
+        if not success and self.auto_debug:
+            # Use error pattern detector to determine recovery strategy
+            recovery = self.error_detector.get_recovery_recommendation(agent_name, str(result))
+            
+            self.logger.log_reasoning(
+                "error_recovery",
+                f"Agent {agent_name} failed (attempt #{recovery['occurrence_count']})",
+                f"Recovery strategy: {recovery['strategy']}"
+            )
+            
+            # Execute recovery based on recommended strategy
+            if recovery['strategy'] == "retry_same":
+                # Simple retry
+                self.logger.log_reasoning("recovery", "Retrying agent with same parameters", "")
+                success, result, updated_context = await self.workflow_engine.execute_agent_with_retry(
+                    agent_name,
+                    self.runtime,
+                    context,
+                    agent_config
+                )
+                
+            elif recovery['strategy'] == "retry_with_context":
+                # Retry with error context
+                updated_context.artifacts["previous_error"] = str(result)
+                self.logger.log_reasoning("recovery", "Retrying with error context", str(result))
+                success, result, updated_context = await self.workflow_engine.execute_agent_with_retry(
+                    agent_name,
+                    self.runtime,
+                    updated_context,
+                    agent_config
+                )
+                
+            elif recovery['strategy'] == "trigger_debugger":
+                # Trigger automated debugger
+                self.logger.log_reasoning(
+                    "recovery",
+                    f"Triggering automated debugger for {agent_name}",
+                    f"Error pattern detected after {recovery['occurrence_count']} failures"
+                )
+                
+                # Create error context for debugger
+                error_context = {
+                    "failed_agent": agent_name,
+                    "error_type": "repeated_failure",
+                    "error_message": str(result),
+                    "failure_count": recovery['occurrence_count'],
+                    "context": updated_context
+                }
+                
+                # Trigger automated debugger
+                debug_success = await self._trigger_automated_debugger(
+                    agent_name,
+                    error_context,
+                    updated_context
+                )
+                
+                if debug_success:
+                    self.logger.log_reasoning(
+                        "recovery",
+                        f"Automated debugging resolved errors for {agent_name}",
+                        "Retrying agent execution"
+                    )
+                    # Reset error tracking for this agent after successful debug
+                    self.error_detector.reset_agent(agent_name)
+                    # Retry the agent after debugging
+                    success, result, updated_context = await self.workflow_engine.execute_agent_with_retry(
+                        agent_name,
+                        self.runtime,
+                        updated_context,
+                        agent_config
+                    )
+                else:
+                    self.logger.log_error(
+                        "recovery",
+                        f"Automated debugging failed for {agent_name}",
+                        "Trying alternative agent"
+                    )
+                    # Continue to alternative agent strategy
+                    recovery['strategy'] = "use_alternative_agent"
+                    
+            if recovery['strategy'] == "use_alternative_agent":
+                # Try an alternative agent
+                alternatives = recovery['details'].get('alternatives', ["rapid-builder"])
+                alternative_agent = alternatives[0] if alternatives else "rapid-builder"
+                
+                self.logger.log_reasoning(
+                    "recovery",
+                    f"Using alternative agent: {alternative_agent}",
+                    f"Original agent {agent_name} failed {recovery['occurrence_count']} times"
+                )
+                
+                if alternative_agent in self.agents:
+                    alt_config = self.agents[alternative_agent]
+                    success, result, updated_context = await self.workflow_engine.execute_agent_with_retry(
+                        alternative_agent,
+                        self.runtime,
+                        updated_context,
+                        alt_config
+                    )
+                    if success:
+                        self.logger.log_reasoning(
+                            "recovery",
+                            f"Alternative agent {alternative_agent} succeeded",
+                            f"Replaced failing agent {agent_name}"
+                        )
+                        
+            elif recovery['strategy'] == "manual_intervention":
+                # Request manual intervention
+                self.logger.log_error(
+                    "recovery",
+                    f"Agent {agent_name} requires manual intervention",
+                    f"Failed {recovery['occurrence_count']} times with: {str(result)}"
+                )
+                
+                if interactive and console:
+                    console.print(Panel(
+                        f"[red]⚠️ Manual Intervention Required[/red]\n\n" +
+                        f"Agent: {agent_name}\n" +
+                        f"Failures: {recovery['occurrence_count']}\n" +
+                        f"Error: {str(result)}\n\n" +
+                        "[yellow]The system has exhausted all automated recovery options.[/yellow]",
+                        title="Critical Error",
+                        border_style="red"
+                    ))
+                    
+                    if not Confirm.ask("Continue without this agent?"):
+                        return False, "User cancelled due to repeated failures", context
         
         # Post-execution validation and automated debugging
         if self.enable_validation and success:

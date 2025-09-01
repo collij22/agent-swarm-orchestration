@@ -52,7 +52,16 @@
       "Bash(git rm:*)",
       "Bash(git reset:*)",
       "Bash(sed:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(run_countdown_orchestrator.bat)",
+      "Bash(tree:*)",
+      "Read(C:\\Users\\jonlc/**)",
+      "Bash(npm run dev:*)",
+      "Bash(dotnet build:*)",
+      "Bash(if [ -z \"$ANTHROPIC_API_KEY\" ])",
+      "Bash(then echo \"API key not set\")",
+      "Bash(else echo \"API key is configured\")",
+      "Bash(fi)"
     ],
     "deny": [],
     "ask": []

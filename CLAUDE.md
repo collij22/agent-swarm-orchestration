@@ -435,6 +435,39 @@ Files Created: 12 files (main.py, database.py, config.json, ...)
 - **Use consistent date fields**: created_at, updated_at (not order_date, etc.)
 - **Verify serialization**: Test all API endpoints return proper JSON
 
+## 🛡️ Error Recovery Standards (January 2025)
+
+### Progressive Error Recovery
+When agents encounter errors, the system follows a 5-stage escalation:
+1. **Retry Same** - Simple retry (might be transient)
+2. **Retry with Context** - Add error information to help agent
+3. **Trigger Debugger** - Automated-debugger agent intervenes
+4. **Alternative Agent** - Try different agent (e.g., rapid-builder)
+5. **Manual Intervention** - Request human help with full context
+
+### Tool Parameter Validation
+- **Never accept empty content** for write_file operations
+- **Auto-generate appropriate content** based on file type:
+  - Python: Module with NotImplementedError
+  - JavaScript/TypeScript: Module with error throw
+  - JSON: Error object with TODO
+  - Markdown: Documentation template
+- **Track files needing fixes** in context.artifacts["files_needing_fix"]
+- **Raise errors** for unknown file types instead of creating empty files
+
+### Error Pattern Detection
+- **Track repeated failures** per agent
+- **Monitor agent health** (healthy → warning → critical → failed)
+- **Automatic recovery strategies** based on failure count
+- **Reset tracking** after successful recovery
+- **Alternative agent selection** based on failure type
+
+### Debugging Triggers
+- **Agent failures** now trigger debugger (not just validation failures)
+- **Tool parameter errors** get immediate debugging attention
+- **Progressive strategies** prevent infinite failure loops
+- **Smart fallbacks** ensure project completion despite failures
+
 ## 🔌 MCP (Model Context Protocol) Standards
 
 ### MCP Tool Usage Requirements

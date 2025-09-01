@@ -1,0 +1,193 @@
+project:
+  name: "Countdown Windows Game"
+  type: "full_stack_api"
+  platform: "Windows 10/11 (x64)"
+  timeline: "4 weeks"
+  priority: "full_feature"
+  description: "Windows desktop game (WinUI 3) faithfully simulating Channel 4 Countdown with multiplayer backend, ELO rating, and AI opponents"
+
+tech_stack:
+  frontend:
+    framework: "WinUI 3"
+    language: "C# (.NET 8)"
+    ui_library: "WinUI 3 XAML"
+    styling: "Fluent Design System"
+  backend:
+    language: "C# (.NET 8)"
+    framework: "ASP.NET Core (for multiplayer)"
+    database: "SQLite (local) + PostgreSQL (server)"
+    realtime: "SignalR"
+    orm: "Entity Framework Core"
+  testing:
+    unit: "xUnit"
+    integration: "MSTest"
+    ui: "WinAppDriver"
+
+features:
+  core_gameplay:
+    - "15-round format: 10 Letters, 4 Numbers, 1 Conundrum"
+    - "30-second timer per round with visual countdown"
+    - "Alternating control between players"
+    - "Authentic scoring: Letters (1pt/letter, 18pts for 9-letter), Numbers (10/7/5pts by proximity), Conundrum (10pts)"
+    - "Crucial Conundrum tie-breaker system"
+    
+  game_modes:
+    - "Single-player vs AI (Easy/Medium/Hard difficulty)"
+    - "Multiplayer PvP with real-time synchronization"
+    - "Practice mode (untimed, unrated)"
+    - "Rated matches affecting ELO rating"
+    
+  letters_rounds:
+    - "9-letter selection with vowel/consonant constraints (min 3 vowels, 4 consonants)"
+    - "Dictionary validation system with UK/US spelling profiles"
+    - "Anagram solver for AI and post-round analysis"
+    - "Visual tile board with reveal animations"
+    
+  numbers_rounds:
+    - "6 number selection from pool (20 small: 1-10x2, 4 large: 25,50,75,100)"
+    - "Target generation (100-999)"
+    - "Expression builder UI with drag-drop tiles"
+    - "Mathematical solver with positive integer constraint"
+    - "Multiple solution tracking"
+    
+  conundrum:
+    - "9-letter anagram with scrambling algorithm"
+    - "Buzz-in system with lockout on wrong answer"
+    - "5-second answer window after buzz"
+    
+  multiplayer:
+    - "Open challenge lobby system"
+    - "Private matches via 6-8 character invite codes"
+    - "Matchmaking with rating-based filtering"
+    - "Real-time sync via SignalR WebSockets"
+    - "Disconnect handling with 15s grace period"
+    
+  rating_system:
+    - "Global ELO rating starting at 1500"
+    - "Dynamic K-factor based on games played and rating"
+    - "Leaderboards: Global, Regional, Friends, Weekly"
+    - "Match history and statistics tracking"
+    
+  ui_features:
+    - "Authentic game show layout with clock centerpiece"
+    - "Left/right contestant score pods"
+    - "Animated tile reveals and score updates"
+    - "Round progression sidebar"
+    - "Chat system for multiplayer"
+    
+  ai_system:
+    - "Difficulty-scaled word selection algorithms"
+    - "Numbers solver with configurable search depth"
+    - "Realistic timing simulation (3-25s thinking time)"
+    - "Probabilistic error injection for realism"
+    
+  content_management:
+    - "Pluggable dictionary system"
+    - "Pre-generated episode stacks for consistency"
+    - "Curated conundrum database"
+    - "Word frequency weighting"
+    
+  technical_features:
+    - "Anti-cheat detection system"
+    - "Client-server time synchronization"
+    - "Offline mode for single-player"
+    - "Settings persistence"
+    - "Crash reporting and telemetry"
+    
+  accessibility:
+    - "Full keyboard navigation"
+    - "Screen reader support"
+    - "Color-blind safe palettes"
+    - "Dyslexia-friendly font options"
+    - "Large text mode"
+    
+  performance:
+    - "60 FPS animations"
+    - "Clock drift < ±30ms"
+    - "500 concurrent matches support"
+    - "Sub-100ms input latency"
+
+non_functional_requirements:
+  security:
+    - "Server-authoritative game state"
+    - "Input validation and sanitization"
+    - "Secure WebSocket connections"
+    - "OAuth or magic link authentication"
+    
+  data_privacy:
+    - "GDPR compliance"
+    - "Data export functionality"
+    - "Account deletion support"
+    
+  legal:
+    - "Original assets only (no Channel 4 IP)"
+    - "Clear attribution and disclaimers"
+    - "Permissive dictionary licensing"
+
+architecture:
+  client:
+    - "WinUI 3 desktop application"
+    - "Local SQLite database for offline data"
+    - "SignalR client for real-time communication"
+    
+  server:
+    - "ASP.NET Core Web API"
+    - "SignalR hubs for real-time gameplay"
+    - "PostgreSQL for persistent data"
+    - "Redis for session caching"
+    
+  shared:
+    - "Game rules engine library"
+    - "Dictionary/solver algorithms"
+    - "Protocol definitions"
+
+deliverables:
+  - "Windows installer (MSI/MSIX)"
+  - "Game executable with all features"
+  - "Backend API and SignalR services"
+  - "Database schemas and migrations"
+  - "Admin tools for content management"
+  - "API documentation"
+  - "User manual"
+  - "Developer setup guide"
+
+constraints:
+  - "Must run on Windows 10/11 x64"
+  - "No copyrighted Channel 4 assets"
+  - "30-second round timing must be exact"
+  - "ELO calculations must be standard"
+
+success_metrics:
+  - "All 15 rounds playable with correct rules"
+  - "Multiplayer latency < 100ms"
+  - "AI provides realistic challenge at each level"
+  - "ELO rating updates correctly"
+  - "Zero crashes in 1000 game sessions"
+  - "Dictionary validates 10,000 words/second"
+
+development_priorities:
+  phase1:
+    - "Core game engine and rules"
+    - "Local single-player vs AI"
+    - "Basic UI with all game screens"
+    
+  phase2:
+    - "Multiplayer infrastructure"
+    - "SignalR real-time sync"
+    - "Matchmaking and lobbies"
+    
+  phase3:
+    - "ELO rating system"
+    - "Leaderboards and profiles"
+    - "Anti-cheat measures"
+    
+  phase4:
+    - "Polish and animations"
+    - "Accessibility features"
+    - "Performance optimization"
+
+# MCP Optimization Hints
+mcp_hints:
+  - "sqlite: Local game database and statistics"
+  - "fetch: API testing and validation"
+  - "data_processing: Match statistics and analytics"
