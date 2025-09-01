@@ -13,7 +13,7 @@ You're working on a **100% complete, production-ready 15-agent orchestration sys
 
 Review the core architecture and current implementation status:
 
-@PROJECT_SUMMARY.md
+@PROJECT_SUMMARY_concise.md
 @ultimate_agent_plan.md
 
 ## 🏗️ Implementation Standards & Core Runtime

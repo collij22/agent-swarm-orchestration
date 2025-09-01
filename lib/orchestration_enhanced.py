@@ -441,23 +441,52 @@ class AdaptiveWorkflowEngine:
         """Create execution plan with dependency-aware agent scheduling"""
         agent_plans = {}
         
+        # PHASE 1 FIX: Always ensure requirements-analyst and project-architect run first
+        phase1_agents = ["requirements-analyst", "project-architect"]
+        
         # Group requirements by assigned agents
         agent_requirements = {}
+        
+        # First, ensure Phase 1 agents are included if available
+        for agent in phase1_agents:
+            if agent in available_agents:
+                agent_requirements[agent] = ["PHASE1-ANALYSIS"]  # Virtual requirement for Phase 1
+        
+        # Then process actual requirements
         for req_id, requirement in self.requirements.items():
             for agent in requirement.assigned_agents:
                 if agent in available_agents:
                     if agent not in agent_requirements:
                         agent_requirements[agent] = []
-                    agent_requirements[agent].append(req_id)
+                    if req_id not in agent_requirements[agent]:
+                        agent_requirements[agent].append(req_id)
         
         # Create execution plans
         for agent, req_ids in agent_requirements.items():
             # Calculate dependencies (agents that must run first)
-            agent_deps = self._calculate_agent_dependencies(agent, req_ids)
+            # Phase 1 agents have no dependencies, others depend on Phase 1
+            if agent in phase1_agents:
+                agent_deps = []  # Phase 1 agents have no dependencies
+            else:
+                agent_deps = self._calculate_agent_dependencies(agent, req_ids)
+                # Ensure non-Phase 1 agents depend on Phase 1 agents
+                for p1_agent in phase1_agents:
+                    if p1_agent in available_agents and p1_agent not in agent_deps:
+                        agent_deps.append(p1_agent)
             
             # Calculate priority (highest priority requirement)
-            priorities = [self.requirements[req_id].priority for req_id in req_ids]
-            agent_priority = min(priorities) if priorities else 2
+            # Filter out virtual PHASE1-ANALYSIS requirement
+            actual_req_ids = [rid for rid in req_ids if rid != "PHASE1-ANALYSIS"]
+            if actual_req_ids:
+                priorities = [self.requirements[req_id].priority for req_id in actual_req_ids if req_id in self.requirements]
+            else:
+                priorities = []
+            
+            # Phase 1 agents get highest priority
+            if agent in phase1_agents:
+                agent_priority = 1  # Highest priority
+            else:
+                agent_priority = min(priorities) if priorities else 2
             
             agent_plans[agent] = AgentExecutionPlan(
                 agent_name=agent,

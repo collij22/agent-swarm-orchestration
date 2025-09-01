@@ -333,6 +333,21 @@ class ReasoningLogger:
     
     def log_reasoning(self, agent_name: str, reasoning: str, decision: Optional[str] = None):
         """Log agent reasoning and decision making"""
+        # Clean reasoning to prevent loops (especially for DevOps-Engineer)
+        if agent_name == "devops-engineer" and reasoning:
+            # Deduplicate reasoning lines
+            lines = reasoning.split('\n')
+            unique_lines = []
+            seen = set()
+            for line in lines:
+                line_stripped = line.strip()
+                if line_stripped and line_stripped not in seen:
+                    unique_lines.append(line)
+                    seen.add(line_stripped)
+                    if len(unique_lines) >= 5:  # Max 5 unique lines for DevOps
+                        break
+            reasoning = '\n'.join(unique_lines)
+        
         if agent_name in self.metrics:
             self.metrics[agent_name].reasoning_entries.append(reasoning)
         

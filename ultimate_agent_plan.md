@@ -409,9 +409,48 @@ python test_mock_enhanced.py  # Test mock runner with tool execution
 python debug_orchestrator.py  # Debug orchestrator in mock mode
 ```
 
-## 🔧 Critical Bug Fixes & Error Recovery (January 2025)
+## 🔧 Critical Bug Fixes & Error Recovery (September 2025 - Phase 1-2)
 
-### Latest Improvements - Error Recovery System:
+### Phase 1 Improvements - Critical Infrastructure (Sep 2025):
+1. **✅ Automated Debugger Registration**: Added to AGENT_REGISTRY
+   - Centralized agent configuration management
+   - Proper model assignment (Opus tier)
+   - Error recovery capabilities
+
+2. **✅ UTF-8 Encoding Wrapper**: Windows compatibility fixes
+   - Automatic UTF-8 configuration
+   - Character encoding fallback
+   - Cross-platform compatibility
+
+3. **✅ Workflow Phase Management**: Phase 1 agents always run first
+   - requirements-analyst and project-architect prioritized
+   - Dependency graph ensures proper execution order
+   - All other agents depend on Phase 1 completion
+
+### Phase 2 Improvements - Agent Coordination (Sep 2025):
+1. **✅ File Locking Mechanism**: FileCoordinator prevents conflicts
+   - Exclusive/shared lock types
+   - Wait queues for blocked agents
+   - Timeout management (5 min default)
+   - Conflict detection and prevention
+
+2. **✅ Mandatory Verification Steps**: AgentVerification module
+   - Import resolution checking
+   - Entry point creation verification
+   - Working implementation requirements
+   - Syntax validation for all languages
+
+3. **✅ Inter-Agent Communication**: share_artifact tool
+   - Structured artifact sharing
+   - Context preservation between agents
+   - Handoff protocol implementation
+
+4. **✅ Reasoning Deduplication**: Prevents infinite loops
+   - DevOps-Engineer specific fix
+   - Limits to 5 unique reasoning lines
+   - Automatic loop detection
+
+### Latest Improvements - Error Recovery System (Jan 2025):
 1. **✅ Progressive Error Recovery**: 5-stage escalation strategy
    - Retry → Context → Debugger → Alternative → Manual
    - Prevents infinite failure loops

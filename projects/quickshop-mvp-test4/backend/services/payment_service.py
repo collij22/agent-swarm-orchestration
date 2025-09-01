@@ -1,23 +1,20 @@
 import os
 import stripe
-from typing import Dict, Any
 from fastapi import HTTPException
+from typing import Dict, Any
+
+# Configure Stripe with secure key management
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
 class StripePaymentService:
-    def __init__(self):
-        stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
-        self.webhook_secret = os.getenv('STRIPE_WEBHOOK_SECRET')
-
-    def create_payment_intent(self, amount: int, currency: str = 'usd') -> Dict[str, Any]:
+    @staticmethod
+    def create_payment_intent(amount: int, currency: str = 'usd') -> Dict[str, Any]:
         """
-        Create a Stripe PaymentIntent with error handling and logging
+        Create a Stripe payment intent with error handling
         
-        Args:
-            amount (int): Payment amount in cents
-            currency (str): Currency code (default: 'usd')
-        
-        Returns:
-            Dict with PaymentIntent details
+        :param amount: Payment amount in cents
+        :param currency: Currency code (default: usd)
+        :return: Payment intent details
         """
         try:
             intent = stripe.PaymentIntent.create(
@@ -25,36 +22,31 @@ class StripePaymentService:
                 currency=currency,
                 payment_method_types=['card'],
                 # Add additional configuration as needed
-                metadata={
-                    'integration_check': 'accept_a_payment',
-                    'source': 'quickshop_mvp'
-                }
             )
             return {
                 'client_secret': intent.client_secret,
                 'payment_intent_id': intent.id
             }
         except stripe.error.StripeError as e:
-            # Log the specific Stripe error
+            # Log error details securely
             raise HTTPException(
                 status_code=400, 
-                detail=f"Payment creation failed: {str(e)}"
+                detail=f"Payment processing error: {str(e)}"
             )
 
-    def verify_webhook(self, payload: str, sig_header: str) -> Dict[str, Any]:
+    @staticmethod
+    def verify_webhook(payload, sig_header):
         """
-        Verify Stripe webhook signature and parse event
+        Verify Stripe webhook signature for security
         
-        Args:
-            payload (str): Raw webhook payload
-            sig_header (str): Signature header from Stripe
-        
-        Returns:
-            Verified Stripe event
+        :param payload: Raw webhook payload
+        :param sig_header: Signature header from Stripe
+        :return: Verified webhook event
         """
+        webhook_secret = os.getenv('STRIPE_WEBHOOK_SECRET')
         try:
             event = stripe.Webhook.construct_event(
-                payload, sig_header, self.webhook_secret
+                payload, sig_header, webhook_secret
             )
             return event
         except ValueError:
@@ -62,21 +54,7 @@ class StripePaymentService:
             raise HTTPException(status_code=400, detail="Invalid payload")
         except stripe.error.SignatureVerificationError:
             # Invalid signature
-            raise HTTPException(status_code=400, detail="Invalid signature")
+            raise HTTPException(status_code=403, detail="Invalid signature")
 
-    def handle_payment_success(self, payment_intent: Dict[str, Any]):
-        """
-        Process successful payment
-        
-        Args:
-            payment_intent (Dict): Stripe PaymentIntent object
-        """
-        # Implement order processing logic
-        order_id = payment_intent.get('metadata', {}).get('order_id')
-        if order_id:
-            # Update order status, create records, etc.
-            pass
-
-def get_stripe_service():
-    """Dependency injection for Stripe service"""
-    return StripePaymentService()
+# Expose service for FastAPI dependency injection
+payment_service = StripePaymentService()

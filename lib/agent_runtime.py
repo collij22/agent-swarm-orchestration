@@ -11,6 +11,8 @@ Features:
 """
 
 import os
+import sys
+import io
 import json
 import time
 import asyncio
@@ -18,6 +20,11 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Callable, Tuple
 from dataclasses import dataclass
 from enum import Enum
+
+# Set UTF-8 encoding for Windows compatibility
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 try:
     from anthropic import Anthropic, AsyncAnthropic
@@ -31,6 +38,50 @@ try:
 except ImportError:
     # For standalone imports
     from agent_logger import ReasoningLogger, get_logger
+
+try:
+    from .file_coordinator import FileCoordinator, get_file_coordinator
+except ImportError:
+    # For standalone imports
+    try:
+        from file_coordinator import FileCoordinator, get_file_coordinator
+    except ImportError:
+        # Fallback if file_coordinator doesn't exist yet
+        FileCoordinator = None
+        get_file_coordinator = None
+
+def clean_reasoning(text: str, max_lines: int = 3) -> str:
+    """
+    Clean and deduplicate reasoning text to prevent loops.
+    
+    Args:
+        text: Raw reasoning text
+        max_lines: Maximum number of unique lines to keep
+        
+    Returns:
+        Cleaned reasoning text
+    """
+    if not text:
+        return text
+    
+    lines = text.split('\n')
+    unique_lines = []
+    seen = set()
+    
+    for line in lines:
+        # Strip whitespace for comparison
+        line_stripped = line.strip()
+        
+        # Skip empty lines and duplicates
+        if line_stripped and line_stripped not in seen:
+            unique_lines.append(line)
+            seen.add(line_stripped)
+            
+            # Stop after max_lines unique lines
+            if len(unique_lines) >= max_lines:
+                break
+    
+    return '\n'.join(unique_lines)
 
 class ModelType(Enum):
     HAIKU = "claude-3-5-haiku-20241022"  # Fast & cost-optimized (~$1/1M input, $5/1M output)
@@ -49,7 +100,7 @@ def get_optimal_model(agent_name: str, task_complexity: str = "standard") -> Mod
     """
     # Agents that should always use Opus for complex reasoning
     opus_agents = ["project-architect", "ai-specialist", "debug-specialist", 
-                   "project-orchestrator", "meta-agent"]
+                   "project-orchestrator", "meta-agent", "automated-debugger"]
     
     # Agents that can use Haiku for simple tasks
     haiku_agents = ["documentation-writer", "api-integrator"]
@@ -60,6 +111,35 @@ def get_optimal_model(agent_name: str, task_complexity: str = "standard") -> Mod
         return ModelType.HAIKU
     else:
         return ModelType.SONNET
+
+# Agent Registry for centralized agent configuration
+AGENT_REGISTRY = {
+    'automated-debugger': {
+        'model': ModelType.OPUS,
+        'path': '.claude/agents/automated-debugger.md',
+        'capabilities': ['error_recovery', 'build_fixing', 'validation_retry']
+    },
+    'project-architect': {
+        'model': ModelType.OPUS,
+        'path': '.claude/agents/project-architect.md',
+        'capabilities': ['system_design', 'database_architecture', 'api_planning']
+    },
+    'rapid-builder': {
+        'model': ModelType.SONNET,
+        'path': '.claude/agents/rapid-builder.md',
+        'capabilities': ['prototyping', 'scaffolding', 'integration']
+    },
+    'quality-guardian': {
+        'model': ModelType.SONNET,
+        'path': '.claude/agents/quality-guardian.md',
+        'capabilities': ['testing', 'security_audit', 'code_review']
+    },
+    'quality-guardian-enhanced': {
+        'model': ModelType.SONNET,
+        'path': '.claude/agents/quality-guardian-enhanced.md',
+        'capabilities': ['validation', 'build_testing', 'error_reporting']
+    }
+}
 
 @dataclass
 class Tool:
@@ -782,6 +862,9 @@ async def write_file_tool(file_path: str, content: str, reasoning: str = None,
                          context: AgentContext = None, agent_name: str = None,
                          verify: bool = True, max_retries: int = 3) -> str:
     """Enhanced write content to a file with verification and tracking"""
+    # Get file coordinator for locking
+    coordinator = get_file_coordinator() if get_file_coordinator else None
+    
     # Get project directory from context if available
     if context and "project_directory" in context.artifacts:
         project_base = Path(context.artifacts["project_directory"])
@@ -910,6 +993,20 @@ export default function {file_name.replace('-', '_')}() {{
     
     # Retry logic for file operations
     for attempt in range(max_retries):
+        # Acquire file lock if coordinator is available
+        if coordinator and agent_name:
+            lock_acquired = coordinator.acquire_lock(
+                str(path), 
+                agent_name, 
+                lock_type="exclusive",
+                wait=True  # Wait if file is locked
+            )
+            
+            if not lock_acquired:
+                # If we can't get the lock after waiting, log warning
+                if reasoning:
+                    print(f"Warning: Could not acquire lock for {file_path}, proceeding anyway")
+        
         try:
             # Create parent directories
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -921,6 +1018,14 @@ export default function {file_name.replace('-', '_')}() {{
                 # Fallback: remove all non-ASCII characters
                 content_ascii = content.encode('ascii', 'ignore').decode('ascii')
                 path.write_text(content_ascii, encoding='utf-8')
+            
+            # Track modification if coordinator is available
+            if coordinator and agent_name:
+                coordinator.track_modification(
+                    str(path),
+                    agent_name,
+                    "create" if not path.exists() else "update"
+                )
             
             # Verify file was created if requested
             if verify and not path.exists():
@@ -952,9 +1057,17 @@ export default function {file_name.replace('-', '_')}() {{
                 if any(pattern in file_path for pattern in critical_patterns):
                     context.add_verification_required(file_path)
             
+            # Release lock if coordinator is available
+            if coordinator and agent_name:
+                coordinator.release_lock(str(path), agent_name)
+            
             return f"File written successfully: {file_path} (verified: {path.exists()})"
             
         except Exception as e:
+            # Release lock on error
+            if coordinator and agent_name:
+                coordinator.release_lock(str(path), agent_name)
+            
             if attempt < max_retries - 1:
                 await asyncio.sleep(0.5 * (attempt + 1))  # Exponential backoff
                 continue
@@ -963,6 +1076,10 @@ export default function {file_name.replace('-', '_')}() {{
                 if context and agent_name:
                     context.add_incomplete_task(agent_name, f"write_file: {file_path}", error_msg)
                 return f"Error: {error_msg}"
+        finally:
+            # Always try to release lock at the end of each attempt
+            if coordinator and agent_name:
+                coordinator.release_lock(str(path), agent_name)
     
     return f"File operation completed: {file_path}"
 
@@ -988,9 +1105,59 @@ async def record_decision_tool(decision: str, rationale: str, reasoning: str = N
     })
     return f"Decision recorded: {decision}"
 
-async def complete_task_tool(summary: str, artifacts: Optional[Dict] = None, reasoning: str = None) -> str:
+async def complete_task_tool(summary: str, artifacts: Optional[Dict] = None, reasoning: str = None, 
+                           context: AgentContext = None, agent_name: str = None) -> str:
     """Mark current agent task as complete"""
+    # Store artifacts if provided
+    if artifacts and context:
+        for key, value in artifacts.items():
+            context.artifacts[f"{agent_name}_{key}" if agent_name else key] = value
+    
+    # Mark task as completed
+    if context and agent_name:
+        context.completed_tasks.append(f"{agent_name}: {summary}")
+    
     return f"Task completed: {summary}"
+
+async def share_artifact_tool(artifact_type: str, content: Any, description: str = None,
+                             reasoning: str = None, context: AgentContext = None, 
+                             agent_name: str = None) -> str:
+    """
+    Share an artifact with other agents for coordination.
+    
+    Args:
+        artifact_type: Type of artifact (e.g., "api_schema", "database_model", "config")
+        content: The actual artifact content (can be dict, list, str, etc.)
+        description: Optional description of the artifact
+        reasoning: Why this artifact is being shared
+        context: Agent context for storing artifacts
+        agent_name: Name of the agent sharing the artifact
+    
+    Returns:
+        Confirmation message
+    """
+    if context is None:
+        return "Error: No context available for sharing artifacts"
+    
+    # Create artifact key
+    artifact_key = f"{agent_name}_{artifact_type}" if agent_name else artifact_type
+    
+    # Store the artifact with metadata
+    artifact_data = {
+        "content": content,
+        "type": artifact_type,
+        "shared_by": agent_name or "unknown",
+        "description": description or f"Shared {artifact_type}",
+        "timestamp": time.time()
+    }
+    
+    context.artifacts[artifact_key] = artifact_data
+    
+    # Log the sharing
+    if description:
+        return f"Shared {artifact_type}: {description}"
+    else:
+        return f"Shared {artifact_type} for other agents to use"
 
 async def dependency_check_tool(agent_name: str, reasoning: str = None, context: AgentContext = None) -> str:
     """Check if agent dependencies are met before execution"""
@@ -1122,6 +1289,17 @@ def create_standard_tools() -> List[Tool]:
     ))
     
     # New inter-agent communication tools
+    tools.append(Tool(
+        name="share_artifact",
+        description="Share an artifact with other agents for coordination",
+        parameters={
+            "artifact_type": {"type": "string", "description": "Type of artifact (e.g., 'api_schema', 'database_model', 'config')", "required": True},
+            "content": {"type": "any", "description": "The actual artifact content", "required": True},
+            "description": {"type": "string", "description": "Description of the artifact", "required": False}
+        },
+        function=share_artifact_tool
+    ))
+    
     tools.append(Tool(
         name="dependency_check",
         description="Check if agent dependencies are met before execution",

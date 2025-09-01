@@ -735,6 +735,37 @@ completion_stages:
 - Ensure seed data is created regardless of mode
 - Run compilation checks in mock mode
 
+## 🔄 Agent Coordination Standards (September 2025 Updates)
+
+### File Locking Mechanism
+- **FileCoordinator**: Prevents parallel agents from modifying same files
+- **Lock Types**: Exclusive (write) and shared (read) locks
+- **Timeout**: 5-minute default with automatic expiration
+- **Wait Queue**: Agents queue for locked files
+- **Conflict Detection**: Tracks and reports file modification conflicts
+- **Statistics**: Monitors locks, conflicts prevented, and agent activity
+
+### Inter-Agent Communication
+- **share_artifact**: Agents share data structures and schemas
+- **Artifact Types**: api_schema, database_model, config, etc.
+- **Metadata Tracking**: Timestamp, shared_by, description
+- **Context Preservation**: Artifacts persist across agent executions
+- **Coordination Protocol**: Structured data exchange between agents
+
+### Mandatory Agent Verification
+All agents MUST complete these steps before marking tasks complete:
+1. **Import Resolution**: Verify all imports resolve, create missing modules
+2. **Entry Point Creation**: Create all referenced files with working code
+3. **Working Implementation**: No TODOs without implementation
+4. **Syntax Verification**: All code must be syntactically valid
+5. **Dependency Consistency**: All imports in requirements/package.json
+
+### Reasoning Deduplication
+- **DevOps-Engineer Fix**: Automatic deduplication of reasoning loops
+- **Max Lines**: Limited to 5 unique reasoning lines
+- **Clean Function**: Removes duplicate lines from agent output
+- **Performance**: Prevents infinite reasoning loops
+
 ## 🛡️ Error Recovery Standards (September 2025 Updates)
 
 ### Progressive Error Recovery

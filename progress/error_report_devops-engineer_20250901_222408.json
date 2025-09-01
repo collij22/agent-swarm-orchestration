@@ -1,0 +1,11 @@
+{
+  "agent_name": "devops-engineer",
+  "errors": [
+    "Build exception: [WinError 2] The system cannot find the file specified"
+  ],
+  "warnings": [],
+  "suggested_fixes": [
+    "Check Node.js installation"
+  ],
+  "output": "[WinError 2] The system cannot find the file specified"
+}
