@@ -127,7 +127,18 @@ except ImportError:
     HAS_RICH = False
     print("Warning: Rich not installed. Install with: pip install rich")
 
-console = Console() if HAS_RICH else None
+# Create console with error handling
+console = None
+if HAS_RICH:
+    try:
+        console = Console(
+            force_terminal=True,
+            width=120,
+            legacy_windows=False
+        )
+    except Exception:
+        # If console creation fails, set to None
+        console = None
 
 
 class EnhancedOrchestrator:
@@ -1747,10 +1758,18 @@ async def main():
             summary_level=args.summary_level
         )
     except Exception as e:
-        if HAS_RICH:
-            console.print(f"[red]Failed to initialize orchestrator: {str(e)}[/red]")
-        else:
+        # Try to print error, but handle closed stdout
+        try:
             print(f"Failed to initialize orchestrator: {str(e)}")
+            import traceback
+            traceback.print_exc()
+        except:
+            # If print fails, try writing to stderr
+            try:
+                import sys
+                sys.stderr.write(f"Failed to initialize orchestrator: {str(e)}\n")
+            except:
+                pass  # Nothing we can do if both stdout and stderr are closed
         sys.exit(1)
     
     # Check if we're in API mode but have no client
@@ -1782,16 +1801,35 @@ async def main():
             with open(args.requirements) as f:
                 requirements = yaml.safe_load(f)
             
-            if HAS_RICH:
-                console.print(Panel(
-                    f"[bold]Enhanced {args.project_type} Workflow[/bold]\n" +
-                    f"Project: {requirements.get('project', {}).get('name', 'Unknown')}\n" +
-                    f"Requirements: {args.requirements}\n" +
-                    f"Dashboard: {'Enabled' if args.dashboard else 'Disabled'}\n" +
-                    f"Human Log: {'Enabled (' + args.summary_level + ')' if args.human_log else 'Disabled'}\n" +
-                    f"Max Parallel: {args.max_parallel}",
-                    border_style="green"
-                ))
+            if HAS_RICH and console:
+                try:
+                    console.print(Panel(
+                        f"[bold]Enhanced {args.project_type} Workflow[/bold]\n" +
+                        f"Project: {requirements.get('project', {}).get('name', 'Unknown')}\n" +
+                        f"Requirements: {args.requirements}\n" +
+                        f"Dashboard: {'Enabled' if args.dashboard else 'Disabled'}\n" +
+                        f"Human Log: {'Enabled (' + args.summary_level + ')' if args.human_log else 'Disabled'}\n" +
+                        f"Max Parallel: {args.max_parallel}",
+                        border_style="green"
+                    ))
+                except:
+                    print(f"\n{'='*60}")
+                    print(f"Enhanced {args.project_type} Workflow")
+                    print(f"Project: {requirements.get('project', {}).get('name', 'Unknown')}")
+                    print(f"Requirements: {args.requirements}")
+                    print(f"Dashboard: {'Enabled' if args.dashboard else 'Disabled'}")
+                    print(f"Human Log: {'Enabled (' + args.summary_level + ')' if args.human_log else 'Disabled'}")
+                    print(f"Max Parallel: {args.max_parallel}")
+                    print(f"{'='*60}\n")
+            else:
+                print(f"\n{'='*60}")
+                print(f"Enhanced {args.project_type} Workflow")
+                print(f"Project: {requirements.get('project', {}).get('name', 'Unknown')}")
+                print(f"Requirements: {args.requirements}")
+                print(f"Dashboard: {'Enabled' if args.dashboard else 'Disabled'}")
+                print(f"Human Log: {'Enabled (' + args.summary_level + ')' if args.human_log else 'Disabled'}")
+                print(f"Max Parallel: {args.max_parallel}")
+                print(f"{'='*60}\n")
             
             success = await orchestrator.execute_enhanced_workflow(
                 args.project_type,
@@ -1835,17 +1873,29 @@ async def main():
             parser.print_help()
     
     except KeyboardInterrupt:
-        if HAS_RICH:
-            console.print("\n[yellow]Interrupted by user[/yellow]")
-        orchestrator.logger.close_session()
+        try:
+            if HAS_RICH and console:
+                console.print("\n[yellow]Interrupted by user[/yellow]")
+            else:
+                print("\nInterrupted by user")
+        except:
+            print("\nInterrupted by user")
+        if 'orchestrator' in locals():
+            orchestrator.logger.close_session()
         sys.exit(1)
     except Exception as e:
-        if HAS_RICH:
-            console.print(f"[red]Error: {str(e)}[/red]")
+        try:
+            if HAS_RICH and console:
+                console.print(f"[red]Error: {str(e)}[/red]")
+            else:
+                print(f"Error: {str(e)}")
+        except:
+            print(f"Error: {str(e)}")
         if args.verbose:
             import traceback
             traceback.print_exc()
-        orchestrator.logger.close_session()
+        if 'orchestrator' in locals():
+            orchestrator.logger.close_session()
         sys.exit(1)
 
 

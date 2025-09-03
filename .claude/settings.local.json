@@ -70,7 +70,13 @@
       "mcp__Ref__ref_search_documentation",
       "mcp__Ref__ref_read_url",
       "Bash(for:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(start:*)",
+      "Bash(where python)",
+      "Bash(C:UsersjonlcAppDataLocalProgramsPythonPython312python.exe -m pip install anthropic rich networkx pyyaml aiofiles httpx)",
+      "Bash(C:UsersjonlcAppDataLocalProgramsPythonPython312python.exe diagnose_issue.py)",
+      "Bash(copy:*)",
+      "Bash(tasklist)"
     ],
     "deny": [],
     "ask": []

@@ -1,0 +1,27 @@
+{
+  "app": {
+    "name": "QuickShop MVP",
+    "version": "1.0.0",
+    "environment": "development",
+    "port": 3000,
+    "api_url": "http://localhost:8000"
+  },
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "name": "quickshop_mvp",
+    "user": "admin",
+    "pool_size": 10
+  },
+  "features": {
+    "authentication": true,
+    "payments": true,
+    "analytics": true,
+    "caching": true
+  },
+  "security": {
+    "jwt_expiry": "24h",
+    "bcrypt_rounds": 10,
+    "rate_limit": 100
+  }
+}

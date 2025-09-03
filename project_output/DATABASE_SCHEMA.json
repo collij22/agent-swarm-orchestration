@@ -1,0 +1,287 @@
+{
+  "database": "quickshop_mvp",
+  "version": "1.0.0",
+  "description": "Complete database schema for QuickShop MVP e-commerce application",
+  "tables": {
+    "users": {
+      "description": "User accounts with authentication",
+      "columns": {
+        "id": {
+          "type": "uuid",
+          "primary": true,
+          "default": "gen_random_uuid()"
+        },
+        "email": {
+          "type": "varchar(255)",
+          "unique": true,
+          "nullable": false
+        },
+        "password_hash": {
+          "type": "varchar(255)",
+          "nullable": false
+        },
+        "first_name": {
+          "type": "varchar(100)"
+        },
+        "last_name": {
+          "type": "varchar(100)"
+        },
+        "is_active": {
+          "type": "boolean",
+          "default": true
+        },
+        "created_at": {
+          "type": "timestamp",
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "timestamp",
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": [
+        {
+          "name": "idx_users_email",
+          "columns": ["email"],
+          "unique": true
+        }
+      ]
+    },
+    "products": {
+      "description": "Product catalog with inventory",
+      "columns": {
+        "id": {
+          "type": "uuid",
+          "primary": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "type": "varchar(255)",
+          "nullable": false
+        },
+        "description": {
+          "type": "text"
+        },
+        "price": {
+          "type": "decimal(10,2)",
+          "nullable": false,
+          "check": "price >= 0"
+        },
+        "stock_quantity": {
+          "type": "integer",
+          "default": 0,
+          "check": "stock_quantity >= 0"
+        },
+        "sku": {
+          "type": "varchar(100)",
+          "unique": true
+        },
+        "is_active": {
+          "type": "boolean",
+          "default": true
+        },
+        "created_at": {
+          "type": "timestamp",
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "timestamp",
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": [
+        {
+          "name": "idx_products_sku",
+          "columns": ["sku"],
+          "unique": true
+        },
+        {
+          "name": "idx_products_name",
+          "columns": ["name"]
+        }
+      ]
+    },
+    "orders": {
+      "description": "Customer orders",
+      "columns": {
+        "id": {
+          "type": "uuid",
+          "primary": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "type": "uuid",
+          "nullable": false,
+          "foreign_key": {
+            "table": "users",
+            "column": "id",
+            "on_delete": "CASCADE"
+          }
+        },
+        "total_amount": {
+          "type": "decimal(10,2)",
+          "nullable": false,
+          "check": "total_amount >= 0"
+        },
+        "status": {
+          "type": "varchar(50)",
+          "default": "pending",
+          "check": "status IN ('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled')"
+        },
+        "shipping_address": {
+          "type": "text"
+        },
+        "created_at": {
+          "type": "timestamp",
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "timestamp",
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": [
+        {
+          "name": "idx_orders_user_id",
+          "columns": ["user_id"]
+        },
+        {
+          "name": "idx_orders_status",
+          "columns": ["status"]
+        },
+        {
+          "name": "idx_orders_created_at",
+          "columns": ["created_at"]
+        }
+      ]
+    },
+    "order_items": {
+      "description": "Items within each order",
+      "columns": {
+        "id": {
+          "type": "uuid",
+          "primary": true,
+          "default": "gen_random_uuid()"
+        },
+        "order_id": {
+          "type": "uuid",
+          "nullable": false,
+          "foreign_key": {
+            "table": "orders",
+            "column": "id",
+            "on_delete": "CASCADE"
+          }
+        },
+        "product_id": {
+          "type": "uuid",
+          "nullable": false,
+          "foreign_key": {
+            "table": "products",
+            "column": "id",
+            "on_delete": "RESTRICT"
+          }
+        },
+        "quantity": {
+          "type": "integer",
+          "nullable": false,
+          "check": "quantity > 0"
+        },
+        "unit_price": {
+          "type": "decimal(10,2)",
+          "nullable": false,
+          "check": "unit_price >= 0"
+        },
+        "total_price": {
+          "type": "decimal(10,2)",
+          "nullable": false,
+          "check": "total_price >= 0"
+        },
+        "created_at": {
+          "type": "timestamp",
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": [
+        {
+          "name": "idx_order_items_order_id",
+          "columns": ["order_id"]
+        },
+        {
+          "name": "idx_order_items_product_id",
+          "columns": ["product_id"]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "unique_order_product",
+          "type": "unique",
+          "columns": ["order_id", "product_id"]
+        }
+      ]
+    }
+  },
+  "relationships": {
+    "users_orders": {
+      "type": "one_to_many",
+      "parent": "users",
+      "child": "orders",
+      "description": "A user can have multiple orders"
+    },
+    "orders_order_items": {
+      "type": "one_to_many",
+      "parent": "orders",
+      "child": "order_items",
+      "description": "An order can contain multiple items"
+    },
+    "products_order_items": {
+      "type": "one_to_many",
+      "parent": "products",
+      "child": "order_items",
+      "description": "A product can appear in multiple order items"
+    }
+  },
+  "triggers": [
+    {
+      "name": "update_users_updated_at",
+      "table": "users",
+      "event": "BEFORE UPDATE",
+      "function": "UPDATE updated_at = CURRENT_TIMESTAMP"
+    },
+    {
+      "name": "update_products_updated_at",
+      "table": "products",
+      "event": "BEFORE UPDATE",
+      "function": "UPDATE updated_at = CURRENT_TIMESTAMP"
+    },
+    {
+      "name": "update_orders_updated_at",
+      "table": "orders",
+      "event": "BEFORE UPDATE",
+      "function": "UPDATE updated_at = CURRENT_TIMESTAMP"
+    },
+    {
+      "name": "calculate_order_item_total",
+      "table": "order_items",
+      "event": "BEFORE INSERT OR UPDATE",
+      "function": "SET total_price = quantity * unit_price"
+    }
+  ],
+  "initial_data": {
+    "products": [
+      {
+        "name": "Sample Product 1",
+        "description": "A sample product for testing",
+        "price": 29.99,
+        "stock_quantity": 100,
+        "sku": "SAMPLE-001"
+      },
+      {
+        "name": "Sample Product 2",
+        "description": "Another sample product",
+        "price": 49.99,
+        "stock_quantity": 50,
+        "sku": "SAMPLE-002"
+      }
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "project_requirements": {
+    "name": "QuickShop MVP",
+    "type": "E-commerce platform",
+    "features": [
+      "User authentication (register, login, logout)",
+      "Product catalog with categories",
+      "Shopping cart functionality",
+      "Order management",
+      "Admin dashboard"
+    ],
+    "tech_stack": {
+      "frontend": "React + TypeScript + Tailwind CSS",
+      "backend": "FastAPI (Python)",
+      "database": "PostgreSQL",
+      "deployment": "Docker + docker-compose"
+    },
+    "output_directory": "projects\\quickshop-mvp-fixed"
+  },
+  "completed_tasks": [],
+  "artifacts": {
+    "output_dir": "projects\\quickshop-mvp-fixed"
+  },
+  "decisions": [],
+  "current_phase": "initialization",
+  "created_files": {},
+  "verification_required": [],
+  "agent_dependencies": {},
+  "incomplete_tasks": []
+}

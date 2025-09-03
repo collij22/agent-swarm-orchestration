@@ -1,0 +1,1 @@
+Warning: Rich not installed. Install with: pip install rich

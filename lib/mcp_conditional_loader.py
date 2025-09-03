@@ -77,22 +77,22 @@ class MCPConditionalLoader:
                 priority=6
             ),
             
-            # Brave Search MCP Rules
-            MCPActivationRule(
-                mcp_name="brave_search",
-                trigger_type=MCPTriggerType.KEYWORD,
-                conditions=["research", "search", "investigate", "analyze", "compare", "best practices", "troubleshoot"],
-                agents=["requirements-analyst", "project-architect", "debug-specialist"],
-                priority=6,
-                description="Web search for research and troubleshooting"
-            ),
-            MCPActivationRule(
-                mcp_name="brave_search",
-                trigger_type=MCPTriggerType.AGENT_ROLE,
-                conditions=["requirements-analyst"],
-                agents=["requirements-analyst"],
-                priority=7
-            ),
+            # Brave Search MCP Rules - DISABLED due to API compatibility issues
+            # MCPActivationRule(
+            #     mcp_name="brave_search",
+            #     trigger_type=MCPTriggerType.KEYWORD,
+            #     conditions=["research", "search", "investigate", "analyze", "compare", "best practices", "troubleshoot"],
+            #     agents=["requirements-analyst", "project-architect", "debug-specialist"],
+            #     priority=6,
+            #     description="Web search for research and troubleshooting"
+            # ),
+            # MCPActivationRule(
+            #     mcp_name="brave_search",
+            #     trigger_type=MCPTriggerType.AGENT_ROLE,
+            #     conditions=["requirements-analyst"],
+            #     agents=["requirements-analyst"],
+            #     priority=7
+            # ),
             
             # Firecrawl MCP Rules
             MCPActivationRule(

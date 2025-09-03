@@ -181,19 +181,20 @@ class MCPManager:
                 },
                 enabled=False
             ),
-            'brave_search': MCPServerConfig(
-                name='Brave Search MCP',
-                type='brave_search',
-                url='http://localhost:3108',
-                transport='http',
-                config={
-                    'command': 'npx',
-                    'args': ['-y', '@brave/mcp-search-server'],
-                    'conditional': True,
-                    'triggers': ['research', 'troubleshooting', 'best_practices']
-                },
-                enabled=False
-            ),
+            # DISABLED - API compatibility issue with Anthropic
+            # 'brave_search': MCPServerConfig(
+            #     name='Brave Search MCP',
+            #     type='brave_search',
+            #     url='http://localhost:3108',
+            #     transport='http',
+            #     config={
+            #         'command': 'npx',
+            #         'args': ['-y', '@brave/mcp-search-server'],
+            #         'conditional': True,
+            #         'triggers': ['research', 'troubleshooting', 'best_practices']
+            #     },
+            #     enabled=False
+            # ),
             'fetch': MCPServerConfig(
                 name='Fetch MCP',
                 type='fetch',

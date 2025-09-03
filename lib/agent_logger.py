@@ -54,16 +54,24 @@ if Console:
         # Disable Rich console to prevent hanging
         console = None
     else:
-        # Force UTF-8 encoding on Windows to handle Unicode characters
-        console = Console(
-            file=sys.stdout,
-            force_terminal=True,
-            width=120,
-            legacy_windows=False
-        )
+        try:
+            # Force UTF-8 encoding on Windows to handle Unicode characters
+            console = Console(
+                file=sys.stdout,
+                force_terminal=True,
+                width=120,
+                legacy_windows=False
+            )
+        except Exception:
+            # If console creation fails, set to None
+            console = None
+    
     # Set console encoding to handle Unicode on Windows
-    if hasattr(sys.stdout, 'reconfigure'):
-        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    try:
+        if hasattr(sys.stdout, 'reconfigure'):
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass  # Ignore encoding errors
 else:
     console = None
 
@@ -190,20 +198,47 @@ class ReasoningLogger:
     
     def _initialize_session(self):
         """Initialize a new logging session"""
+        import sys
+        
         session_info = {
             "session_id": self.session_id,
             "start_time": datetime.now().isoformat(),
             "log_file": str(self.session_file)
         }
         
-        if self.console:
-            self.console.print(Panel(
-                f"[bold green]Session Started[/bold green]\n"
-                f"Session ID: {self.session_id}\n"
-                f"Log File: {self.session_file}",
-                title="Agent Logger",
-                border_style="green"
-            ))
+        # Check if stdout is available
+        if sys.stdout is None or (hasattr(sys.stdout, 'closed') and sys.stdout.closed):
+            # Can't print anything, just return
+            return
+        
+        # Try using Rich console, fallback to print if it fails
+        try:
+            if self.console and hasattr(self.console, 'file') and self.console.file and not self.console.file.closed:
+                self.console.print(Panel(
+                    f"[bold green]Session Started[/bold green]\n"
+                    f"Session ID: {self.session_id}\n"
+                    f"Log File: {self.session_file}",
+                    title="Agent Logger",
+                    border_style="green"
+                ))
+            else:
+                # Fallback to standard print
+                print(f"\n{'='*60}")
+                print(f"Session Started")
+                print(f"Session ID: {self.session_id}")
+                print(f"Log File: {self.session_file}")
+                print(f"{'='*60}\n")
+        except (ValueError, AttributeError, OSError) as e:
+            # If any error, try simple print
+            try:
+                print(f"\n{'='*60}")
+                print(f"Session Started")
+                print(f"Session ID: {self.session_id}")
+                print(f"Log File: {self.session_file}")
+                print(f"{'='*60}\n")
+            except:
+                # If even simple print fails, just continue silently
+                pass
     
     def log_agent_start(self, agent_name: str, context: str = "", reasoning: str = ""):
         """Log when an agent starts execution"""

@@ -1,0 +1,225 @@
+{
+  "project_name": "QuickShop MVP",
+  "database_name": "quickshop_db",
+  "database_type": "postgresql",
+  "version": "1.0.0",
+  "created_at": "2025-09-02T17:46:43Z",
+  "tables": {
+    "users": {
+      "description": "User accounts with authentication",
+      "columns": {
+        "id": {
+          "type": "uuid",
+          "constraints": "PRIMARY KEY DEFAULT gen_random_uuid()",
+          "description": "Unique user identifier"
+        },
+        "email": {
+          "type": "varchar(255)",
+          "constraints": "UNIQUE NOT NULL",
+          "description": "User email address for login"
+        },
+        "password_hash": {
+          "type": "varchar(255)",
+          "constraints": "NOT NULL",
+          "description": "Hashed password for authentication"
+        },
+        "created_at": {
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP",
+          "description": "Account creation timestamp"
+        },
+        "updated_at": {
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP",
+          "description": "Last account update timestamp"
+        }
+      },
+      "indexes": [
+        {
+          "name": "idx_users_email",
+          "columns": ["email"],
+          "type": "btree"
+        }
+      ]
+    },
+    "products": {
+      "description": "Product catalog with inventory management",
+      "columns": {
+        "id": {
+          "type": "uuid",
+          "constraints": "PRIMARY KEY DEFAULT gen_random_uuid()",
+          "description": "Unique product identifier"
+        },
+        "name": {
+          "type": "varchar(255)",
+          "constraints": "NOT NULL",
+          "description": "Product name"
+        },
+        "description": {
+          "type": "text",
+          "constraints": "",
+          "description": "Product description"
+        },
+        "price": {
+          "type": "decimal(10,2)",
+          "constraints": "NOT NULL CHECK (price >= 0)",
+          "description": "Product price in currency units"
+        },
+        "stock": {
+          "type": "integer",
+          "constraints": "NOT NULL DEFAULT 0 CHECK (stock >= 0)",
+          "description": "Available inventory quantity"
+        },
+        "created_at": {
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP",
+          "description": "Product creation timestamp"
+        }
+      },
+      "indexes": [
+        {
+          "name": "idx_products_name",
+          "columns": ["name"],
+          "type": "btree"
+        },
+        {
+          "name": "idx_products_price",
+          "columns": ["price"],
+          "type": "btree"
+        }
+      ]
+    },
+    "orders": {
+      "description": "Customer order management",
+      "columns": {
+        "id": {
+          "type": "uuid",
+          "constraints": "PRIMARY KEY DEFAULT gen_random_uuid()",
+          "description": "Unique order identifier"
+        },
+        "user_id": {
+          "type": "uuid",
+          "constraints": "NOT NULL REFERENCES users(id) ON DELETE CASCADE",
+          "description": "Reference to the customer who placed the order"
+        },
+        "total": {
+          "type": "decimal(10,2)",
+          "constraints": "NOT NULL CHECK (total >= 0)",
+          "description": "Total order amount"
+        },
+        "status": {
+          "type": "varchar(50)",
+          "constraints": "NOT NULL DEFAULT 'pending'",
+          "description": "Order status (pending, processing, shipped, delivered, cancelled)"
+        },
+        "created_at": {
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP",
+          "description": "Order creation timestamp"
+        }
+      },
+      "indexes": [
+        {
+          "name": "idx_orders_user_id",
+          "columns": ["user_id"],
+          "type": "btree"
+        },
+        {
+          "name": "idx_orders_status",
+          "columns": ["status"],
+          "type": "btree"
+        },
+        {
+          "name": "idx_orders_created_at",
+          "columns": ["created_at"],
+          "type": "btree"
+        }
+      ]
+    },
+    "order_items": {
+      "description": "Individual items within orders",
+      "columns": {
+        "id": {
+          "type": "uuid",
+          "constraints": "PRIMARY KEY DEFAULT gen_random_uuid()",
+          "description": "Unique order item identifier"
+        },
+        "order_id": {
+          "type": "uuid",
+          "constraints": "NOT NULL REFERENCES orders(id) ON DELETE CASCADE",
+          "description": "Reference to the parent order"
+        },
+        "product_id": {
+          "type": "uuid",
+          "constraints": "NOT NULL REFERENCES products(id) ON DELETE RESTRICT",
+          "description": "Reference to the ordered product"
+        },
+        "quantity": {
+          "type": "integer",
+          "constraints": "NOT NULL CHECK (quantity > 0)",
+          "description": "Quantity of the product ordered"
+        },
+        "price": {
+          "type": "decimal(10,2)",
+          "constraints": "NOT NULL CHECK (price >= 0)",
+          "description": "Price per unit at time of order"
+        }
+      },
+      "indexes": [
+        {
+          "name": "idx_order_items_order_id",
+          "columns": ["order_id"],
+          "type": "btree"
+        },
+        {
+          "name": "idx_order_items_product_id",
+          "columns": ["product_id"],
+          "type": "btree"
+        }
+      ],
+      "unique_constraints": [
+        {
+          "name": "uk_order_items_order_product",
+          "columns": ["order_id", "product_id"],
+          "description": "Prevent duplicate products in the same order"
+        }
+      ]
+    }
+  },
+  "relationships": [
+    {
+      "from_table": "orders",
+      "from_column": "user_id",
+      "to_table": "users",
+      "to_column": "id",
+      "relationship_type": "many_to_one",
+      "on_delete": "CASCADE"
+    },
+    {
+      "from_table": "order_items",
+      "from_column": "order_id",
+      "to_table": "orders",
+      "to_column": "id",
+      "relationship_type": "many_to_one",
+      "on_delete": "CASCADE"
+    },
+    {
+      "from_table": "order_items",
+      "from_column": "product_id",
+      "to_table": "products",
+      "to_column": "id",
+      "relationship_type": "many_to_one",
+      "on_delete": "RESTRICT"
+    }
+  ],
+  "configuration": {
+    "charset": "utf8mb4",
+    "collation": "utf8mb4_unicode_ci",
+    "timezone": "UTC",
+    "connection_pool": {
+      "min_connections": 5,
+      "max_connections": 20,
+      "idle_timeout": 300
+    }
+  }
+}

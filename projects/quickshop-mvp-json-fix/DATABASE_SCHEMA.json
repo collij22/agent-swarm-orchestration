@@ -1,0 +1,258 @@
+{
+  "database_name": "quickshop_db",
+  "version": "1.0",
+  "description": "Database schema for QuickShop MVP - E-commerce application",
+  "tables": {
+    "users": {
+      "description": "User accounts and authentication",
+      "columns": {
+        "id": {
+          "type": "uuid",
+          "constraints": ["PRIMARY KEY"],
+          "description": "Unique user identifier"
+        },
+        "email": {
+          "type": "varchar(255)",
+          "constraints": ["UNIQUE", "NOT NULL"],
+          "description": "User email address for login"
+        },
+        "password_hash": {
+          "type": "varchar(255)",
+          "constraints": ["NOT NULL"],
+          "description": "Hashed password for security"
+        },
+        "created_at": {
+          "type": "timestamp",
+          "constraints": ["DEFAULT CURRENT_TIMESTAMP"],
+          "description": "Account creation timestamp"
+        },
+        "updated_at": {
+          "type": "timestamp",
+          "constraints": ["DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"],
+          "description": "Last account update timestamp"
+        }
+      },
+      "indexes": [
+        {
+          "name": "idx_users_email",
+          "columns": ["email"],
+          "type": "unique"
+        }
+      ]
+    },
+    "products": {
+      "description": "Product catalog and inventory",
+      "columns": {
+        "id": {
+          "type": "uuid",
+          "constraints": ["PRIMARY KEY"],
+          "description": "Unique product identifier"
+        },
+        "name": {
+          "type": "varchar(255)",
+          "constraints": ["NOT NULL"],
+          "description": "Product name"
+        },
+        "description": {
+          "type": "text",
+          "constraints": [],
+          "description": "Detailed product description"
+        },
+        "price": {
+          "type": "decimal(10,2)",
+          "constraints": ["NOT NULL", "CHECK (price >= 0)"],
+          "description": "Product price in dollars"
+        },
+        "stock": {
+          "type": "integer",
+          "constraints": ["NOT NULL", "DEFAULT 0", "CHECK (stock >= 0)"],
+          "description": "Available inventory count"
+        },
+        "created_at": {
+          "type": "timestamp",
+          "constraints": ["DEFAULT CURRENT_TIMESTAMP"],
+          "description": "Product creation timestamp"
+        }
+      },
+      "indexes": [
+        {
+          "name": "idx_products_name",
+          "columns": ["name"],
+          "type": "btree"
+        },
+        {
+          "name": "idx_products_price",
+          "columns": ["price"],
+          "type": "btree"
+        }
+      ]
+    },
+    "orders": {
+      "description": "Customer orders and order management",
+      "columns": {
+        "id": {
+          "type": "uuid",
+          "constraints": ["PRIMARY KEY"],
+          "description": "Unique order identifier"
+        },
+        "user_id": {
+          "type": "uuid",
+          "constraints": ["NOT NULL"],
+          "description": "Reference to user who placed the order"
+        },
+        "total": {
+          "type": "decimal(10,2)",
+          "constraints": ["NOT NULL", "CHECK (total >= 0)"],
+          "description": "Total order amount in dollars"
+        },
+        "status": {
+          "type": "varchar(50)",
+          "constraints": ["NOT NULL", "DEFAULT 'pending'"],
+          "description": "Order status (pending, confirmed, shipped, delivered, cancelled)"
+        },
+        "created_at": {
+          "type": "timestamp",
+          "constraints": ["DEFAULT CURRENT_TIMESTAMP"],
+          "description": "Order creation timestamp"
+        }
+      },
+      "foreign_keys": [
+        {
+          "column": "user_id",
+          "references": {
+            "table": "users",
+            "column": "id"
+          },
+          "on_delete": "CASCADE"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_orders_user_id",
+          "columns": ["user_id"],
+          "type": "btree"
+        },
+        {
+          "name": "idx_orders_status",
+          "columns": ["status"],
+          "type": "btree"
+        },
+        {
+          "name": "idx_orders_created_at",
+          "columns": ["created_at"],
+          "type": "btree"
+        }
+      ]
+    },
+    "order_items": {
+      "description": "Individual items within orders",
+      "columns": {
+        "id": {
+          "type": "uuid",
+          "constraints": ["PRIMARY KEY"],
+          "description": "Unique order item identifier"
+        },
+        "order_id": {
+          "type": "uuid",
+          "constraints": ["NOT NULL"],
+          "description": "Reference to the parent order"
+        },
+        "product_id": {
+          "type": "uuid",
+          "constraints": ["NOT NULL"],
+          "description": "Reference to the ordered product"
+        },
+        "quantity": {
+          "type": "integer",
+          "constraints": ["NOT NULL", "CHECK (quantity > 0)"],
+          "description": "Quantity of the product ordered"
+        },
+        "price": {
+          "type": "decimal(10,2)",
+          "constraints": ["NOT NULL", "CHECK (price >= 0)"],
+          "description": "Price per unit at time of order"
+        }
+      },
+      "foreign_keys": [
+        {
+          "column": "order_id",
+          "references": {
+            "table": "orders",
+            "column": "id"
+          },
+          "on_delete": "CASCADE"
+        },
+        {
+          "column": "product_id",
+          "references": {
+            "table": "products",
+            "column": "id"
+          },
+          "on_delete": "RESTRICT"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_order_items_order_id",
+          "columns": ["order_id"],
+          "type": "btree"
+        },
+        {
+          "name": "idx_order_items_product_id",
+          "columns": ["product_id"],
+          "type": "btree"
+        }
+      ],
+      "unique_constraints": [
+        {
+          "name": "uk_order_product",
+          "columns": ["order_id", "product_id"],
+          "description": "Prevent duplicate products in same order"
+        }
+      ]
+    }
+  },
+  "relationships": {
+    "users_to_orders": {
+      "type": "one_to_many",
+      "description": "One user can have multiple orders"
+    },
+    "orders_to_order_items": {
+      "type": "one_to_many",
+      "description": "One order can have multiple items"
+    },
+    "products_to_order_items": {
+      "type": "one_to_many",
+      "description": "One product can be in multiple order items"
+    }
+  },
+  "data_types": {
+    "uuid": "Universally unique identifier (36 characters)",
+    "varchar": "Variable-length character string",
+    "text": "Variable-length text field",
+    "decimal": "Fixed-point decimal number",
+    "integer": "32-bit signed integer",
+    "timestamp": "Date and time with timezone"
+  },
+  "constraints": {
+    "check_constraints": [
+      "Price values must be non-negative",
+      "Stock quantities must be non-negative",
+      "Order totals must be non-negative",
+      "Order item quantities must be positive",
+      "Order item prices must be non-negative"
+    ],
+    "referential_integrity": [
+      "Orders must reference valid users",
+      "Order items must reference valid orders and products",
+      "Cascading deletes for user orders",
+      "Restricted deletes for products with order items"
+    ]
+  },
+  "notes": {
+    "security": "Password hashes should use bcrypt or similar secure hashing",
+    "performance": "Indexes are provided for common query patterns",
+    "scalability": "UUID primary keys support distributed systems",
+    "data_integrity": "Foreign key constraints maintain referential integrity"
+  }
+}

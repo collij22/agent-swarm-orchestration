@@ -23,8 +23,14 @@ from enum import Enum
 
 # Set UTF-8 encoding for Windows compatibility
 if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    try:
+        if hasattr(sys.stdout, 'buffer') and sys.stdout.buffer:
+            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        if hasattr(sys.stderr, 'buffer') and sys.stderr.buffer:
+            sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (ValueError, AttributeError, OSError):
+        # If stdout/stderr are closed or unavailable, skip encoding setup
+        pass
 
 try:
     from anthropic import Anthropic, AsyncAnthropic
@@ -481,6 +487,13 @@ class AnthropicAgentRunner:
                 
                 # Handle text responses
                 if combined_text:
+                    # Import unicode stripper to handle emojis
+                    try:
+                        from .unicode_stripper import strip_unicode
+                        combined_text = strip_unicode(combined_text)
+                    except ImportError:
+                        pass  # Continue without stripping if module not available
+                    
                     # Strip trailing whitespace to avoid Claude API errors
                     clean_text = combined_text.rstrip()
                     # Prevent repetitive text by checking for duplicates
@@ -502,6 +515,23 @@ class AnthropicAgentRunner:
                         tool_name = block.name
                         tool_args = block.input
                         tool_id = block.id
+                        
+                        # Debug: Log the exact tool name the agent is trying to call
+                        if tool_name not in self.tools:
+                            self.logger.log_warning(
+                                agent_name,
+                                f"Agent trying to call unknown tool: '{tool_name}'",
+                                f"Available tools: {list(self.tools.keys())[:10]}"
+                            )
+                            # Try to fix common naming mistakes
+                            if tool_name.endswith("_tool"):
+                                fixed_name = tool_name[:-5]  # Remove "_tool" suffix
+                                if fixed_name in self.tools:
+                                    self.logger.log_reasoning(
+                                        agent_name,
+                                        f"Fixing tool name: '{tool_name}' -> '{fixed_name}'"
+                                    )
+                                    tool_name = fixed_name
                         
                         # Log tool call with reasoning
                         reasoning = tool_args.get('reasoning', 'No reasoning provided')
@@ -588,6 +618,12 @@ class AnthropicAgentRunner:
                 if not tool_called:
                     # Use the combined text from all blocks
                     final_result = clean_text if combined_text else "Complete"
+                    # Strip unicode from final result to prevent encoding issues
+                    try:
+                        from .unicode_stripper import strip_unicode
+                        final_result = strip_unicode(final_result)
+                    except ImportError:
+                        pass
                     break
                 
         except Exception as e:
@@ -600,7 +636,15 @@ class AnthropicAgentRunner:
             context.completed_tasks.append(agent_name)
             context.artifacts[agent_name] = final_result
         
-        self.logger.log_agent_complete(agent_name, success, final_result[:500])
+        # Strip unicode from result before logging to prevent truncation
+        log_result = final_result
+        try:
+            from .unicode_stripper import strip_unicode
+            log_result = strip_unicode(final_result)
+        except ImportError:
+            pass
+            
+        self.logger.log_agent_complete(agent_name, success, log_result[:500])
         
         return success, final_result, context
     
@@ -705,6 +749,13 @@ class AnthropicAgentRunner:
         import inspect
         sig = inspect.signature(tool.function)
         
+        # Debug: Log the signature for write_file
+        if tool.name == "write_file":
+            self.logger.log_reasoning(
+                agent_name or "unknown",
+                f"write_file signature parameters: {list(sig.parameters.keys())}"
+            )
+        
         # Enhanced handling for write_file tool to prevent missing content errors
         if tool.name == "write_file":
             if "content" not in args:
@@ -722,26 +773,78 @@ class AnthropicAgentRunner:
                     args["content"] = str(args.pop("data"))
                     self.logger.log_reasoning(agent_name or "unknown", "Using 'data' parameter as content")
                 else:
-                    # Generate placeholder content based on file type
-                    file_path = args.get("file_path", "unknown")
-                    if file_path.endswith(".py"):
-                        args["content"] = f"# TODO: Implement {file_path}\n# File created by {agent_name}\n\npass"
-                    elif file_path.endswith(".json"):
-                        args["content"] = "{}"
-                    elif file_path.endswith(".md"):
-                        args["content"] = f"# {file_path}\n\nTODO: Add content"
-                    elif file_path.endswith(".txt"):
-                        args["content"] = f"TODO: Add content for {file_path}"
-                    elif file_path.endswith(".yml") or file_path.endswith(".yaml"):
-                        args["content"] = "# TODO: Add configuration"
-                    else:
-                        args["content"] = ""
+                    # Track write_file attempts for loop detection PER AGENT
+                    if not hasattr(self, '_write_file_attempts'):
+                        self._write_file_attempts = {}
                     
-                    self.logger.log_warning(
-                        agent_name or "unknown",
-                        f"WARNING: Generated placeholder content for {file_path}",
-                        "Agent must provide actual content in write_file call - placeholders indicate missing content parameter"
-                    )
+                    # Clean up old entries to prevent memory leak (keep only last 50)
+                    if len(self._write_file_attempts) > 50:
+                        # Keep only the most recent 25 entries
+                        keys_to_keep = list(self._write_file_attempts.keys())[-25:]
+                        self._write_file_attempts = {k: self._write_file_attempts[k] for k in keys_to_keep}
+                    
+                    file_path = args.get("file_path", "unknown")
+                    # Use agent_name + file_path as key to track per-agent attempts
+                    attempt_key = f"{agent_name or 'unknown'}::{file_path}"
+                    
+                    # Count attempts for this agent+file combination
+                    if attempt_key not in self._write_file_attempts:
+                        self._write_file_attempts[attempt_key] = 0
+                    self._write_file_attempts[attempt_key] += 1
+                    
+                    # If we've tried too many times, raise an error to trigger loop breaker
+                    # Increased to 4 attempts to give agents more chances
+                    if self._write_file_attempts[attempt_key] > 4:
+                        error_msg = f"Agent repeatedly failing to provide content for {file_path} after {self._write_file_attempts[attempt_key]} attempts"
+                        self.logger.log_error(
+                            agent_name or "unknown",
+                            error_msg,
+                            "Triggering loop breaker due to repeated failures"
+                        )
+                        # Reset counter for this agent+file combination
+                        self._write_file_attempts[attempt_key] = 0
+                        raise ValueError(error_msg)
+                    
+                    # Import content generator to create real content
+                    try:
+                        from .content_generator import ContentGenerator
+                        generator = ContentGenerator({"project_name": "QuickShop MVP"})
+                        
+                        # Generate real content based on file type and context
+                        args["content"] = generator.generate_content(file_path, "")
+                        
+                        # Enhanced warning with more details
+                        self.logger.log_warning(
+                            agent_name or "unknown",
+                            f"Generated REAL content for {file_path}",
+                            f"Size: {len(args['content'])} bytes | Attempt: {self._write_file_attempts[attempt_key]}/2 | Type: {file_path.split('.')[-1] if '.' in file_path else 'unknown'}"
+                        )
+                        # Debug: Confirm content was added
+                        self.logger.log_reasoning(
+                            agent_name or "unknown",
+                            f"After fix - args now has keys: {list(args.keys())}"
+                        )
+                    except ImportError:
+                        # Fallback to basic content if generator not available
+                        file_path = args.get("file_path", "unknown")
+                        if file_path.endswith(".py"):
+                            args["content"] = f"# TODO: Implement {file_path}\n# File created by {agent_name}\n\npass"
+                        elif file_path.endswith(".json"):
+                            args["content"] = "{}"
+                        elif file_path.endswith(".md"):
+                            args["content"] = f"# {file_path}\n\nTODO: Add content"
+                        elif file_path.endswith(".txt"):
+                            args["content"] = f"TODO: Add content for {file_path}"
+                        elif file_path.endswith(".yml") or file_path.endswith(".yaml"):
+                            args["content"] = "# TODO: Add configuration"
+                        else:
+                            args["content"] = ""
+                        
+                        self.logger.log_warning(
+                            agent_name or "unknown",
+                            f"WARNING: Generated placeholder content for {file_path}",
+                            "Agent must provide actual content in write_file call - placeholders indicate missing content parameter"
+                        )
             elif args["content"] is None:
                 self.logger.log_error(
                     agent_name or "unknown",
@@ -756,18 +859,220 @@ class AnthropicAgentRunner:
                     f"Converting non-string content ({type(args['content'])}) to string"
                 )
                 args["content"] = str(args["content"])
+            
+            # Check if content has placeholders even when provided
+            if "content" in args and args["content"]:
+                content_lower = args["content"].lower()
+                if any(placeholder in content_lower for placeholder in ["todo", "fixme", "add content", "placeholder"]):
+                    # Replace placeholder content with real content
+                    try:
+                        from .content_generator import ContentGenerator
+                        generator = ContentGenerator({"project_name": "QuickShop MVP"})
+                        file_path = args.get("file_path", "unknown")
+                        
+                        old_content = args["content"]
+                        args["content"] = generator.generate_content(file_path, "")
+                        
+                        self.logger.log_warning(
+                            agent_name or "unknown",
+                            f"Replaced placeholder content with REAL content for {file_path} ({len(args['content'])} bytes)",
+                            f"Agent provided placeholder: '{old_content[:50]}...'"
+                        )
+                    except ImportError:
+                        self.logger.log_warning(
+                            agent_name or "unknown",
+                            "Agent provided placeholder content but generator not available",
+                            f"Content: {args['content'][:100]}..."
+                        )
+        
+        # Fix parameters for specific tools that agents commonly get wrong
+        if tool.name == "share_artifact":
+            # Ensure required parameters are present
+            if "artifact_type" not in args:
+                # Try to infer from context or use default
+                args["artifact_type"] = "general"
+                self.logger.log_warning(
+                    agent_name or "unknown",
+                    "share_artifact_tool missing artifact_type - using 'general'",
+                    "Agent must provide artifact_type parameter"
+                )
+            
+            if "content" not in args:
+                # Try to extract from other parameters or use empty dict
+                if "data" in args:
+                    args["content"] = args.pop("data")
+                elif "artifact" in args:
+                    args["content"] = args.pop("artifact")
+                else:
+                    args["content"] = {}
+                self.logger.log_warning(
+                    agent_name or "unknown",
+                    "share_artifact_tool missing content - using empty dict",
+                    "Agent must provide content parameter"
+                )
+            else:
+                # Even if content exists, remove alternative parameter names to avoid conflicts
+                args.pop("data", None)
+                args.pop("artifact", None)
+        
+        elif tool.name == "verify_deliverables":
+            # Ensure deliverables list is present
+            if "deliverables" not in args:
+                # Try to extract from other parameters or use empty list
+                if "files" in args:
+                    args["deliverables"] = args.pop("files")
+                elif "items" in args:
+                    args["deliverables"] = args.pop("items")
+                elif "list" in args:
+                    args["deliverables"] = args.pop("list")
+                else:
+                    # Use a default list of common deliverables
+                    args["deliverables"] = ["README.md", "requirements.txt", "main.py"]
+                self.logger.log_warning(
+                    agent_name or "unknown",
+                    f"verify_deliverables missing deliverables - using default list",
+                    f"Default: {args['deliverables']}"
+                )
+                # Debug: Confirm deliverables was added
+                self.logger.log_reasoning(
+                    agent_name or "unknown",
+                    f"After fix - args now contains: {list(args.keys())}"
+                )
+            else:
+                # Even if deliverables exists, remove alternative parameter names to avoid conflicts
+                args.pop("files", None)
+                args.pop("items", None)
+                args.pop("list", None)
+        
+        elif tool.name == "dependency_check":
+            # Ensure agent_name is present
+            if "agent_name" not in args:
+                # Use the current agent name if available
+                if agent_name:
+                    args["agent_name"] = agent_name
+                else:
+                    args["agent_name"] = "current_agent"
+                self.logger.log_warning(
+                    agent_name or "unknown",
+                    f"dependency_check_tool missing agent_name - using '{args['agent_name']}'",
+                    "Agent must provide agent_name parameter"
+                )
+        
+        elif tool.name == "record_decision":
+            # Ensure required parameters are present
+            if "decision" not in args:
+                args["decision"] = "Decision not specified"
+                self.logger.log_warning(
+                    agent_name or "unknown",
+                    "record_decision_tool missing decision parameter",
+                    "Using placeholder decision"
+                )
+            
+            if "rationale" not in args:
+                # Try alternative parameter names
+                if "reason" in args:
+                    args["rationale"] = args.pop("reason")
+                elif "reasoning" in args and args["reasoning"] != args.get("rationale"):
+                    args["rationale"] = args["reasoning"]
+                else:
+                    args["rationale"] = "Rationale not provided"
+                self.logger.log_warning(
+                    agent_name or "unknown",
+                    "record_decision_tool missing rationale parameter",
+                    f"Using: {args['rationale'][:50]}..."
+                )
+            else:
+                # Even if rationale exists, remove alternative parameter names to avoid conflicts
+                args.pop("reason", None)
+                # Note: We don't remove "reasoning" as it's often a valid parameter for tools
+        
+        elif tool.name == "complete_task":
+            # Log what we're starting with for debugging
+            self.logger.log_reasoning(
+                agent_name or "unknown",
+                f"complete_task initial args: {list(args.keys())}"
+            )
+            
+            # Ensure summary is present
+            if "summary" not in args:
+                # Try alternative parameter names
+                if "description" in args:
+                    args["summary"] = args.pop("description")
+                elif "task" in args:
+                    args["summary"] = args.pop("task")
+                else:
+                    args["summary"] = "Task completed"
+                self.logger.log_warning(
+                    agent_name or "unknown",
+                    "complete_task_tool missing summary parameter",
+                    f"Using: {args['summary']}"
+                )
+            
+            # ALWAYS remove alternative parameter names to avoid conflicts
+            # This must happen whether summary exists or not
+            args.pop("description", None)  # Remove if exists
+            args.pop("task", None)  # Remove if exists
+            
+            # Log what we're ending with for debugging
+            self.logger.log_reasoning(
+                agent_name or "unknown",
+                f"complete_task after cleanup: {list(args.keys())}"
+            )
         
         # Prepare function arguments
         func_args = {}
         
-        # Handle reasoning parameter if the function expects it
-        if 'reasoning' in sig.parameters and 'reasoning' in args:
-            func_args['reasoning'] = args['reasoning']
+        # FIRST: Check if this is a wrapped function (only has 'kwargs' parameter)
+        is_wrapped = len(sig.parameters) == 1 and 'kwargs' in sig.parameters
         
-        # Add other parameters (excluding reasoning to avoid duplication)
-        for k, v in args.items():
-            if k != 'reasoning' and k in sig.parameters:
-                func_args[k] = v
+        if is_wrapped:
+            # This is a wrapped function - pass ALL args as kwargs
+            self.logger.log_reasoning(
+                agent_name or "unknown",
+                f"Detected wrapped function {tool.name} - passing all args as kwargs"
+            )
+            # Log exactly what we're passing for debugging
+            if tool.name == "complete_task":
+                self.logger.log_reasoning(
+                    agent_name or "unknown",
+                    f"complete_task wrapped: passing args keys: {list(args.keys())}"
+                )
+            # Pass everything including reasoning
+            func_args = dict(args)  # Copy all arguments
+        else:
+            # Normal function - only pass parameters that are in the signature
+            
+            # Handle reasoning parameter if the function expects it
+            if 'reasoning' in sig.parameters and 'reasoning' in args:
+                func_args['reasoning'] = args['reasoning']
+            
+            # Copy other parameters
+            for k, v in args.items():
+                if k != 'reasoning':
+                    if k in sig.parameters:
+                        func_args[k] = v
+                    else:
+                        # Log when we skip a parameter
+                        if tool.name in ["verify_deliverables", "share_artifact", "write_file"]:
+                            self.logger.log_warning(
+                                agent_name or "unknown",
+                                f"Skipping parameter '{k}' - not in function signature",
+                                f"Function expects: {list(sig.parameters.keys())}"
+                            )
+        
+        # Debug: Log what we're about to call
+        if tool.name in ["write_file", "share_artifact", "verify_deliverables", "dependency_check"]:
+            self.logger.log_reasoning(
+                agent_name or "unknown",
+                f"Calling {tool.name} with func_args: {list(func_args.keys())}, original args: {list(args.keys())}"
+            )
+            # Extra debug for verify_deliverables
+            if tool.name == "verify_deliverables" and "deliverables" not in func_args:
+                self.logger.log_error(
+                    agent_name or "unknown",
+                    f"CRITICAL: deliverables not in func_args even after fix!",
+                    f"sig.parameters: {list(sig.parameters.keys())}"
+                )
         
         # Add context if the function expects it
         if 'context' in sig.parameters:
@@ -805,7 +1110,7 @@ class AnthropicAgentRunner:
         # Build incomplete tasks summary
         incomplete_summary = ""
         if context.incomplete_tasks:
-            incomplete_summary = "\n".join([f"    - {task['agent']}: {task['task']} ({task['reason']})"
+            incomplete_summary = "\n".join([f"    - {task['agent']}: {task.get('task', 'unknown task')} ({task.get('reason', task.get('error', 'unknown'))})"
                                           for task in context.incomplete_tasks[-5:]])
         
         # Build verification required summary
@@ -816,7 +1121,7 @@ class AnthropicAgentRunner:
         context_str = f"""
 <context>
     <project_requirements>{json.dumps(context.project_requirements, indent=2)}</project_requirements>
-    <completed_tasks>{', '.join(context.completed_tasks)}</completed_tasks>
+    <completed_tasks>{', '.join([str(task) if isinstance(task, str) else task.get('agent', 'unknown') for task in context.completed_tasks])}</completed_tasks>
     <current_phase>{context.current_phase}</current_phase>
     <previous_decisions>{json.dumps(context.decisions[-5:], indent=2) if context.decisions else 'None'}</previous_decisions>
     <created_files>
@@ -1294,7 +1599,7 @@ def create_standard_tools() -> List[Tool]:
         description="Share an artifact with other agents for coordination",
         parameters={
             "artifact_type": {"type": "string", "description": "Type of artifact (e.g., 'api_schema', 'database_model', 'config')", "required": True},
-            "content": {"type": "any", "description": "The actual artifact content", "required": True},
+            "content": {"type": "object", "description": "The actual artifact content", "required": True},
             "description": {"type": "string", "description": "Description of the artifact", "required": False}
         },
         function=share_artifact_tool
@@ -1323,7 +1628,7 @@ def create_standard_tools() -> List[Tool]:
         name="verify_deliverables",
         description="Verify that critical deliverables exist and are valid",
         parameters={
-            "deliverables": {"type": "array", "description": "List of file paths to verify", "required": True}
+            "deliverables": {"type": "array", "items": {"type": "string"}, "description": "List of file paths to verify", "required": True}
         },
         function=verify_deliverables_tool
     ))

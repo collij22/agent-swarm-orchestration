@@ -1,0 +1,26 @@
+{
+  "name": "database_schema",
+  "status": "manually_added",
+  "note": "Agent didn't mention this file even though it was requested",
+  "timestamp": "2025-09-02T17:09:46",
+  "tables": {
+    "users": {
+      "id": "uuid PRIMARY KEY",
+      "email": "varchar(255) UNIQUE NOT NULL",
+      "password_hash": "varchar(255) NOT NULL",
+      "created_at": "timestamp DEFAULT NOW()"
+    },
+    "products": {
+      "id": "uuid PRIMARY KEY",
+      "name": "varchar(255) NOT NULL",
+      "price": "decimal(10,2) NOT NULL",
+      "stock": "integer DEFAULT 0"
+    },
+    "orders": {
+      "id": "uuid PRIMARY KEY",
+      "user_id": "uuid REFERENCES users(id)",
+      "total": "decimal(10,2) NOT NULL",
+      "status": "varchar(50) DEFAULT 'pending'"
+    }
+  }
+}

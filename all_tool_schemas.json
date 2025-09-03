@@ -1,0 +1,400 @@
+[
+  {
+    "name": "write_file",
+    "description": "Write content to a file. CRITICAL: You MUST provide BOTH file_path AND content in the SAME call. Never call write_file without the actual file content. Include the complete code/text content, not placeholders.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "reasoning": {
+          "type": "string",
+          "description": "Explanation for why we're using write_file"
+        },
+        "file_path": {
+          "type": "string",
+          "description": "Path to file"
+        },
+        "content": {
+          "type": "string",
+          "description": "ACTUAL content to write - the complete file contents, not a placeholder or description"
+        }
+      },
+      "required": [
+        "reasoning",
+        "file_path",
+        "content"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "run_command",
+    "description": "Execute a shell command",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "reasoning": {
+          "type": "string",
+          "description": "Explanation for why we're using run_command"
+        },
+        "command": {
+          "type": "string",
+          "description": "Command to run"
+        }
+      },
+      "required": [
+        "reasoning",
+        "command"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "record_decision",
+    "description": "Record an important architectural or technical decision",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "reasoning": {
+          "type": "string",
+          "description": "Explanation for why we're using record_decision"
+        },
+        "decision": {
+          "type": "string",
+          "description": "The decision made"
+        },
+        "rationale": {
+          "type": "string",
+          "description": "Why this decision was made"
+        }
+      },
+      "required": [
+        "reasoning",
+        "decision",
+        "rationale"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "complete_task",
+    "description": "Mark the current agent's task as complete",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "reasoning": {
+          "type": "string",
+          "description": "Explanation for why we're using complete_task"
+        },
+        "summary": {
+          "type": "string",
+          "description": "Summary of what was accomplished"
+        },
+        "artifacts": {
+          "type": "object",
+          "description": "Any artifacts produced"
+        }
+      },
+      "required": [
+        "reasoning",
+        "summary"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "share_artifact",
+    "description": "Share an artifact with other agents for coordination",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "reasoning": {
+          "type": "string",
+          "description": "Explanation for why we're using share_artifact"
+        },
+        "artifact_type": {
+          "type": "string",
+          "description": "Type of artifact (e.g., 'api_schema', 'database_model', 'config')"
+        },
+        "content": {
+          "type": "any",
+          "description": "The actual artifact content"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the artifact"
+        }
+      },
+      "required": [
+        "reasoning",
+        "artifact_type",
+        "content"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "dependency_check",
+    "description": "Check if agent dependencies are met before execution",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "reasoning": {
+          "type": "string",
+          "description": "Explanation for why we're using dependency_check"
+        },
+        "agent_name": {
+          "type": "string",
+          "description": "Name of agent to check"
+        }
+      },
+      "required": [
+        "reasoning",
+        "agent_name"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "request_artifact",
+    "description": "Request a specific artifact from a previous agent",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "reasoning": {
+          "type": "string",
+          "description": "Explanation for why we're using request_artifact"
+        },
+        "artifact_name": {
+          "type": "string",
+          "description": "Name or path of artifact needed"
+        },
+        "from_agent": {
+          "type": "string",
+          "description": "Specific agent that created it"
+        }
+      },
+      "required": [
+        "reasoning",
+        "artifact_name"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "verify_deliverables",
+    "description": "Verify that critical deliverables exist and are valid",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "reasoning": {
+          "type": "string",
+          "description": "Explanation for why we're using verify_deliverables"
+        },
+        "deliverables": {
+          "type": "array",
+          "description": "List of file paths to verify"
+        }
+      },
+      "required": [
+        "reasoning",
+        "deliverables"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mcp_semgrep_scan",
+    "description": "Run security vulnerability scan on code using Semgrep MCP",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "reasoning": {
+          "type": "string",
+          "description": "Explanation for why we're using mcp_semgrep_scan"
+        },
+        "path": {
+          "type": "string",
+          "description": "File or directory to scan"
+        },
+        "rules": {
+          "type": "string",
+          "description": "Rule sets (security,owasp,pci_dss,gdpr)"
+        }
+      },
+      "required": [
+        "reasoning"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mcp_security_report",
+    "description": "Generate security report from scan results",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "reasoning": {
+          "type": "string",
+          "description": "Explanation for why we're using mcp_security_report"
+        },
+        "scan_results": {
+          "type": "string",
+          "description": "Scan results to report on"
+        },
+        "format": {
+          "type": "string",
+          "description": "Report format (markdown/json/html)"
+        }
+      },
+      "required": [
+        "reasoning"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mcp_ref_search",
+    "description": "Search technical documentation for accurate, up-to-date information (saves ~60% tokens)",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "reasoning": {
+          "type": "string",
+          "description": "Explanation for why we're using mcp_ref_search"
+        },
+        "query": {
+          "type": "string",
+          "description": "Search query or question"
+        },
+        "technology": {
+          "type": "string",
+          "description": "Technology to search (react/fastapi/etc)"
+        },
+        "max_results": {
+          "type": "integer",
+          "description": "Maximum results"
+        }
+      },
+      "required": [
+        "reasoning",
+        "query"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mcp_get_docs",
+    "description": "Get specific documentation context for a technology and topic",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "reasoning": {
+          "type": "string",
+          "description": "Explanation for why we're using mcp_get_docs"
+        },
+        "technology": {
+          "type": "string",
+          "description": "Technology name"
+        },
+        "topic": {
+          "type": "string",
+          "description": "Specific topic"
+        }
+      },
+      "required": [
+        "reasoning",
+        "technology",
+        "topic"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mcp_playwright_screenshot",
+    "description": "Take screenshot of webpage for visual validation",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "reasoning": {
+          "type": "string",
+          "description": "Explanation for why we're using mcp_playwright_screenshot"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL to screenshot"
+        },
+        "selector": {
+          "type": "string",
+          "description": "CSS selector for element"
+        },
+        "full_page": {
+          "type": "boolean",
+          "description": "Capture full page"
+        }
+      },
+      "required": [
+        "reasoning",
+        "url"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mcp_playwright_test",
+    "description": "Run playwright-based test on webpage",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "reasoning": {
+          "type": "string",
+          "description": "Explanation for why we're using mcp_playwright_test"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL to test"
+        },
+        "test_script": {
+          "type": "string",
+          "description": "JavaScript test script"
+        }
+      },
+      "required": [
+        "reasoning",
+        "url",
+        "test_script"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mcp_visual_regression",
+    "description": "Compare webpage against baseline for visual regression testing",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "reasoning": {
+          "type": "string",
+          "description": "Explanation for why we're using mcp_visual_regression"
+        },
+        "baseline_path": {
+          "type": "string",
+          "description": "Path to baseline screenshot"
+        },
+        "current_url": {
+          "type": "string",
+          "description": "URL to capture and compare"
+        },
+        "threshold": {
+          "type": "number",
+          "description": "Similarity threshold (0-1)"
+        }
+      },
+      "required": [
+        "reasoning",
+        "baseline_path",
+        "current_url"
+      ],
+      "additionalProperties": false
+    }
+  }
+]

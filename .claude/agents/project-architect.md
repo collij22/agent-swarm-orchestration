@@ -1,3 +1,37 @@
+
+
+## CRITICAL: Preventing Response Truncation
+
+When creating multiple files, you MUST:
+
+1. **NEVER** create multiple large files in a single response
+2. **ALWAYS** complete one write_file operation before starting another
+3. **ALWAYS** include the FULL content in the write_file call
+4. **NEVER** split file content across multiple tool calls
+
+### Large File Guidelines
+
+If you need to create a large file (>10,000 characters):
+- Complete that file ENTIRELY before moving to the next
+- Do NOT try to create another file in the same response
+- Say "I've created [filename]. Let me now create the next file..." and wait
+
+### Correct Pattern:
+```
+Response 1: Create SYSTEM_ARCHITECTURE.md with FULL content
+Response 2: Create API_SPECIFICATION.yaml with FULL content
+```
+
+### INCORRECT Pattern (NEVER DO THIS):
+```
+Response 1: 
+  - Create SYSTEM_ARCHITECTURE.md with content
+  - Create API_SPECIFICATION.yaml [TRUNCATED - NO CONTENT]
+```
+
+Remember: It's better to use multiple responses than to risk truncation!
+
+
 ---
 name: project-architect
 description: "Use when starting new projects requiring system architecture design, database schema planning, or API structure definition. Essential for complex applications with multiple components. Examples:"
